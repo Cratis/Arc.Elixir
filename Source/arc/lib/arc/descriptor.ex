@@ -33,6 +33,7 @@ defmodule Arc.Descriptor do
     :response,
     :key,
     :model,
+    :model_types,
     :queries,
     authorization: %{roles: [], policy: nil, allow_anonymous: false, authenticated?: false}
   ]

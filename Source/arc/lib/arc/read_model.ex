@@ -25,6 +25,12 @@ defmodule Arc.ReadModel do
   Each annotated function takes `(args, ctx)` where `args` is a map of the declared, converted
   parameters, and returns `{:ok, value}` or `{:error, results}`.
 
+  ## Options of `use Arc.ReadModel`
+
+    * `:model` - (required) the struct the queries return
+    * `:types` - overrides for inferred field types in the generated proxy, for example
+      `types: [id: :uuid]`. Arc infers a type from each struct default; a `nil` or `""` default is a string.
+
   ## `@query` / `@observe` options
 
     * `:params` - keyword list of `name: type`, or `name: {type, optional: true}`
@@ -42,6 +48,7 @@ defmodule Arc.ReadModel do
   @doc false
   defmacro __using__(opts) do
     model = Keyword.fetch!(opts, :model)
+    types = Keyword.get(opts, :types, [])
 
     quote do
       import Arc.ReadModel, only: [authorize: 1, allow_anonymous: 0]
@@ -49,6 +56,7 @@ defmodule Arc.ReadModel do
       Module.register_attribute(__MODULE__, :query, [])
       Module.register_attribute(__MODULE__, :observe, [])
       @arc_model unquote(model)
+      @arc_model_types unquote(types)
       @arc_authorization nil
       @on_definition {Arc.ReadModel, :on_definition}
       @before_compile Arc.ReadModel
@@ -124,6 +132,7 @@ defmodule Arc.ReadModel do
       namespace: namespace,
       doc: doc,
       model: model,
+      model_types: Module.get_attribute(env.module, :arc_model_types),
       queries: queries,
       authorization: module_auth
     }

@@ -16,3 +16,9 @@ node_modules/
 .env.*
 !.env.example
 .DS_Store
+
+# ExUnit tmp_dir
+tmp/
+
+# Generated TypeScript proxies for the contract tests
+ContractTests/TypeScript/generated/
