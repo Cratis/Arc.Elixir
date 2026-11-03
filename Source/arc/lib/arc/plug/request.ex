@@ -21,6 +21,8 @@ defmodule Arc.Plug.Request do
     correlation = correlation_id(conn, config[:correlation_header])
     conn = put_resp_header(conn, config[:correlation_header], correlation)
 
+    conn = Plug.Conn.put_private(conn, :arc_application, app)
+
     case Authentication.run(config[:authentication], conn) do
       :failed ->
         {:unauthenticated, conn}

@@ -26,7 +26,14 @@ end
 {:ok, client} =
   Chronicle.Testing.start_supervised_client(event_types: [ArcFixtures.Authors.AuthorRegistered])
 
-Application.put_env(:cratis_arc, ArcFixtures.App, chronicle: [client: client], introspection: :anonymous)
+# The unsigned x-ms-client-principal headers are trusted here because this server is only reachable
+# by the contract test; a real application enables that only behind an authenticating ingress.
+Application.put_env(:cratis_arc, ArcFixtures.App,
+  chronicle: [client: client],
+  introspection: :anonymous,
+  authentication: [Arc.Authentication.ClientPrincipal],
+  trust_forwarded_identity_headers: true
+)
 Arc.Application.refresh(ArcFixtures.App)
 
 {:ok, _} = Supervisor.start_link([ArcFixtures.App], strategy: :one_for_one)

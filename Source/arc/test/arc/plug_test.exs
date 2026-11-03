@@ -236,16 +236,5 @@ defmodule Arc.PlugTest do
                &(&1["fullyQualifiedName"] == "ArcFixtures.Authors.Listing.Authors.AllAuthors")
              )
     end
-
-    test "the identity schema and development lists are always answered" do
-      assert decoded(conn(:get, "/.cratis/identity-details/schema") |> call()) == %{}
-      assert decoded(conn(:get, "/.cratis/users") |> call()) == []
-      assert decoded(conn(:get, "/.cratis/tenants") |> call()) == []
-    end
-
-    test "/.cratis/me is not registered without an identity details provider" do
-      conn = conn(:get, "/.cratis/me") |> call()
-      refute conn.halted
-    end
   end
 end

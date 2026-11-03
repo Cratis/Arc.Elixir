@@ -14,7 +14,9 @@ import {
     Sorting,
     Paging,
 } from "@cratis/arc/queries";
+import { IdentityProvider } from "@cratis/arc/identity";
 import { Guid } from "@cratis/fundamentals";
+import { Details } from "../generated/Identity";
 import { AllAuthors, ById, LiveAuthors } from "../generated/Authors/Listing";
 import { RegisterAuthor, RenameAuthor } from "../generated/Authors/Registration";
 
@@ -31,6 +33,17 @@ Globals.queryTransportMethod = QueryTransportMethod.WebSocket;
 Globals.queryCacheRetentionMs = 0;
 // SAFETY: the Node eventsource implementation provides the browser EventSource surface used by Arc.
 Globals.eventSourceFactory = (url) => new NodeEventSource(url) as unknown as EventSource;
+
+function clientPrincipal(): Record<string, string> {
+    const principal = {
+        identityProvider: "aad",
+        userId: "alice@contoso.com",
+        userDetails: "Alice",
+        userRoles: ["editor"],
+        claims: [{ typ: "department", val: "Engineering" }],
+    };
+    return { "x-ms-client-principal": Buffer.from(JSON.stringify(principal)).toString("base64") };
+}
 
 function waitFor<T>(register: (resolve: (value: T) => void) => () => void, timeoutMs = 8000): Promise<T> {
     return new Promise<T>((resolve, reject) => {
@@ -168,5 +181,50 @@ test("Arc for Elixir serves the generated proxies", async (t) => {
             Globals.queryTransportMethod = QueryTransportMethod.WebSocket;
             Globals.queryDirectMode = false;
         }
+    });
+
+    await t.test("an anonymous caller has no identity", async () => {
+        IdentityProvider.clearCache();
+        IdentityProvider.setOrigin(origin);
+        IdentityProvider.setApiBasePath("");
+        IdentityProvider.setHttpHeadersCallback(() => ({}));
+
+        const identity = await IdentityProvider.getCurrent(Details);
+
+        assert.equal(identity.isSet, false);
+    });
+
+    await t.test("a signed-in caller gets a typed identity with roles and details", async () => {
+        IdentityProvider.clearCache();
+        IdentityProvider.setHttpHeadersCallback(clientPrincipal);
+
+        const identity = await IdentityProvider.getCurrent(Details);
+
+        assert.equal(identity.isSet, true);
+        assert.equal(identity.name, "Alice");
+        assert.equal(identity.isInRole("editor"), true);
+        assert.equal(identity.isInRole("admin"), false);
+        assert.ok(identity.details instanceof Details);
+        assert.equal(identity.details.displayName, "Hello Alice");
+        assert.equal(identity.details.department, "Engineering");
+    });
+
+    await t.test("the identity endpoint answers 401 anonymously and is private", async () => {
+        const anonymous = await fetch(`${origin}/.cratis/me`);
+        const signedIn = await fetch(`${origin}/.cratis/me`, { headers: clientPrincipal() });
+
+        assert.equal(anonymous.status, 401);
+        assert.equal(signedIn.status, 200);
+        assert.equal(signedIn.headers.get("cache-control"), "no-store, private");
+        const body = (await signedIn.json()) as Record<string, unknown>;
+        assert.deepEqual(Object.keys(body).sort(), ["details", "id", "isAuthenticated", "isAuthorized", "name", "roles"]);
+    });
+
+    await t.test("development users and tenants are listed for tools such as Lens", async () => {
+        const users = (await (await fetch(`${origin}/.cratis/users`)).json()) as Array<{ microsoftIdentity: { userId: string } }>;
+        const tenants = (await (await fetch(`${origin}/.cratis/tenants`)).json()) as Array<{ id: string }>;
+
+        assert.equal(users[0]?.microsoftIdentity.userId, "ada@example.com");
+        assert.equal(tenants[0]?.id, "acme");
     });
 });

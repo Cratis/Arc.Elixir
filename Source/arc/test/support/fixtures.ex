@@ -111,6 +111,55 @@ defmodule ArcFixtures.Store do
   def put(list), do: :persistent_term.put(__MODULE__, list)
 end
 
+defmodule ArcFixtures.Identity.Details do
+  use Arc.Schema
+
+  schema do
+    field :display_name, :string, required: true
+    field :department, :string
+  end
+end
+
+defmodule ArcFixtures.Identity.Provider do
+  use Arc.Identity.Provider, details: ArcFixtures.Identity.Details
+
+  @impl true
+  def details(%Arc.Identity.Context{name: "banned"}),
+    do: {:unauthorized, %ArcFixtures.Identity.Details{display_name: "banned"}}
+
+  def details(%Arc.Identity.Context{} = context) do
+    {:ok,
+     %ArcFixtures.Identity.Details{
+       display_name: "Hello " <> context.name,
+       department: List.keyfind(context.claims, "department", 0, {nil, nil}) |> elem(1)
+     }}
+  end
+end
+
+defmodule ArcFixtures.Identity.Users do
+  @behaviour Arc.Identity.UsersProvider
+
+  @impl true
+  def users do
+    [
+      %Arc.Identity.User{
+        user_id: "ada@example.com",
+        user_details: "Ada",
+        roles: ["editor"],
+        claims: [{"department", "Engineering"}],
+        details: %{department: "Engineering"}
+      }
+    ]
+  end
+end
+
+defmodule ArcFixtures.Identity.Tenants do
+  @behaviour Arc.Identity.TenantsProvider
+
+  @impl true
+  def tenants, do: [%Arc.Identity.Tenant{id: "acme", name: "ACME"}]
+end
+
 defmodule ArcFixtures.App do
   use Arc.Application,
     otp_app: :cratis_arc,
@@ -118,6 +167,10 @@ defmodule ArcFixtures.App do
       ArcFixtures.Authors.Registration.RegisterAuthor,
       ArcFixtures.Authors.Registration.RenameAuthor,
       ArcFixtures.Authors.Registration.Explode,
-      ArcFixtures.Authors.Listing.Authors
+      ArcFixtures.Authors.Listing.Authors,
+      ArcFixtures.Identity.Details,
+      ArcFixtures.Identity.Provider,
+      ArcFixtures.Identity.Users,
+      ArcFixtures.Identity.Tenants
     ]
 end

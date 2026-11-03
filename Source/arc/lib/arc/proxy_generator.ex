@@ -29,6 +29,8 @@ defmodule Arc.ProxyGenerator do
     * each query of a read model becomes a `QueryFor` (or `ObservableQueryFor`) class with
       parameters, sorting helpers and the `use`, `useWithPaging`, `useSuspense` and `when` hooks
     * each model and nested schema becomes a class with `@field` decorators
+    * the identity provider's details type becomes a class too, to pass to `IdentityProvider.getCurrent`
+      or `useIdentity`
     * an `index.ts` per folder re-exports the generated files
 
   The output follows the C# proxy generator's templates, so the frontend packages consume it
@@ -117,7 +119,7 @@ defmodule Arc.ProxyGenerator do
 
     overrides = Map.new(state.read_models, fn d -> {d.model, d.model_types} end)
 
-    (command_types ++ query_types)
+    (command_types ++ query_types ++ identity_types(state))
     |> TypeScript.reachable_types()
     |> Enum.map(fn module ->
       {_ns, name} = Naming.module_parts(module)
@@ -129,6 +131,15 @@ defmodule Arc.ProxyGenerator do
         body: Render.type(module, fields, opts)
       }
     end)
+  end
+
+  # The identity provider's details type, so `useIdentity` can be typed. Generated like any other type.
+  defp identity_types(%{identity_provider: nil}), do: []
+
+  defp identity_types(%{identity_provider: provider}) do
+    if function_exported?(provider, :__arc_details__, 0),
+      do: List.wrap(provider.__arc_details__()),
+      else: []
   end
 
   defp path(module, name, opts) do

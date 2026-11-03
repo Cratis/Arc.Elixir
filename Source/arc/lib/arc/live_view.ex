@@ -117,6 +117,25 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       )
     end
 
+    # Identity
+
+    @doc """
+    Assigns the caller's `Arc.Identity.Result` (the same data `GET /.cratis/me` serves) under `key`.
+
+    An anonymous caller gets a result with `authenticated?: false`. An application without an
+    identity provider gets empty details. Identity is presentation data, never an authorization
+    decision; commands and queries authorize themselves.
+    """
+    @spec assign_identity(Phoenix.LiveView.Socket.t(), atom()) :: Phoenix.LiveView.Socket.t()
+    def assign_identity(socket, key \\ :identity) do
+      assign(socket, key, identity(socket))
+    end
+
+    @doc "The caller's `Arc.Identity.Result`."
+    @spec identity(Phoenix.LiveView.Socket.t()) :: Arc.Identity.Result.t()
+    def identity(socket),
+      do: Arc.Identity.resolve(socket.assigns.arc_application, principal(socket))
+
     # Queries
 
     @doc """

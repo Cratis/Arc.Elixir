@@ -79,6 +79,16 @@ defmodule Arc.LiveViewTest do
     assert admin |> element("#rename") |> render_click() =~ "previous-"
   end
 
+  test "the caller's identity is assigned from the same source as /.cratis/me" do
+    {:ok, anonymous, html} = live(build_conn(), "/authors")
+    assert html =~ "nobody"
+    refute render(anonymous) =~ "Hello"
+
+    {:ok, signed_in, html} = live_as(%{id: "u1", name: "root", roles: ["admin"]})
+    assert html =~ "Hello root"
+    assert render(signed_in) =~ "Hello root"
+  end
+
   defp eventually(fun, attempts \\ 40) do
     cond do
       fun.() -> true

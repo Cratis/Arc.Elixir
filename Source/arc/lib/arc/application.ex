@@ -36,11 +36,16 @@ defmodule Arc.Application do
     * `:tenant_header` - default `"x-cratis-tenant-id"`
     * `:correlation_header` - default `"x-correlation-id"`
     * `:max_body_bytes` - request body limit; default `1_000_000`
-    * `:introspection` - who may read the `/.cratis/commands` and `/.cratis/queries` catalogs:
-      `:authenticated` (default), `:anonymous` or `false` to remove them
+    * `:introspection` - who may read the discovery routes (`/.cratis/commands`, `/.cratis/queries`,
+      `/.cratis/identity-details/schema`, `/.cratis/users`, `/.cratis/tenants`): `:authenticated`
+      (default), `:anonymous` or `false` to remove them. `/.cratis/me` is not affected
     * `:expose_exceptions` - include exception messages and stack traces in results; default
       `false`, which replaces them with a generic message (the detail is always logged)
-    * `:identity_details` - a module with `details(principal)` returning a map, served under `/.cratis/me`
+    * `:identity_details` - the `Arc.Identity.Provider` module to use; by default the single
+      provider found in `:otp_app`. Without a provider `/.cratis/me` is not served
+    * `:trust_forwarded_identity_headers` - let `Arc.Authentication.ClientPrincipal` accept the
+      unsigned `x-ms-client-principal*` headers; default `false`. Enable only behind an ingress that
+      authenticates callers and strips client-supplied identity headers
   """
 
   alias Arc.Descriptor
@@ -83,6 +88,7 @@ defmodule Arc.Application do
       correlation_header: "x-correlation-id",
       max_body_bytes: 1_000_000,
       introspection: :authenticated,
+      trust_forwarded_identity_headers: false,
       expose_exceptions: false
     ]
     |> Keyword.merge(compile_opts)
@@ -136,13 +142,18 @@ defmodule Arc.Application do
       "query"
     )
 
+    modules = candidate_modules(config)
+
     state = %{
       config: config,
       commands: commands,
       read_models: read_models,
       command_routes: command_routes,
       query_routes: query_routes,
-      query_names: query_names
+      query_names: query_names,
+      identity_provider: identity_provider(config, modules),
+      users_providers: implementing(modules, Arc.Identity.UsersProvider),
+      tenants_providers: implementing(modules, Arc.Identity.TenantsProvider)
     }
 
     :persistent_term.put({@key, app}, state)
@@ -154,22 +165,54 @@ defmodule Arc.Application do
   def policy(nil, _name), do: nil
   def policy(app, name), do: Keyword.get(state(app).config[:policies], name)
 
+  defp candidate_modules(config) do
+    case Keyword.fetch(config, :artifacts) do
+      {:ok, list} ->
+        list
+
+      :error ->
+        otp_app = Keyword.fetch!(config, :otp_app)
+        Application.load(otp_app)
+        Application.spec(otp_app, :modules) || []
+    end
+  end
+
   defp discover(config) do
-    modules =
-      case Keyword.fetch(config, :artifacts) do
-        {:ok, list} ->
-          list
-
-        :error ->
-          otp_app = Keyword.fetch!(config, :otp_app)
-          Application.load(otp_app)
-          Application.spec(otp_app, :modules) || []
-      end
-
-    modules
+    config
+    |> candidate_modules()
     |> Enum.filter(&(Code.ensure_loaded?(&1) and function_exported?(&1, :__arc__, 0)))
     |> Enum.map(& &1.__arc__())
     |> Enum.sort_by(&inspect(&1.module))
+  end
+
+  # Modules that declare `@behaviour behaviour`, in a stable order.
+  defp implementing(modules, behaviour) do
+    modules
+    |> Enum.filter(fn module ->
+      Code.ensure_loaded?(module) and
+        behaviour in (module.module_info(:attributes)[:behaviour] || [])
+    end)
+    |> Enum.sort_by(&inspect/1)
+  end
+
+  defp identity_provider(config, modules) do
+    case config[:identity_details] do
+      nil ->
+        case implementing(modules, Arc.Identity.Provider) do
+          [] ->
+            nil
+
+          [provider] ->
+            provider
+
+          many ->
+            raise ArgumentError,
+                  "Several identity providers found: #{inspect(many)}. Keep one, or name it with the identity_details option."
+        end
+
+      explicit ->
+        explicit
+    end
   end
 
   defp ensure_unique!(items, _opts, route_fun, kind) do

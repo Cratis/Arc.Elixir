@@ -18,6 +18,7 @@ defmodule ArcFixtures.Web.AuthorsLive do
     {:ok,
      socket
      |> assign(:renamed, nil)
+     |> assign_identity()
      |> assign_observable(:authors, Authors, :live_authors)
      |> assign_form(:form, RegisterAuthor, %{"id" => "7f4d0f4e-0f4e-4d0f-8f4e-0f4e4d0f8f4e"})}
   end
@@ -59,6 +60,7 @@ defmodule ArcFixtures.Web.AuthorsLive do
     <p :if={assigns[:saved]} id="saved">saved</p>
     <button phx-click="rename" id="rename">rename</button>
     <p :if={@renamed} id="renamed">{inspect(@renamed)}</p>
+    <p id="who">{Map.get(@identity.details, :display_name, "nobody")}</p>
     """
   end
 end
