@@ -41,10 +41,10 @@ defmodule ArcFixtures.Authors.Registration.RegisterAuthor do
       doc: "Identifies the author."
     )
 
-    field(:name, :string, required: true, max_length: 10)
-    field(:email, :string, email: true)
-    field(:age, :integer, min: 0, max: 150)
-    field(:tags, {:list, :string})
+    field :name, :string, required: true, max_length: 10
+    field :email, :string, email: true
+    field :age, :integer, min: 0, max: 150
+    field :tags, {:list, :string}
   end
 
   def validate(%__MODULE__{name: "forbidden"}, _ctx),
@@ -59,12 +59,12 @@ end
 defmodule ArcFixtures.Authors.Registration.RenameAuthor do
   @moduledoc "Renames an author; only admins may."
   use Arc.Command
-  authorize(roles: ["admin"])
-  response(:string)
+  authorize roles: ["admin"]
+  response :string
 
   schema do
-    field(:id, :uuid, key: true, required: true)
-    field(:name, :string, required: true)
+    field :id, :uuid, key: true, required: true
+    field :name, :string, required: true
   end
 
   def provide(%__MODULE__{id: id}, _ctx), do: {:ok, %{old_name: "previous-" <> id}}
@@ -80,7 +80,7 @@ defmodule ArcFixtures.Authors.Registration.Explode do
   allow_anonymous()
 
   schema do
-    field(:id, :uuid, key: true)
+    field :id, :uuid, key: true
   end
 
   def handle(_command, _ctx), do: raise("boom")

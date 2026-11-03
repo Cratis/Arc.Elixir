@@ -72,7 +72,9 @@ defmodule Arc.Chronicle do
 
   # A single event takes the single-event path; several append atomically in one call.
   defp append_group(source, [event], opts), do: Chronicle.append_with_result(source, event, opts)
-  defp append_group(source, events, opts), do: Chronicle.append_many_with_result(source, events, opts)
+
+  defp append_group(source, events, opts),
+    do: Chronicle.append_many_with_result(source, events, opts)
 
   defp options(ctx) do
     base = [correlation_id: ctx.correlation_id]

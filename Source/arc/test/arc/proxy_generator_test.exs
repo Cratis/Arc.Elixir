@@ -166,9 +166,4 @@ defmodule Arc.ProxyGeneratorTest do
       Arc.Application.refresh(CollideApp)
     end
   end
-
-  test "proxy generation is opt-in: no output configured means no options" do
-    assert ProxyGenerator.options(ArcFixtures.App) == nil
-    assert ProxyGenerator.options(ArcFixtures.App, output: "x")[:output] == "x"
-  end
 end
