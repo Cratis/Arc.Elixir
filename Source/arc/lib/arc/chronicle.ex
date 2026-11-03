@@ -6,7 +6,7 @@ defmodule Arc.Chronicle do
   Appends the events a command returned to Chronicle.
 
   Events are grouped by event source id, in the order returned, and each group is appended
-  atomically with `Chronicle.append_many_with_result/3`. Constraint and concurrency violations
+  atomically (`Chronicle.append_with_result/3` for one event, `append_many_with_result/3` for several). Constraint and concurrency violations
   become validation results (`"constraintViolation"`, `"concurrencyViolation"`) so a client can
   show them like any other rejection.
   """
@@ -62,13 +62,17 @@ defmodule Arc.Chronicle do
 
   defp append_groups(groups, ctx) do
     Enum.reduce_while(groups, :ok, fn {source, events}, :ok ->
-      case Chronicle.append_many_with_result(source, events, options(ctx)) do
+      case append_group(source, events, options(ctx)) do
         {:ok, _result} -> {:cont, :ok}
         {:error, %AppendResult{} = result} -> {:halt, {:error, violations(result)}}
         {:error, reason} -> {:halt, {:error, [failure(reason)]}}
       end
     end)
   end
+
+  # A single event takes the single-event path; several append atomically in one call.
+  defp append_group(source, [event], opts), do: Chronicle.append_with_result(source, event, opts)
+  defp append_group(source, events, opts), do: Chronicle.append_many_with_result(source, events, opts)
 
   defp options(ctx) do
     base = [correlation_id: ctx.correlation_id]

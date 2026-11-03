@@ -36,6 +36,35 @@ defmodule Arc.Test do
   @spec scenario(module(), atom()) :: Scenario.t()
   def scenario(application, client), do: %Scenario{application: application, client: client}
 
+  @doc """
+  Points `application` at a Chronicle test client for the duration of the test, so code that reaches
+  the application's own configuration (the HTTP host, LiveView) uses it. Restores the previous
+  configuration when the test exits. Not safe with `async: true`: configuration is global.
+  """
+  @spec configure(module(), atom()) :: :ok
+  def configure(application, client) do
+    otp_app = Keyword.fetch!(application.config(), :otp_app)
+    previous = Application.get_env(otp_app, application)
+
+    Application.put_env(
+      otp_app,
+      application,
+      Keyword.merge(previous || [], chronicle: [client: client])
+    )
+
+    Arc.Application.refresh(application)
+
+    ExUnit.Callbacks.on_exit(fn ->
+      if previous,
+        do: Application.put_env(otp_app, application, previous),
+        else: Application.delete_env(otp_app, application)
+
+      Arc.Application.refresh(application)
+    end)
+
+    :ok
+  end
+
   @doc "Executes a command. Accepts the options of `Arc.execute/3`."
   @spec execute(Scenario.t(), struct() | {module(), map()}, keyword()) :: CommandResult.t()
   def execute(%Scenario{} = scenario, command, opts \\ []),
@@ -120,22 +149,29 @@ defmodule Arc.Test.Case do
   `Arc.Test.Scenario` in the context as `:arc`.
 
   Options: `:application` (required) and every option of `Chronicle.Testing.start_supervised_client/1`
-  (`:event_types`, `:reactors`, `:reducers`, `:constraints`, ...). Pass `observable: true` to also
-  start the application's supervisor for observable-query tests; such tests cannot run with
-  `async: true` because the supervisor is registered by name.
+  (`:event_types`, `:reactors`, `:reducers`, `:constraints`, ...). Also:
+
+    * `configure: true` - point the application's configuration at the test client with
+      `Arc.Test.configure/2`, for tests that go through the HTTP host or LiveView
+    * `observable: true` - also start the application's supervisor, for observable-query tests
+
+  Both are global, so such tests cannot run with `async: true`. Do not use `observable: true` when
+  the application already starts `application` in its supervision tree.
   """
 
   use ExUnit.CaseTemplate
 
   using opts do
     {application, opts} = Keyword.pop!(opts, :application)
-    {observable, chronicle_opts} = Keyword.pop(opts, :observable, false)
+    {observable, opts} = Keyword.pop(opts, :observable, false)
+    {configure, chronicle_opts} = Keyword.pop(opts, :configure, false)
 
     quote do
       setup do
         {:ok, client} = Chronicle.Testing.start_supervised_client(unquote(chronicle_opts))
         on_exit(fn -> Chronicle.Testing.stop_supervised_client(client) end)
 
+        if unquote(configure), do: Arc.Test.configure(unquote(application), client)
         if unquote(observable), do: start_supervised!(unquote(application))
 
         %{arc: Arc.Test.scenario(unquote(application), client), chronicle: client}

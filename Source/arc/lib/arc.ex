@@ -71,6 +71,14 @@ defmodule Arc do
     Pipeline.execute_query(descriptor, query, raw, context(application, context_opts), query_opts)
   end
 
+  @doc """
+  A new UUID v4 string, for a command key such as a new author's id.
+
+      %RegisterAuthor{id: Arc.new_id(), name: "Ada"}
+  """
+  @spec new_id() :: String.t()
+  defdelegate new_id(), to: Context, as: :new_correlation_id
+
   @doc "Builds a context for `application` from the given options."
   @spec context(module(), keyword()) :: Context.t()
   def context(application, opts \\ []) do

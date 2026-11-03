@@ -5,6 +5,7 @@ defmodule Arc.LiveViewTest do
   # Not async: the Arc application supervisor and endpoint are registered by name.
   use Arc.Test.Case,
     application: ArcFixtures.App,
+    configure: true,
     event_types: [ArcFixtures.Authors.AuthorRegistered],
     observable: true
 
@@ -15,16 +16,8 @@ defmodule Arc.LiveViewTest do
 
   @id "7f4d0f4e-0f4e-4d0f-8f4e-0f4e4d0f8f4e"
 
-  setup %{chronicle: client} do
-    Application.put_env(:cratis_arc, ArcFixtures.App, chronicle: [client: client])
-    Arc.Application.refresh(ArcFixtures.App)
+  setup do
     ArcFixtures.Store.put([%ArcFixtures.Authors.Author{id: @id, name: "Ada"}])
-
-    on_exit(fn ->
-      Application.delete_env(:cratis_arc, ArcFixtures.App)
-      Arc.Application.refresh(ArcFixtures.App)
-    end)
-
     :ok
   end
 

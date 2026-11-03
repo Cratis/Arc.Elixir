@@ -4,6 +4,7 @@
 defmodule Arc.PlugTest do
   use Arc.Test.Case,
     application: ArcFixtures.App,
+    configure: true,
     event_types: [ArcFixtures.Authors.AuthorRegistered]
 
   import Plug.Test
@@ -14,20 +15,11 @@ defmodule Arc.PlugTest do
   @id "7f4d0f4e-0f4e-4d0f-8f4e-0f4e4d0f8f4e"
   @register "/api/authors/registration/register-author"
 
-  setup %{chronicle: client} do
-    # The plug uses the application's configured Chronicle options, so point them at this test's client.
-    Application.put_env(:cratis_arc, ArcFixtures.App, chronicle: [client: client])
-    Arc.Application.refresh(ArcFixtures.App)
-
+  setup do
     ArcFixtures.Store.put([
       %ArcFixtures.Authors.Author{id: @id, name: "Ada"},
       %ArcFixtures.Authors.Author{id: "b", name: "Bob"}
     ])
-
-    on_exit(fn ->
-      Application.delete_env(:cratis_arc, ArcFixtures.App)
-      Arc.Application.refresh(ArcFixtures.App)
-    end)
 
     :ok
   end

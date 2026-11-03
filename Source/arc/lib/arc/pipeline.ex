@@ -309,6 +309,14 @@ defmodule Arc.Pipeline do
   defp normalize_results({:error, %Arc.ValidationResult{} = r}), do: [r]
   defp normalize_results({:error, list}) when is_list(list), do: list
 
+  defp normalize_results({:error, other}) do
+    Logger.warning(
+      "Arc artifact returned an error that is not a validation result: #{inspect(other)}"
+    )
+
+    [Validation.error("The request could not be completed.", [], reason: "frameworkFailure")]
+  end
+
   defp filter_severity(results, %Context{allowed_severity: allowed}),
     do: Enum.reject(results, &(Arc.ValidationResult.severity_value(&1.severity) <= allowed))
 
