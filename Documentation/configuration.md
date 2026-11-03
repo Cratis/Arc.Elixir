@@ -26,7 +26,9 @@ config :my_app, MyApp.Arc, introspection: :authenticated
 | `authentication` | `[Arc.Authentication.FromAssigns]` | `Arc.Authentication` handlers, in order |
 | `policies` | `[]` | `[name: PolicyModule]` for `Arc.Policy` |
 | `identity_details` | the single `Arc.Identity.Provider` found | The identity provider to use. Without one, `/.cratis/me` is not served |
-| `trust_forwarded_identity_headers` | `false` | Let `Arc.Authentication.ClientPrincipal` accept the unsigned `x-ms-client-principal*` headers. Only behind an authenticating ingress |
+| `trust_forwarded_identity_headers` | `false` | Let `Arc.Authentication.MicrosoftIdentityPlatform` accept the `x-ms-client-principal*` headers. Unsigned, only behind an authenticating ingress; required for the two options below |
+| `forwarded_identity` | `[enabled: false, audience: "", keys: []]` | Verify the signed `x-cratis-forwarded-identity-signature` envelope with 1 to 8 `[key_id:, secret_base64:]` keys. See [Signed forwarded identity](authorization-and-identity.md#signed-forwarded-identity) |
+| `on_behalf_of` | `[enabled: false, issuer: "", audience: "", service: "", clock_skew: 30, signing_keys: []]` | Accept an RS256 assertion that an actor acts for the user, with `[key_id:, public_key_pem:]` keys. See [Acting on behalf of a user](authorization-and-identity.md#acting-on-behalf-of-a-user) |
 | `tenant_header` | `"x-cratis-tenant-id"` | Header read into `ctx.tenant` |
 | `correlation_header` | `"x-correlation-id"` | Header reused and echoed |
 | `max_body_bytes` | `1_000_000` | Request body limit |

@@ -31,7 +31,7 @@ Not verified: behavior against a running Chronicle kernel in this repository's C
 - **Introspection depth.** The catalogs report name, namespace, route, type, documentation summary and a payload or arguments schema. They do not report authorization or per-property validation metadata.
 - **Tenancy.** The tenant header is read into `ctx.tenant`. Arc has no resolver chain and does not require or enforce a tenant. `/.cratis/tenants` only lists what your providers return.
 - **Identity cookie.** `/.cratis/me` never sets or reads a `.cratis-identity` cookie.
-- **Signed forwarded identity.** Only the unsigned `x-ms-client-principal*` headers are supported, and only when trusted. The signed forwarded-identity envelope of Arc on .NET is not implemented.
+- **Replay memory.** The signed forwarded-identity and on-behalf-of replay caches live in a process per application and per node. A replay is refused on the node that saw the original only, and verification fails closed if the application is not started.
 - **Admission control.** The only request limit is `max_body_bytes`. There are no connection or subscription caps.
 - **`X-Allowed-Severity`.** Read on commands only, as a number, and capped at `Warning`.
 

@@ -34,7 +34,7 @@ end
 - **Phoenix and LiveView** — the same commands and queries, in process, with forms that show pipeline errors on the right field
 - **Observable queries** — re-run when Chronicle changes a read model, pushed over WebSocket or Server-Sent Events
 - **Opt-in TypeScript proxies** — `mix arc.gen.proxies` generates typed commands and queries, with the same validation as the server, only if you add the compiler
-- **Identity** — `/.cratis/me`, typed identity details, development users for Lens, and trusted `x-ms-client-principal` headers behind an ingress
+- **Identity** — `/.cratis/me`, typed identity details, development users for Lens, signed forwarded identity and on-behalf-of, as Arc on .NET
 - **The exact result envelopes** — `CommandResult` and `QueryResult` match the Arc contract field for field, pinned by specs
 - **Chronicle underneath** — returned events are appended with the caller's identity and correlation; constraint rejections reach the client as validation results
 - **`Arc.Test`** — the real pipeline against Chronicle's in-memory kernel

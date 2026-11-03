@@ -42,7 +42,7 @@ end
 - **LiveView, in process.** The same commands and queries, called without an HTTP hop, with forms that show the pipeline's errors on the right field.
 - **Observable queries.** A query that re-runs when Chronicle changes a read model and pushes the result over WebSocket or Server-Sent Events.
 - **Opt-in TypeScript proxies.** Only if you build a React frontend: `mix arc.gen.proxies` generates typed commands and queries, with the same validation rules as the server.
-- **Identity.** The signed-in user, their roles and typed application details, served to React from `/.cratis/me` and to LiveView in process, with development users for tools such as Lens.
+- **Identity.** The signed-in user, their roles and typed application details, served to React from `/.cratis/me` and to LiveView in process, with development users for tools such as Lens, the signed forwarded-identity envelope and on-behalf-of, as in Arc on .NET.
 - **The same result envelopes.** Commands and queries answer with exactly the shapes the other Arc implementations do, so the frontend packages work unchanged. See [Result envelopes](results.md).
 - **Chronicle underneath.** Returned events are appended to the event store with the caller's identity and correlation.
 

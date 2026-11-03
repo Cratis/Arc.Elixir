@@ -32,7 +32,7 @@ applies-to:
   - `Arc.Identity.resolve/2` is the single implementation behind both the endpoint and `Arc.LiveView.assign_identity/2`.
   - `Arc.Identity.UsersProvider` and `TenantsProvider` feed `/.cratis/users` and `/.cratis/tenants` for tools such as Lens, concatenated without deduplication.
   - The five discovery routes share the `introspection` access setting; `/.cratis/me` does not.
-  - `Arc.Authentication.ClientPrincipal` reads the unsigned `x-ms-client-principal*` headers only when `trust_forwarded_identity_headers: true`; otherwise the request stays anonymous and a warning is logged once.
+  - `Arc.Authentication.MicrosoftIdentityPlatform` reads the unsigned `x-ms-client-principal*` headers only when `trust_forwarded_identity_headers: true`; otherwise the request stays anonymous and a warning is logged once.
 - **Identity is presentation, not authorization.** Nothing in the details decides what a caller may do; `authorize` does.
 
 ## Options considered
@@ -47,7 +47,7 @@ The envelope and identity shapes stand. A future contract change is made in the 
 
 ## Timeline and scope
 
-Applies from the first release. The signed forwarded-identity envelope of Arc on .NET and delta change sets remain out of scope (see the limits page).
+Applies from the first release. Delta change sets remain out of scope (see the limits page). The signed forwarded-identity envelope was added by decision 0010.
 
 ## Verification
 

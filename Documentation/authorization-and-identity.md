@@ -163,25 +163,69 @@ A user is listed on the wire as a `microsoftIdentity` client principal (`identit
 
 ## Signing in through an ingress or Lens
 
-`Arc.Authentication.ClientPrincipal` authenticates from the Microsoft identity platform headers an ingress supplies, and from the same headers Lens injects in development:
+`Arc.Authentication.MicrosoftIdentityPlatform` authenticates from the Microsoft identity platform headers an ingress supplies, and from the same headers Lens injects in development. It matches Arc on .NET:
 
 | Header | Content |
 | --- | --- |
 | `x-ms-client-principal` | The base64 client principal: `identityProvider`, `userId`, `userDetails`, `userRoles`, `claims` |
 | `x-ms-client-principal-id` | The identifier; the RFC 8187 `UTF-8''…` form is percent-decoded |
-| `x-ms-client-principal-name` | The name |
+| `x-ms-client-principal-name` | The name, used when `userDetails` is empty |
+
+All three headers are required on the unsigned path. The id comes from `x-ms-client-principal-id`, the name from `userDetails`, and the roles from `userRoles` and from claims of the type `http://schemas.microsoft.com/ws/2008/06/identity/claims/role`. The identity provider is kept as the claim `urn:cratis:arc:identity:provider`. A payload that is not valid base64 JSON fails the request with 401.
 
 ```elixir
 config :my_app, MyApp.Arc,
-  authentication: [Arc.Authentication.ClientPrincipal, Arc.Authentication.FromAssigns],
+  authentication: [Arc.Authentication.MicrosoftIdentityPlatform, Arc.Authentication.FromAssigns],
   trust_forwarded_identity_headers: true
 ```
 
-:::caution[These headers are not signed]
-Base64 is not a signature. The handler ignores the headers, and the request stays anonymous, until you set `trust_forwarded_identity_headers: true`. Set it only when every request reaches the application through an ingress that authenticates callers, strips caller-supplied identity headers and writes trusted replacements, and when nothing can reach the application directly. The setting applies to every route, including the discovery routes. The first time an untrusted request carries the headers, Arc logs a warning naming the setting.
+:::caution[Unsigned headers are not proof]
+Base64 is not a signature. The handler ignores the headers, and the request stays anonymous, until you set `trust_forwarded_identity_headers: true`. Set it only when every request reaches the application through an ingress that authenticates callers, strips caller-supplied identity headers and writes trusted replacements, and when nothing can reach the application directly. The setting applies to every route, including the discovery routes. The first time an untrusted request carries the headers, Arc logs a warning naming the setting. Prefer the signed envelope below.
 :::
 
-The principal's id comes from `x-ms-client-principal-id`, else the `sub` claim, else `userId`, else `"unknown"`. Its name comes from `x-ms-client-principal-name`, else `userDetails`. Roles come from `userRoles` and from role claims. The identity provider the ingress used is kept as the claim `urn:cratis:arc:identity:provider`. A payload that is not valid base64 JSON fails the request with 401.
+## Signed forwarded identity
+
+The signed envelope lets the application verify that the identity headers came from your ingress, so it does not have to trust the network. Arc verifies it exactly as Arc on .NET does: an HMAC-SHA256 over a canonical form of the request, carried in `x-cratis-forwarded-identity-signature` as `v1.<keyId>.<timestamp>.<nonce>.<mac>`.
+
+```elixir
+config :my_app, MyApp.Arc,
+  authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
+  trust_forwarded_identity_headers: true,
+  forwarded_identity: [
+    enabled: true,
+    audience: "my-app",
+    keys: [[key_id: "k1", secret_base64: System.fetch_env!("ARC_FORWARDED_IDENTITY_KEY")]]
+  ]
+```
+
+Each secret is exactly 32 random bytes, standard-base64 encoded. Configure one to eight keys, so a key can be rotated while the old one still verifies. With the envelope enabled, a request with identity headers but no valid signature is rejected with 401; the headers alone are never enough.
+
+The MAC covers the audience, key id, timestamp, nonce, method, canonical path and query, the tenant header, and the identity headers, so none can be changed in flight. A signature is accepted for 60 seconds in the past and 30 seconds ahead, and a nonce can be used once per audience and key.
+
+:::note[Replay memory is per node]
+Seen nonces are kept in memory by a process that `Arc.Application` starts, up to 100,000 entries. A replay is refused only on the node that saw the original, so give each node its own key or route a caller to one node if that matters. If the application is not started, verification fails closed.
+:::
+
+## Acting on behalf of a user
+
+An ingress can let a support person or a service act as a user. It adds a signed assertion that names the actor, and Arc then answers with the user as the principal and the actor beside it, as Arc on .NET does.
+
+```elixir
+config :my_app, MyApp.Arc,
+  trust_forwarded_identity_headers: true,
+  on_behalf_of: [
+    enabled: true,
+    issuer: "https://auth.example.com",
+    audience: "my-app",
+    service: "my-app",
+    clock_skew: 30,
+    signing_keys: [[key_id: "authproxy-2026", public_key_pem: File.read!("authproxy.pub.pem")]]
+  ]
+```
+
+The assertion is an RS256 JWS. Arc checks the signature against RSA public keys of at least 2048 bits (a private key is refused), then the issuer, audience, optional service, the key id, a lifetime of at most five minutes, a unique `jti`, the HTTP method and path, the tenant, and hashes that bind the assertion to the user and actor headers. Any failure is a 401 with a fixed message and never reveals which check failed.
+
+On success `Arc.Principal.actor/1` returns the acting principal and `Arc.Principal.acted_on_behalf_of?/1` is true. Chronicle records the actor as the cause of an append, on behalf of the user. Without the `on_behalf_of` option, a request that carries an assertion is rejected rather than ignored.
 
 ## Discovery routes
 
