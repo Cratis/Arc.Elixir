@@ -1,0 +1,18 @@
+# Elixir and Mix
+/_build/
+/deps/
+/doc/
+*.ez
+erl_crash.dump
+.elixir_ls/
+.fetch
+
+# Generated TypeScript and Node
+node_modules/
+
+# Local work and secrets
+.ai-work/
+.env
+.env.*
+!.env.example
+.DS_Store
