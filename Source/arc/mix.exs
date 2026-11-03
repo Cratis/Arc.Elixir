@@ -48,6 +48,7 @@ defmodule Arc.MixProject do
       {:phoenix_html, "~> 4.0", optional: true},
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:bandit, "~> 1.5", only: [:dev, :test]},
+      {:lazy_html, ">= 0.1.0", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end

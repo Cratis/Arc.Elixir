@@ -36,8 +36,10 @@ end
 
 defmodule Arc.Authentication.FromAssigns do
   @moduledoc """
-  Reads the principal from `conn.assigns[:arc_principal]` (an `Arc.Principal`), or builds one
-  from `conn.assigns[:current_user]` when it is a map with `:id` and `:name` (and optionally `:roles`).
+  Reads the principal from `conn.assigns[:arc_principal]` (an `Arc.Principal`), or builds one from
+  the signed-in user your own authentication assigned: `conn.assigns.current_scope.user` (the
+  `phx.gen.auth` shape) or `conn.assigns.current_user`, a map with `:id` and optionally `:name`,
+  `:email` and `:roles`.
   """
 
   @behaviour Arc.Authentication
@@ -47,6 +49,14 @@ defmodule Arc.Authentication.FromAssigns do
     case conn.assigns do
       %{arc_principal: %Arc.Principal{} = principal} ->
         {:authenticated, principal}
+
+      %{current_scope: %{user: %{id: id} = user}} ->
+        {:authenticated,
+         Arc.Principal.new(
+           to_string(id),
+           to_string(Map.get(user, :name, Map.get(user, :email, id))),
+           roles: Map.get(user, :roles, [])
+         )}
 
       %{current_user: %{id: id} = user} ->
         {:authenticated,

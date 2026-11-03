@@ -7,6 +7,8 @@ defmodule Arc.PipelineTest do
     event_types: [ArcFixtures.Authors.AuthorRegistered],
     reducers: [ArcFixtures.Authors.AuthorReducer]
 
+  import ExUnit.CaptureLog
+
   alias ArcFixtures.Authors.AuthorId
   alias ArcFixtures.Authors.AuthorRegistered
   alias ArcFixtures.Authors.Registration.{Explode, RegisterAuthor, RenameAuthor}
@@ -128,7 +130,9 @@ defmodule Arc.PipelineTest do
 
   describe "failures" do
     test "an exception becomes a redacted exception result", %{arc: arc} do
-      result = Arc.Test.execute(arc, %Explode{id: @id})
+      {result, log} = with_log(fn -> Arc.Test.execute(arc, %Explode{id: @id}) end)
+
+      assert log =~ "boom"
 
       assert Arc.CommandResult.status(result) == 500
       assert [message] = result.exception_messages
@@ -177,5 +181,10 @@ defmodule Arc.PipelineTest do
       assert [%{"severity" => 3, "members" => ["name"], "reason" => "rule"}] =
                wire["validationResults"]
     end
+  end
+
+  defp capture_result(fun) do
+    {result, _log} = with_log(fun)
+    result
   end
 end
