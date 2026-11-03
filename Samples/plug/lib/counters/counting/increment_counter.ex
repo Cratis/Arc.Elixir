@@ -7,8 +7,8 @@ defmodule Counters.Counting.IncrementCounter do
   use Arc.Command
 
   schema do
-    field(:id, Counters.CounterId, key: true, required: true)
-    field(:by, :integer, required: true, min: 1, max: 100)
+    field :id, Counters.CounterId, key: true, required: true
+    field :by, :integer, required: true, min: 1, max: 100
   end
 
   def handle(%__MODULE__{by: by}, _ctx), do: {:append, %Counters.CounterIncremented{by: by}}

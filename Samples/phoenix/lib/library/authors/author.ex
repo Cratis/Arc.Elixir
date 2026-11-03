@@ -8,6 +8,6 @@ defmodule Library.Authors.Author do
 
   defstruct id: "", name: ""
 
-  from(Library.Authors.AuthorRegistered, set: [id: :event_source_id, name: :name])
-  from(Library.Authors.AuthorRenamed, set: [name: :name])
+  from Library.Authors.AuthorRegistered, set: [id: :event_source_id, name: :name]
+  from Library.Authors.AuthorRenamed, set: [name: :name]
 end

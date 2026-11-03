@@ -10,5 +10,5 @@ defmodule Library.Authors.AuthorRegistered do
 
   # A store-level rule: no two authors may share a name. Chronicle enforces it at append time,
   # and Arc reports a violation to the client as a `constraintViolation` validation result.
-  unique(:name, message: "An author with that name is already registered.")
+  unique :name, message: "An author with that name is already registered."
 end

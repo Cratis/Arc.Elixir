@@ -6,11 +6,11 @@ defmodule Library.Authors.Registration.RenameAuthor do
 
   use Arc.Command
 
-  authorize(roles: ["editor"])
+  authorize roles: ["editor"]
 
   schema do
-    field(:id, Library.Authors.AuthorId, key: true, required: true)
-    field(:name, :string, required: true, min_length: 2, max_length: 50)
+    field :id, Library.Authors.AuthorId, key: true, required: true
+    field :name, :string, required: true, min_length: 2, max_length: 50
   end
 
   def handle(%__MODULE__{name: name}, _ctx),

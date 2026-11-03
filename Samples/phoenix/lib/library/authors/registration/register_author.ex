@@ -7,8 +7,8 @@ defmodule Library.Authors.Registration.RegisterAuthor do
   use Arc.Command
 
   schema do
-    field(:id, Library.Authors.AuthorId, key: true, required: true)
-    field(:name, :string, required: true, min_length: 2, max_length: 50)
+    field :id, Library.Authors.AuthorId, key: true, required: true
+    field :name, :string, required: true, min_length: 2, max_length: 50
   end
 
   # A cross-field rule beyond the declarative ones above.

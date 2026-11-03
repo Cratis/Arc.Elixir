@@ -8,5 +8,5 @@ defmodule Counters.Counter do
 
   defstruct id: "", value: 0
 
-  from(Counters.CounterIncremented, set: [id: :event_source_id], add: [value: :by])
+  from Counters.CounterIncremented, set: [id: :event_source_id], add: [value: :by]
 end

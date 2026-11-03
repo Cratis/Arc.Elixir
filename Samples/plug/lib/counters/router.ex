@@ -8,10 +8,10 @@ defmodule Counters.Router do
 
   use Plug.Router
 
-  plug(Arc.Plug, application: Counters.Arc)
-  plug(:match)
-  plug(:dispatch)
+  plug Arc.Plug, application: Counters.Arc
+  plug :match
+  plug :dispatch
 
-  get("/health", do: send_resp(conn, 200, "ok"))
-  match(_, do: send_resp(conn, 404, "not found"))
+  get "/health", do: send_resp(conn, 200, "ok")
+  match _, do: send_resp(conn, 404, "not found")
 end

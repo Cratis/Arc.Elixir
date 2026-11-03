@@ -35,23 +35,16 @@ defmodule Library.Web.AuthorsLive do
   end
 
   def handle_event("rename", %{"id" => id}, socket) do
-    notice =
-      case execute(socket, %RenameAuthor{
-             id: id,
-             name: "Renamed #{System.unique_integer([:positive])}"
-           }) do
-        {:ok, _result} ->
-          "Renamed."
-
-        {:error, %{authorized?: false, authorization_failure_reason: reason}} ->
-          "Not allowed: #{reason}"
-
-        {:error, _result} ->
-          "The rename was rejected."
-      end
-
-    {:noreply, assign(socket, :notice, notice)}
+    command = %RenameAuthor{id: id, name: "Renamed #{System.unique_integer([:positive])}"}
+    {:noreply, assign(socket, :notice, describe(execute(socket, command)))}
   end
+
+  defp describe({:ok, _result}), do: "Renamed."
+
+  defp describe({:error, %{authorized?: false} = result}),
+    do: "Not allowed: #{result.authorization_failure_reason}"
+
+  defp describe({:error, _result}), do: "The rename was rejected."
 
   defp new_form(socket), do: assign_form(socket, :form, RegisterAuthor, %{"id" => Arc.new_id()})
 
