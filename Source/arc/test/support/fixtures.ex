@@ -20,7 +20,11 @@ defmodule ArcFixtures.Authors.AuthorReducer do
   @handles ArcFixtures.Authors.AuthorRegistered
 
   @impl true
-  def reduce(%ArcFixtures.Authors.AuthorRegistered{} = event, model, context) do
+  def reduce(
+        %ArcFixtures.Authors.AuthorRegistered{} = event,
+        %ArcFixtures.Authors.Author{} = model,
+        context
+      ) do
     %ArcFixtures.Authors.Author{
       model
       | id: context.event_source_id,
