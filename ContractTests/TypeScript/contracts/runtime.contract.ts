@@ -42,7 +42,11 @@ function clientPrincipal(): Record<string, string> {
         userRoles: ["editor"],
         claims: [{ typ: "department", val: "Engineering" }],
     };
-    return { "x-ms-client-principal": Buffer.from(JSON.stringify(principal)).toString("base64") };
+    return {
+        "x-ms-client-principal": Buffer.from(JSON.stringify(principal)).toString("base64"),
+        "x-ms-client-principal-id": principal.userId,
+        "x-ms-client-principal-name": principal.userDetails,
+    };
 }
 
 function waitFor<T>(register: (resolve: (value: T) => void) => () => void, timeoutMs = 8000): Promise<T> {

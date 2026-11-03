@@ -31,7 +31,7 @@ end
 Application.put_env(:cratis_arc, ArcFixtures.App,
   chronicle: [client: client],
   introspection: :anonymous,
-  authentication: [Arc.Authentication.ClientPrincipal],
+  authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
   trust_forwarded_identity_headers: true
 )
 Arc.Application.refresh(ArcFixtures.App)

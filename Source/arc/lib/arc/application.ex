@@ -43,9 +43,13 @@ defmodule Arc.Application do
       `false`, which replaces them with a generic message (the detail is always logged)
     * `:identity_details` - the `Arc.Identity.Provider` module to use; by default the single
       provider found in `:otp_app`. Without a provider `/.cratis/me` is not served
-    * `:trust_forwarded_identity_headers` - let `Arc.Authentication.ClientPrincipal` accept the
-      unsigned `x-ms-client-principal*` headers; default `false`. Enable only behind an ingress that
+    * `:trust_forwarded_identity_headers` - let `Arc.Authentication.MicrosoftIdentityPlatform` accept the
+      `x-ms-client-principal*` headers; default `false`. Enable only behind an ingress that
       authenticates callers and strips client-supplied identity headers
+    * `:forwarded_identity` - signed forwarded identity, see `Arc.Identity.SignedForwarding`:
+      `enabled`, `audience`, `keys: [[key_id:, secret_base64:]]`
+    * `:on_behalf_of` - acting on behalf of a user, see `Arc.Identity.OnBehalfOf`: `enabled`, `issuer`,
+      `audience`, `service`, `clock_skew` (seconds), `signing_keys: [[key_id:, public_key_pem:]]`
   """
 
   alias Arc.Descriptor
@@ -89,6 +93,15 @@ defmodule Arc.Application do
       max_body_bytes: 1_000_000,
       introspection: :authenticated,
       trust_forwarded_identity_headers: false,
+      forwarded_identity: [enabled: false, audience: "", keys: []],
+      on_behalf_of: [
+        enabled: false,
+        issuer: "",
+        audience: "",
+        service: "",
+        clock_skew: 30,
+        signing_keys: []
+      ],
       expose_exceptions: false
     ]
     |> Keyword.merge(compile_opts)
@@ -244,6 +257,7 @@ defmodule Arc.Application do
 
       children = [
         {Registry, keys: :duplicate, name: Arc.Notifier.registry(app)},
+        {Arc.Identity.ReplayCache, app},
         {DynamicSupervisor, name: Arc.Notifier.subscriptions(app), strategy: :one_for_one}
       ]
 

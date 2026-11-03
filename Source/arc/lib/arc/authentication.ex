@@ -70,111 +70,169 @@ defmodule Arc.Authentication.FromAssigns do
   end
 end
 
-defmodule Arc.Authentication.ClientPrincipal do
+defmodule Arc.Authentication.MicrosoftIdentityPlatform do
   @moduledoc """
   Authenticates from the Microsoft identity platform headers an ingress supplies:
   `x-ms-client-principal` (a base64 client principal), `x-ms-client-principal-id` and
   `x-ms-client-principal-name`. These are what Azure App Service, Container Apps, Cratis AuthProxy
   and the Lens browser extension send.
 
-  The headers are **not signed**. The handler ignores them, and the request stays anonymous, unless the
-  application sets `trust_forwarded_identity_headers: true`. Enable that only when every request
-  reaches the application through an ingress that authenticates callers, strips caller-supplied
-  identity headers and writes trusted replacements, and when nothing can reach the application
-  directly. The setting applies to every route.
+  The headers are **not signed** by default. The handler ignores them, and the request stays
+  anonymous, unless the application sets `trust_forwarded_identity_headers: true`. Enable that only
+  when every request reaches the application through an ingress that authenticates callers, strips
+  caller-supplied identity headers and writes trusted replacements, and when nothing can reach the
+  application directly. The setting applies to every route.
 
       config :my_app, MyApp.Arc,
-        authentication: [Arc.Authentication.ClientPrincipal],
+        authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
         trust_forwarded_identity_headers: true
 
-  The principal gets its id from `x-ms-client-principal-id` (percent-decoded when it uses the
-  RFC 8187 `UTF-8''` form), else the `sub` claim, else the principal's `userId`, else `"unknown"`;
-  its name from `x-ms-client-principal-name`, else the principal's `userDetails`. Roles come from
-  `userRoles` and role claims. The identity provider the ingress authenticated with is kept as the
-  claim `"urn:cratis:arc:identity:provider"`. A payload that is not valid base64 JSON fails the
-  request with 401.
+  To have the ingress attest the headers, enable [signed forwarded identity](`Arc.Identity.SignedForwarding`):
+  with it there is no unsigned fallback. To let a support person or an agent act as a user, enable
+  [on-behalf forwarding](`Arc.Identity.OnBehalfOf`).
+
+  ## The principal
+
+  Without signing, all three headers must be present, otherwise the request is left to the next
+  handler. The id is the decoded `x-ms-client-principal-id` (RFC 8187 `UTF-8''` form
+  percent-decoded). The name is the principal's `userDetails`, falling back to
+  `x-ms-client-principal-name`. Roles are `userRoles` plus claims of the role claim type
+  `http://schemas.microsoft.com/ws/2008/06/identity/claims/role`; `sub` and the name identifier come
+  from the id header, replacing any in the payload. The identity provider the ingress authenticated with is kept as the claim
+  `urn:cratis:arc:identity:provider`. A payload that is not a valid client principal fails the request with 401.
   """
 
   @behaviour Arc.Authentication
 
   require Logger
 
-  @identity_provider_claim "urn:cratis:arc:identity:provider"
-  @role_claims ["role", "roles", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
-  @name_id_claims ["sub", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
+  alias Arc.Identity.{Forwarded, OnBehalfOf, SignedForwarding}
+
+  @principal_header "x-ms-client-principal"
+  @id_header "x-ms-client-principal-id"
+  @name_header "x-ms-client-principal-name"
 
   @impl true
   def authenticate(conn) do
-    application = conn.private[:arc_application]
-    principal = header(conn, "x-ms-client-principal")
-    id = header(conn, "x-ms-client-principal-id")
-    name = header(conn, "x-ms-client-principal-name")
+    app = conn.private[:arc_application]
+    config = Arc.Application.state(app).config
+
+    if get_in(config, [:forwarded_identity, :enabled]) == true,
+      do: signed(conn, app, config),
+      else: unsigned(conn, app, config)
+  end
+
+  defp signed(conn, app, config) do
+    case SignedForwarding.authenticate(conn, app, config) do
+      {:failed, reason} ->
+        Logger.debug("Signed forwarded identity rejected: #{reason}")
+        :failed
+
+      other ->
+        other
+    end
+  end
+
+  defp unsigned(conn, app, config) do
+    has_header = fn name -> Plug.Conn.get_req_header(conn, name) != [] end
+    on_behalf? = OnBehalfOf.present?(has_header)
+    rejection = if on_behalf?, do: OnBehalfOf.admit(config)
 
     cond do
-      principal == nil and id == nil -> :anonymous
-      not trusted?(application) -> warn_untrusted() |> then(fn _ -> :anonymous end)
-      true -> build(principal, id, name)
+      rejection != nil ->
+        reject(rejection)
+
+      config[:trust_forwarded_identity_headers] != true ->
+        if forwarded_headers?(conn), do: warn_untrusted()
+        :anonymous
+
+      not (has_header.(@id_header) and has_header.(@name_header) and
+               has_header.(@principal_header)) ->
+        if on_behalf?, do: reject(OnBehalfOf.failure(:missing_represented_user)), else: :anonymous
+
+      true ->
+        build(conn, app, config, on_behalf?)
     end
   end
 
-  @doc "The application to read the trust setting from, recorded by `Arc.Plug` on the connection."
-  @spec put_application(Plug.Conn.t(), module()) :: Plug.Conn.t()
-  def put_application(conn, application),
-    do: Plug.Conn.put_private(conn, :arc_application, application)
+  defp build(conn, app, config, on_behalf?) do
+    id = header(conn, @id_header)
+    name = header(conn, @name_header)
 
-  defp trusted?(nil), do: false
+    case Forwarded.read_principal(header(conn, @principal_header)) do
+      :error ->
+        message = "Not authenticated - invalid representation of ClientPrincipal"
+        if on_behalf?, do: reject(message), else: :failed
 
-  defp trusted?(application),
-    do: Arc.Application.state(application).config[:trust_forwarded_identity_headers] == true
+      {:ok, client} ->
+        client =
+          if client.user_details in [nil, ""],
+            do: %{client | user_details: name || ""},
+            else: client
 
-  defp build(payload, id, name) do
-    with {:ok, parsed} <- parse(payload) do
-      claims =
-        Map.new(parsed["claims"] || [], fn %{"typ" => type, "val" => value} -> {type, value} end)
+        principal = Forwarded.to_principal(client, id)
 
-      roles =
-        (parsed["userRoles"] || []) ++
-          for({type, value} <- claims, type in @role_claims, do: value)
-
-      claims = Map.put(claims, @identity_provider_claim, parsed["identityProvider"] || "")
-
-      principal_id =
-        decode_id(id) || Enum.find_value(@name_id_claims, &Map.get(claims, &1)) ||
-          parsed["userId"] || "unknown"
-
-      principal_name = name || parsed["userDetails"] || ""
-
-      {:authenticated,
-       Arc.Principal.new(principal_id, principal_name, roles: Enum.uniq(roles), claims: claims)}
-    else
-      :error -> :failed
+        if on_behalf?,
+          do: attach_actor(conn, principal, app, config),
+          else: {:authenticated, principal}
     end
   end
 
-  defp parse(nil), do: {:ok, %{}}
+  defp attach_actor(conn, principal, app, config) do
+    forward = %{
+      principal: header(conn, @principal_header),
+      principal_id: header(conn, @id_header),
+      actor: header(conn, OnBehalfOf.actor_header()),
+      assertion: header(conn, OnBehalfOf.assertion_header()),
+      tenant: tenant(conn, config),
+      method: conn.method,
+      path: conn.request_path
+    }
 
-  defp parse(payload) do
-    with {:ok, json} <-
-           Base.decode64(payload, padding: false, ignore: :whitespace) |> or_padded(payload),
-         {:ok, %{} = parsed} <- Jason.decode(json) do
-      {:ok, parsed}
-    else
-      _ -> :error
+    case OnBehalfOf.attach(
+           forward,
+           principal,
+           app,
+           config,
+           OnBehalfOf.signing_keys(config),
+           System.os_time(:second)
+         ) do
+      {:ok, actor, _valid_until} -> {:authenticated, %{principal | actor: actor}}
+      {:error, reason} -> reject(reason)
     end
   end
 
-  defp or_padded({:ok, _} = ok, _payload), do: ok
-  defp or_padded(:error, payload), do: Base.decode64(payload, ignore: :whitespace)
-
-  defp decode_id(nil), do: nil
-  defp decode_id("UTF-8''" <> encoded), do: URI.decode(encoded)
-  defp decode_id(id), do: id
+  defp tenant(conn, config) do
+    case config[:tenant_header] do
+      name when is_binary(name) and name != "" -> header(conn, name)
+      _ -> nil
+    end
+  end
 
   defp header(conn, name) do
     case Plug.Conn.get_req_header(conn, name) do
-      [value | _] when value != "" -> value
-      _ -> nil
+      [value | _] -> value
+      [] -> nil
     end
+  end
+
+  defp forwarded_headers?(conn) do
+    Enum.any?(conn.req_headers, fn {name, _} ->
+      String.starts_with?(name, "x-ms-client-principal")
+    end)
+  end
+
+  # The first rejection in a process is a warning with its reason; later ones are debug, so a
+  # caller sending forged headers cannot flood the logs.
+  defp reject(reason) do
+    if :persistent_term.get({__MODULE__, :rejected}, false) do
+      Logger.debug("On-behalf forward rejected: #{reason}")
+    else
+      :persistent_term.put({__MODULE__, :rejected}, true)
+      Logger.warning("On-behalf forward rejected: #{reason}")
+    end
+
+    :failed
   end
 
   defp warn_untrusted do

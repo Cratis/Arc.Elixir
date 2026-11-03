@@ -76,11 +76,24 @@ defmodule Arc.Chronicle do
   defp append_group(source, events, opts),
     do: Chronicle.append_many_with_result(source, events, opts)
 
-  defp options(ctx) do
+  @doc false
+  @spec options(Arc.Context.t()) :: keyword()
+  def options(ctx) do
     base = [correlation_id: ctx.correlation_id]
 
     identity =
       case ctx.principal do
+        %{authenticated?: true, actor: %{id: actor_id, name: actor_name}, id: id, name: name} ->
+          [
+            identity:
+              Chronicle.Identity.new(
+                actor_id,
+                actor_name || actor_id,
+                "",
+                Chronicle.Identity.new(id, name || id)
+              )
+          ]
+
         %{authenticated?: true, id: id, name: name} ->
           [identity: Chronicle.Identity.new(id, name || id)]
 

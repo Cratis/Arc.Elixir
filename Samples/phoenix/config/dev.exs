@@ -14,5 +14,5 @@ config :library, Library.Web.Endpoint,
 # Trust them only behind an ingress that authenticates callers and strips client-supplied identity
 # headers; never in production configuration.
 config :library, Library.Arc,
-  authentication: [Arc.Authentication.ClientPrincipal, Arc.Authentication.FromAssigns],
+  authentication: [Arc.Authentication.MicrosoftIdentityPlatform, Arc.Authentication.FromAssigns],
   trust_forwarded_identity_headers: true

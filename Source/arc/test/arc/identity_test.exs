@@ -137,13 +137,19 @@ defmodule Arc.IdentityTest do
     end
   end
 
-  describe "Arc.Authentication.ClientPrincipal" do
+  describe "Arc.Authentication.MicrosoftIdentityPlatform" do
     @payload %{
                identityProvider: "aad",
                userId: "alice@contoso.com",
                userDetails: "Alice",
                userRoles: ["anonymous", "authenticated"],
-               claims: [%{typ: "department", val: "Engineering"}, %{typ: "roles", val: "editor"}]
+               claims: [
+                 %{typ: "department", val: "Engineering"},
+                 %{
+                   typ: "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
+                   val: "editor"
+                 }
+               ]
              }
              |> Jason.encode!()
              |> Base.encode64()
@@ -155,7 +161,7 @@ defmodule Arc.IdentityTest do
     end
 
     test "ignores the unsigned headers unless the host trusts them" do
-      configure(authentication: [Arc.Authentication.ClientPrincipal])
+      configure(authentication: [Arc.Authentication.MicrosoftIdentityPlatform])
 
       conn = principal_conn([{"x-ms-client-principal", @payload}]) |> call()
 
@@ -164,7 +170,7 @@ defmodule Arc.IdentityTest do
 
     test "builds the principal from the headers when trusted" do
       configure(
-        authentication: [Arc.Authentication.ClientPrincipal],
+        authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
         trust_forwarded_identity_headers: true
       )
 
@@ -180,10 +186,10 @@ defmodule Arc.IdentityTest do
 
       assert %{
                "id" => "alice@contoso.com",
-               "name" => "Alice Developer",
+               "name" => "Alice",
                "roles" => roles,
                "details" => %{
-                 "displayName" => "Hello Alice Developer",
+                 "displayName" => "Hello Alice",
                  "department" => "Engineering"
                }
              } = Jason.decode!(conn.resp_body)
@@ -191,31 +197,62 @@ defmodule Arc.IdentityTest do
       assert Enum.sort(roles) == ["anonymous", "authenticated", "editor"]
     end
 
-    test "falls back to the principal's own fields" do
+    test "needs all three headers, otherwise the request is left to the next handler" do
       configure(
-        authentication: [Arc.Authentication.ClientPrincipal],
+        authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
         trust_forwarded_identity_headers: true
       )
 
       conn = principal_conn([{"x-ms-client-principal", @payload}]) |> call()
 
-      assert %{"id" => "alice@contoso.com", "name" => "Alice"} = Jason.decode!(conn.resp_body)
+      assert conn.status == 401
+    end
+
+    test "the name falls back to the header only when the principal has none" do
+      configure(
+        authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
+        trust_forwarded_identity_headers: true
+      )
+
+      nameless =
+        %{"userId" => "u", "userDetails" => "", "userRoles" => [], "claims" => []}
+        |> Jason.encode!()
+        |> Base.encode64()
+
+      conn =
+        principal_conn([
+          {"x-ms-client-principal", nameless},
+          {"x-ms-client-principal-id", "u"},
+          {"x-ms-client-principal-name", "From Header"}
+        ])
+        |> call()
+
+      assert %{"name" => "From Header"} = Jason.decode!(conn.resp_body)
     end
 
     test "a payload that is not a client principal fails the request" do
       configure(
-        authentication: [Arc.Authentication.ClientPrincipal],
+        authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
         trust_forwarded_identity_headers: true
       )
 
-      conn = principal_conn([{"x-ms-client-principal", "not-base64-json"}]) |> call()
+      conn =
+        principal_conn([
+          {"x-ms-client-principal", "not-base64-json"},
+          {"x-ms-client-principal-id", "u"},
+          {"x-ms-client-principal-name", "n"}
+        ])
+        |> call()
 
       assert conn.status == 401
     end
 
     test "a request without the headers is left to the next handler" do
       configure(
-        authentication: [Arc.Authentication.ClientPrincipal, Arc.Authentication.FromAssigns],
+        authentication: [
+          Arc.Authentication.MicrosoftIdentityPlatform,
+          Arc.Authentication.FromAssigns
+        ],
         trust_forwarded_identity_headers: true
       )
 

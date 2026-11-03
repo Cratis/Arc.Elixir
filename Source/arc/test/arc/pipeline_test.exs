@@ -97,6 +97,32 @@ defmodule Arc.PipelineTest do
     end
   end
 
+  describe "identity in Chronicle" do
+    test "the caller is the identity the append is made with" do
+      ctx = %Arc.Context{principal: Arc.Test.principal("ada"), correlation_id: "c1"}
+
+      opts = Arc.Chronicle.options(ctx)
+
+      assert opts[:correlation_id] == "c1"
+      assert %Chronicle.Identity{subject: "ada", name: "ada", on_behalf_of: nil} = opts[:identity]
+    end
+
+    test "an actor acting for a user is the identity, on behalf of that user" do
+      principal = %{
+        Arc.Test.principal("ada")
+        | actor: Arc.Principal.new("support", "Support Person")
+      }
+
+      ctx = %Arc.Context{principal: principal, correlation_id: "c1"}
+
+      assert %Chronicle.Identity{
+               subject: "support",
+               name: "Support Person",
+               on_behalf_of: %Chronicle.Identity{subject: "ada"}
+             } = Arc.Chronicle.options(ctx)[:identity]
+    end
+  end
+
   describe "authorization" do
     test "denies an anonymous caller when roles are required", %{arc: arc} do
       result = Arc.Test.execute(arc, %RenameAuthor{id: @id, name: "Ada"})
@@ -181,10 +207,5 @@ defmodule Arc.PipelineTest do
       assert [%{"severity" => 3, "members" => ["name"], "reason" => "rule"}] =
                wire["validationResults"]
     end
-  end
-
-  defp capture_result(fun) do
-    {result, _log} = with_log(fun)
-    result
   end
 end

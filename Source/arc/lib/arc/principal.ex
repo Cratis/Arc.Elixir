@@ -10,15 +10,29 @@ defmodule Arc.Principal do
   authentication system.
   """
 
-  defstruct id: nil, name: nil, authenticated?: false, roles: [], claims: %{}
+  defstruct id: nil, name: nil, authenticated?: false, roles: [], claims: %{}, actor: nil
 
   @type t :: %__MODULE__{
           id: String.t() | nil,
           name: String.t() | nil,
           authenticated?: boolean(),
           roles: [String.t()],
-          claims: %{optional(String.t()) => term()}
+          claims: %{optional(String.t()) => String.t() | [String.t()]},
+          actor: t() | nil
         }
+
+  @doc """
+  Whether another identity is acting on behalf of this principal.
+
+  In an on-behalf session the principal is the represented user (who decides what the request may
+  do) and `actor` is who is actually acting. `roles` never include the actor's roles.
+  """
+  @spec acted_on_behalf_of?(t()) :: boolean()
+  def acted_on_behalf_of?(%__MODULE__{actor: actor}), do: actor != nil
+
+  @doc "The identity acting on behalf of this principal, or `nil`."
+  @spec actor(t()) :: t() | nil
+  def actor(%__MODULE__{actor: actor}), do: actor
 
   @doc "The anonymous principal."
   @spec anonymous() :: t()
