@@ -16,6 +16,8 @@ applies-to:
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
+> Amended by [0008](0008-ship-one-chronicle-only-package-with-opt-in-proxies.md): one package; no installer.
+
 ## Context
 
 Phoenix applications serve either a single-page application over HTTP or server-rendered LiveView, often both. The same commands and queries should serve both.

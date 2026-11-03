@@ -15,6 +15,8 @@ applies-to:
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
+> Amended by [0008](0008-ship-one-chronicle-only-package-with-opt-in-proxies.md): one package, `cratis_arc`; no `arc_ecto`.
+
 ## Context
 
 Arc exists for C#, Kotlin and Java, and as a Node.js source preview. Each keeps the same client packages (`@cratis/arc`, `@cratis/arc.react`, `@cratis/arc.react.mvvm`, Cratis Components) working by implementing the language-neutral HTTP contract. Elixir needs an implementation that is idiomatic rather than a translated one, supports Phoenix and LiveView explicitly, and still serves the regular single-page application stack.

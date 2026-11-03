@@ -16,6 +16,8 @@ applies-to:
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
+> Confirmed by [0008](0008-ship-one-chronicle-only-package-with-opt-in-proxies.md): implemented as `mix arc.gen.proxies` and the `:arc` compiler.
+
 ## Context
 
 Single-page applications consume generated proxies built on `@cratis/arc`. Arc.TypeScript parses source; Arc.Kotlin reads a compile-time manifest and renders in its own language. Elixir already has the full artifact metadata in compiled modules.

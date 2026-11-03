@@ -15,6 +15,8 @@ applies-to:
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
+> Amended by [0008](0008-ship-one-chronicle-only-package-with-opt-in-proxies.md): milestones 7 and 8 collapsed; Hex name and namespace resolved.
+
 ## Context
 
 Decisions 0001 to 0006 fix the architecture. This record fixes the baselines, the order of delivery, and the unverified assumptions that must be settled before the affected work is built.

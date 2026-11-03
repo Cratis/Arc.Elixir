@@ -16,6 +16,8 @@ applies-to:
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
+> Amended by [0008](0008-ship-one-chronicle-only-package-with-opt-in-proxies.md): the Server-Sent Events hub and delta transfer mode are not served.
+
 ## Context
 
 The HTTP contract defines observable queries over an HTTP snapshot, direct SSE, direct WebSocket and multiplexed hubs, with revisions, `changeSet` deltas and per-subscription authorization. Elixir has processes, supervision and Registry, which fit this directly.

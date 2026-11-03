@@ -15,6 +15,8 @@ applies-to:
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
+> Amended by [0008](0008-ship-one-chronicle-only-package-with-opt-in-proxies.md): handler results are `{:append, …}`, `{:ok, response}` or `{:error, results}`.
+
 ## Context
 
 Other Arc implementations use attributes or annotations plus a dependency injection container. Elixir has neither classes nor a standard container. Its idioms are modules, structs, macros, behaviours, tagged tuples and OTP supervision.

@@ -16,6 +16,8 @@ applies-to:
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
+> Amended by [0008](0008-ship-one-chronicle-only-package-with-opt-in-proxies.md): Chronicle is the only integration; Ecto is out of scope.
+
 ## Context
 
 Commanded is the established Elixir CQRS and event-sourcing library. It is aggregate-centric and runs on its own event store. Chronicle uses a server kernel with constraints and decision reads. The fetched Commanded documentation describes no built-in command validation, authorization, identity, tenancy, HTTP contract or frontend proxies, which is the space Arc fills.
