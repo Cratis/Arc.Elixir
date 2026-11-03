@@ -1,0 +1,26 @@
+# Copyright (c) Cratis. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+name: Update Packages
+
+on:
+  schedule:
+    # Off the top of the hour, so this repository's update doesn't queue with every other one.
+    - cron: '23 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    uses: Cratis/Workflows/.github/workflows/update-packages.yml@main
+    with:
+      # Open a pull request instead of pushing to main, so Build runs on the update.
+      publication-mode: pull-request
+      # mix.lock is not part of the published package, so an update releases nothing.
+      pull-request-label: no-release
+      # The shared workflow updates only the first mix.exs it finds. Update the package and every sample.
+      post-update-command: >-
+        for dir in Source/arc Samples/plug Samples/phoenix; do
+        (cd "$dir" && mix deps.update --all) || exit 1;
+        done
+    secrets:
+      PAT_WORKFLOWS: ${{ secrets.PAT_WORKFLOWS }}

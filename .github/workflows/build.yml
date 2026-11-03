@@ -1,0 +1,139 @@
+# Copyright (c) Cratis. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+# Compiles and tests on the pull request itself.
+#
+# Verification that only runs after a merge cannot inform the merge, so the same steps Publish
+# runs run here first. The contract job additionally proves the generated TypeScript proxies:
+# deterministic output, strict compilation against the published @cratis/arc packages, and the
+# real Arc client running against an Arc for Elixir server.
+name: Build
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+env:
+  ELIXIR_VERSION: "1.19.5"
+  OTP_VERSION: "28.5"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir and Erlang
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+
+      - name: Cache Mix dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            Source/arc/deps
+            Source/arc/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('Source/arc/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - name: Install Hex and Rebar
+        working-directory: ./Source/arc
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+
+      - name: Install dependencies
+        working-directory: ./Source/arc
+        run: mix deps.get
+
+      - name: Check formatting
+        working-directory: ./Source/arc
+        run: mix format --check-formatted
+
+      - name: Compile
+        working-directory: ./Source/arc
+        env:
+          MIX_ENV: test
+        run: mix compile --warnings-as-errors
+
+      - name: Run tests
+        working-directory: ./Source/arc
+        run: mix test
+
+  samples:
+    name: Samples
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir and Erlang
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+
+      - name: Install Hex and Rebar
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+
+      - name: Test the samples
+        run: Samples/run-tests.sh
+
+  proxy-contract:
+    name: Proxy contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir and Erlang
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ContractTests/TypeScript/package-lock.json
+
+      - name: Cache Mix dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            Source/arc/deps
+            Source/arc/_build
+          key: ${{ runner.os }}-mix-contract-${{ hashFiles('Source/arc/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-contract-
+
+      - name: Install Hex and Rebar
+        working-directory: ./Source/arc
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+
+      - name: Run the proxy contract
+        run: ContractTests/run.sh
