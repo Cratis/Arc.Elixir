@@ -20,6 +20,7 @@ defmodule Library.Web.AuthorsLive do
     {:ok,
      socket
      |> assign(:notice, nil)
+     |> assign_identity()
      |> assign_observable(:authors, Authors, :live_authors)
      |> new_form()}
   end
@@ -52,6 +53,9 @@ defmodule Library.Web.AuthorsLive do
     ~H"""
     <main>
       <h1>Authors</h1>
+      <p id="who">
+        {if @identity.authenticated?, do: @identity.details.display_name, else: "Not signed in"}
+      </p>
       <p :if={@notice} id="notice">{@notice}</p>
 
       <ul id="authors">

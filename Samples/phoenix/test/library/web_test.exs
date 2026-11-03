@@ -78,4 +78,30 @@ defmodule Library.WebTest do
     assert conn.status == 200
     assert %{"status" => "ok"} = Jason.decode!(conn.resp_body)
   end
+
+  test "the identity endpoint serves the signed-in user with typed details" do
+    anonymous = conn(:get, "/.cratis/me") |> call()
+
+    editor =
+      conn(:get, "/.cratis/me")
+      |> put_req_header("x-demo-user", "ed")
+      |> put_req_header("x-demo-roles", "editor")
+      |> call()
+
+    assert anonymous.status == 401
+
+    assert %{
+             "name" => "ed",
+             "roles" => ["editor"],
+             "isAuthenticated" => true,
+             "details" => %{"displayName" => "Hello, ed", "canRename" => true}
+           } = Jason.decode!(editor.resp_body)
+  end
+
+  test "development tools can list the users to sign in as" do
+    conn = conn(:get, "/.cratis/users") |> call()
+
+    users = Jason.decode!(conn.resp_body)
+    assert Enum.map(users, & &1["microsoftIdentity"]["userId"]) == ["ada", "ed"]
+  end
 end
