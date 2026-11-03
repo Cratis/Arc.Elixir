@@ -1,0 +1,22 @@
+{
+    "name": "@cratis/arc-elixir-typescript-contracts",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "build": "tsc --noEmit",
+        "test:runtime": "node --import tsx --test contracts/runtime.contract.ts"
+    },
+    "dependencies": {
+        "@cratis/arc": "22.161.0",
+        "@cratis/arc.react": "22.161.0",
+        "@cratis/fundamentals": "7.33.0",
+        "react": "19.3.1"
+    },
+    "devDependencies": {
+        "@types/node": "26.6.6",
+        "@types/react": "19.3.0",
+        "eventsource": "5.1.2",
+        "tsx": "4.23.15",
+        "typescript": "7.0.2"
+    }
+}

@@ -1,7 +1,7 @@
 # Elixir and Mix
-/_build/
-/deps/
-/doc/
+_build/
+deps/
+doc/
 *.ez
 erl_crash.dump
 .elixir_ls/
@@ -16,3 +16,14 @@ node_modules/
 .env.*
 !.env.example
 .DS_Store
+
+# ExUnit tmp_dir
+tmp/
+
+# Generated TypeScript proxies for the contract tests
+ContractTests/TypeScript/generated/
+
+# Samples
+Samples/frontend/src/arc/
+Samples/frontend/dist/
+Samples/phoenix/priv/spa/

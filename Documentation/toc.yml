@@ -1,0 +1,34 @@
+- name: Arc for Elixir
+  href: index.md
+- name: Get started
+  href: get-started.md
+- name: How Arc works
+  href: concepts.md
+- name: Commands
+  href: commands.md
+- name: Queries and read models
+  href: queries.md
+- name: Result envelopes
+  href: results.md
+- name: Validation
+  href: validation.md
+- name: Authorization and identity
+  href: authorization-and-identity.md
+- name: Hosting
+  href: hosting/toc.yml
+- name: LiveView
+  href: live-view.md
+- name: React and generated proxies
+  href: react-proxies.md
+- name: Testing
+  href: testing.md
+- name: Observability
+  href: observability.md
+- name: Configuration reference
+  href: configuration.md
+- name: Samples
+  href: samples.md
+- name: Limits and gaps
+  href: limits-and-gaps.md
+- name: Contributing
+  href: contributing/toc.yml
