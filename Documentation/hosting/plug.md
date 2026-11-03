@@ -35,12 +35,12 @@ Arc answers a request only when it is an Arc route. Everything else passes throu
 | a query route | `QUERY` | Arguments, paging and sorting in a JSON body; responses carry `Cache-Control: no-store` |
 | an observable query route | `GET` | Snapshot, or Server-Sent Events with `Accept: text/event-stream`, or a WebSocket upgrade |
 | `/.cratis/queries/ws` | WebSocket | The multiplexed observable-query hub |
-| `/.cratis/commands`, `/.cratis/queries` | `GET` | Operation catalogs; see [introspection](authorization-and-identity.md#introspection-access) |
-| `/.cratis/me` | `GET` | Identity; registered only with `identity_details` |
-| `/.cratis/identity-details/schema` | `GET` | Always `{}` |
-| `/.cratis/users`, `/.cratis/tenants` | `GET` | Always `[]` |
+| `/.cratis/commands`, `/.cratis/queries` | `GET` | Operation catalogs; see [discovery routes](authorization-and-identity.md#discovery-routes) |
+| `/.cratis/me` | `GET` | The caller's [identity](authorization-and-identity.md#identity-for-the-frontend); served only when an identity provider exists. Private: `Cache-Control: no-store, private` |
+| `/.cratis/identity-details/schema` | `GET` | The JSON schema of the identity details type; `{}` without a typed provider |
+| `/.cratis/users`, `/.cratis/tenants` | `GET` | Development users and tenants from your providers; `[]` without any |
 
-Routes are derived from module names; see [How Arc works](concepts.md#routes-come-from-module-names).
+Routes are derived from module names; see [How Arc works](concepts.md#routes-come-from-module-names). The bodies are the [result envelopes](results.md).
 
 ## Status codes
 

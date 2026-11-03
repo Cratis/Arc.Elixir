@@ -81,24 +81,113 @@ The Phoenix sample's `Library.Web.DevAuth` is a demo sign-in built the same way;
 
 ## Identity for the frontend
 
-The React packages ask `GET /.cratis/me` for the signed-in user. It is registered only when you provide a details module:
+Authentication establishes who is calling. Identity is what the UI shows about them: name, roles and application-specific details. The React packages read it from `GET /.cratis/me`, and LiveView reads the same data in process.
+
+Identity is presentation data and never an authorization decision. It adds no trusted claims and protects no command or query; those authorize themselves.
+
+### Provide the details
+
+Implement `Arc.Identity.Provider`. Arc finds it in your application, so there is nothing to register.
 
 ```elixir
-config :my_app, MyApp.Arc, identity_details: MyApp.IdentityDetails
+# From: Samples/phoenix/lib/library/identity/provider.ex
+      use Arc.Identity.Provider, details: Library.Identity.IdentityDetails
+
+      @impl true
+      def details(%Arc.Identity.Context{name: name, principal: principal}) do
+        {:ok,
+         %Library.Identity.IdentityDetails{
+           display_name: "Hello, #{name}",
+           can_rename: "editor" in principal.roles
+         }}
+      end
 ```
+
+`details:` names the type of the details, an `Arc.Schema` module:
 
 ```elixir
-defmodule MyApp.IdentityDetails do
-  def details(%Arc.Principal{} = principal), do: {:ok, %{avatar_url: MyApp.Avatars.url(principal.id)}}
-end
+# From: Samples/phoenix/lib/library/identity/identity_details.ex
+      use Arc.Schema
+
+      schema do
+        field :display_name, :string, required: true
+        field :can_rename, :boolean, required: true
+      end
 ```
 
-`details/1` returns `{:ok, map}` or `:forbidden`. The response is `{id, name, isAuthenticated, isAuthorized, roles, details}`, 401 when the caller is not signed in, 403 when `details/1` returns `:forbidden`. Without `identity_details`, the route is not registered, and the client treats that as "no identity endpoint".
+It does three jobs. `/.cratis/identity-details/schema` serves its JSON schema. [Proxy generation](react-proxies.md) turns it into a TypeScript class, so `useIdentity` is typed. And the wire uses its `camelCase` field names.
 
-## Introspection access
+The callback receives an `Arc.Identity.Context` built from the request principal on every call, so cache expensive lookups inside it:
 
-`/.cratis/commands` and `/.cratis/queries` list your operations, routes and schemas to anyone who can reach them. By default they require an authenticated caller. Set `introspection: :anonymous` for development or `introspection: false` to remove them. See [Configuration](configuration.md).
+| Field | Meaning |
+| --- | --- |
+| `id` | The identity identifier; `"unknown"` when the principal has none |
+| `name` | The display name |
+| `claims` | `{type, value}` string pairs from the principal, plus a `{"role", role}` pair per role |
+| `principal` | The full `Arc.Principal` |
+
+It returns `{:ok, details}`, or `{:unauthorized, details}` when the user is signed in but may not use the application at all. An `Arc.Identity.Details` struct says the same with a flag. An application without a provider does not serve `/.cratis/me`, and the client treats that as "no identity endpoint". Give the application more than one provider and startup fails, naming them; pick one with the `identity_details:` option.
+
+### What the endpoint answers
+
+| Caller | Status | Body |
+| --- | --- | --- |
+| Not signed in | 401 | empty |
+| Signed in, provider says `:unauthorized` | 403 | empty |
+| Signed in and allowed | 200 | `{id, name, isAuthenticated, isAuthorized, roles, details}` |
+
+Every response is private: `Cache-Control: no-store, private` and `Vary: Cookie`, because it holds per-user data. Do not let a shared cache override that. Arc does not read or write an identity cookie.
+
+### In LiveView
+
+`assign_identity/2` assigns the same `Arc.Identity.Result` the endpoint would serve. See [LiveView](live-view.md#identity).
+
+### Development users and tenants
+
+Tools such as Lens read `/.cratis/users` and `/.cratis/tenants` to offer users and tenants to sign in as. Implement `Arc.Identity.UsersProvider` and `Arc.Identity.TenantsProvider` in development-only modules; Arc discovers them and concatenates what they return.
+
+```elixir
+# From: Samples/phoenix/lib/library/identity/dev_users.ex
+      @behaviour Arc.Identity.UsersProvider
+
+      @impl true
+      def users do
+        [
+          %Arc.Identity.User{user_id: "ada", user_details: "ada", roles: []},
+          %Arc.Identity.User{user_id: "ed", user_details: "ed", roles: ["editor"]}
+        ]
+      end
+```
+
+A user is listed on the wire as a `microsoftIdentity` client principal (`identityProvider`, `userId`, `userDetails`, `userRoles`, `claims`) plus `details`; a tenant as `{id, name}`. A list is not proof of authentication or membership, and it is not how a request's tenant is chosen. Keep these modules out of production builds.
+
+## Signing in through an ingress or Lens
+
+`Arc.Authentication.ClientPrincipal` authenticates from the Microsoft identity platform headers an ingress supplies, and from the same headers Lens injects in development:
+
+| Header | Content |
+| --- | --- |
+| `x-ms-client-principal` | The base64 client principal: `identityProvider`, `userId`, `userDetails`, `userRoles`, `claims` |
+| `x-ms-client-principal-id` | The identifier; the RFC 8187 `UTF-8''…` form is percent-decoded |
+| `x-ms-client-principal-name` | The name |
+
+```elixir
+config :my_app, MyApp.Arc,
+  authentication: [Arc.Authentication.ClientPrincipal, Arc.Authentication.FromAssigns],
+  trust_forwarded_identity_headers: true
+```
+
+:::caution[These headers are not signed]
+Base64 is not a signature. The handler ignores the headers, and the request stays anonymous, until you set `trust_forwarded_identity_headers: true`. Set it only when every request reaches the application through an ingress that authenticates callers, strips caller-supplied identity headers and writes trusted replacements, and when nothing can reach the application directly. The setting applies to every route, including the discovery routes. The first time an untrusted request carries the headers, Arc logs a warning naming the setting.
+:::
+
+The principal's id comes from `x-ms-client-principal-id`, else the `sub` claim, else `userId`, else `"unknown"`. Its name comes from `x-ms-client-principal-name`, else `userDetails`. Roles come from `userRoles` and from role claims. The identity provider the ingress used is kept as the claim `urn:cratis:arc:identity:provider`. A payload that is not valid base64 JSON fails the request with 401.
+
+## Discovery routes
+
+`/.cratis/commands`, `/.cratis/queries`, `/.cratis/identity-details/schema`, `/.cratis/users` and `/.cratis/tenants` list your operations, schemas and development fixtures to anyone who can reach them. By default they require an authenticated caller (401 otherwise). Set `introspection: :anonymous` for development, or `introspection: false` to remove all five. `/.cratis/me` is not affected. See [Configuration](configuration.md).
 
 ## Next steps
 
 - [Hosting on Phoenix](hosting/phoenix.md#csrf-and-cookie-sessions) covers cookie sessions and CSRF.
+- [React and generated proxies](react-proxies.md) generates the typed identity details class.

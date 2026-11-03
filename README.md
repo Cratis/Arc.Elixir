@@ -34,6 +34,8 @@ end
 - **Phoenix and LiveView** — the same commands and queries, in process, with forms that show pipeline errors on the right field
 - **Observable queries** — re-run when Chronicle changes a read model, pushed over WebSocket or Server-Sent Events
 - **Opt-in TypeScript proxies** — `mix arc.gen.proxies` generates typed commands and queries, with the same validation as the server, only if you add the compiler
+- **Identity** — `/.cratis/me`, typed identity details, development users for Lens, and trusted `x-ms-client-principal` headers behind an ingress
+- **The exact result envelopes** — `CommandResult` and `QueryResult` match the Arc contract field for field, pinned by specs
 - **Chronicle underneath** — returned events are appended with the caller's identity and correlation; constraint rejections reach the client as validation results
 - **`Arc.Test`** — the real pipeline against Chronicle's in-memory kernel
 
@@ -72,7 +74,7 @@ The `127.0.0.1:` prefixes keep both ports on your machine: the development kerne
 ## Documentation
 
 - [How Arc works](Documentation/concepts.md)
-- [Commands](Documentation/commands.md), [Queries and read models](Documentation/queries.md), [Validation](Documentation/validation.md), [Authorization and identity](Documentation/authorization-and-identity.md)
+- [Result envelopes](Documentation/results.md), [Commands](Documentation/commands.md), [Queries and read models](Documentation/queries.md), [Validation](Documentation/validation.md), [Authorization and identity](Documentation/authorization-and-identity.md)
 - [Hosting on Plug](Documentation/hosting/plug.md) and [on Phoenix](Documentation/hosting/phoenix.md)
 - [LiveView](Documentation/live-view.md)
 - [React and generated proxies](Documentation/react-proxies.md)

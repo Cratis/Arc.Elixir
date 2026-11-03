@@ -25,6 +25,7 @@ use Arc.LiveView, application: Library.Arc
         {:ok,
          socket
          |> assign(:notice, nil)
+         |> assign_identity()
          |> assign_observable(:authors, Authors, :live_authors)
          |> new_form()}
       end
@@ -51,6 +52,19 @@ After `mount`, `@authors` holds the list and `@authors_result` the full `Arc.Que
 
   defp describe({:error, _result}), do: "The rename was rejected."
 ```
+
+## Identity
+
+`assign_identity/2` assigns the `Arc.Identity.Result` for the current caller, the same data `GET /.cratis/me` serves, computed by the same `Arc.Identity.resolve/2`.
+
+```elixir
+# From: Samples/phoenix/lib/library/web/authors_live.ex
+          <p id="who">
+            {if @identity.authenticated?, do: @identity.details.display_name, else: "Not signed in"}
+          </p>
+```
+
+An anonymous caller gets a result with `authenticated?: false`. Identity is for presentation; the commands and queries authorize themselves. See [Authorization and identity](authorization-and-identity.md#identity-for-the-frontend).
 
 ## Forms
 

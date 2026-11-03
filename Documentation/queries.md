@@ -105,7 +105,7 @@ result = Arc.query(MyApp.Arc, Library.Authors.Listing.Authors, :all_authors, %{}
 result.data
 ```
 
-The result is an `Arc.QueryResult`; `Arc.QueryResult.to_wire/1` is the HTTP envelope.
+The result is an `Arc.QueryResult`; `Arc.QueryResult.to_wire/1` is the HTTP envelope, documented field by field in [Result envelopes](results.md).
 
 ## Next steps
 

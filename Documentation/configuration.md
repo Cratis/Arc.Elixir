@@ -25,11 +25,12 @@ config :my_app, MyApp.Arc, introspection: :authenticated
 | `chronicle` | `[]` | Options passed to every Chronicle call, for example `[client: MyApp.Chronicle]` |
 | `authentication` | `[Arc.Authentication.FromAssigns]` | `Arc.Authentication` handlers, in order |
 | `policies` | `[]` | `[name: PolicyModule]` for `Arc.Policy` |
-| `identity_details` | none | A module with `details(principal)`; enables `/.cratis/me` |
+| `identity_details` | the single `Arc.Identity.Provider` found | The identity provider to use. Without one, `/.cratis/me` is not served |
+| `trust_forwarded_identity_headers` | `false` | Let `Arc.Authentication.ClientPrincipal` accept the unsigned `x-ms-client-principal*` headers. Only behind an authenticating ingress |
 | `tenant_header` | `"x-cratis-tenant-id"` | Header read into `ctx.tenant` |
 | `correlation_header` | `"x-correlation-id"` | Header reused and echoed |
 | `max_body_bytes` | `1_000_000` | Request body limit |
-| `introspection` | `:authenticated` | Who may read `/.cratis/commands` and `/.cratis/queries`: `:authenticated`, `:anonymous` or `false` to remove them |
+| `introspection` | `:authenticated` | Who may read the five discovery routes (commands, queries, identity schema, users, tenants): `:authenticated`, `:anonymous` or `false` to remove them. `/.cratis/me` is unaffected |
 | `expose_exceptions` | `false` | Include exception messages and stack traces in results. Never enable in production |
 
 ## Proxy generation

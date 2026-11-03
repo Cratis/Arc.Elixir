@@ -148,6 +148,7 @@ LiveView calls the same modules in process. The page keeps the list current and 
         {:ok,
          socket
          |> assign(:notice, nil)
+         |> assign_identity()
          |> assign_observable(:authors, Authors, :live_authors)
          |> new_form()}
       end

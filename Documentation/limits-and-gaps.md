@@ -17,6 +17,8 @@ Arc for Elixir is a source preview. This page states what it does not do, so you
 | --- | --- |
 | Command and query pipeline, validation, authorization, appends, constraint mapping | The `Source/arc` and sample specs, against Chronicle's in-memory kernel |
 | HTTP routes, statuses, correlation, paging, sorting, the `QUERY` method, introspection | The Plug specs |
+| The result envelopes, field for field | `Arc.EnvelopeTest` pins the exact key sets and types of both |
+| Identity: `/.cratis/me`, the details schema, development users and tenants, trusted client principal headers | The identity specs, and the real `IdentityProvider` in the contract run |
 | Generated TypeScript: deterministic, strict compilation, runtime behavior with the real client | `ContractTests/run.sh`, including commands, validation, authorization, queries, paging, sorting, `QUERY`, the WebSocket hub and Server-Sent Events |
 | LiveView forms, observable assigns, authorization on every call | The LiveView specs |
 
@@ -27,8 +29,9 @@ Not verified: behavior against a running Chronicle kernel in this repository's C
 - **Delta transfer mode.** A hub subscription that asks for `transferMode: "delta"` receives full snapshots with no change set.
 - **No SSE hub.** `/.cratis/queries/sse` and its subscribe and unsubscribe routes are not served. Use the WebSocket hub (the client default) or direct Server-Sent Events per query.
 - **Introspection depth.** The catalogs report name, namespace, route, type, documentation summary and a payload or arguments schema. They do not report authorization or per-property validation metadata.
-- **Tenancy.** The tenant header is read into `ctx.tenant`. Arc has no resolver chain and does not require or enforce a tenant.
-- **Identity cookie.** `/.cratis/me` never sets a `.cratis-identity` cookie.
+- **Tenancy.** The tenant header is read into `ctx.tenant`. Arc has no resolver chain and does not require or enforce a tenant. `/.cratis/tenants` only lists what your providers return.
+- **Identity cookie.** `/.cratis/me` never sets or reads a `.cratis-identity` cookie.
+- **Signed forwarded identity.** Only the unsigned `x-ms-client-principal*` headers are supported, and only when trusted. The signed forwarded-identity envelope of Arc on .NET is not implemented.
 - **Admission control.** The only request limit is `max_body_bytes`. There are no connection or subscription caps.
 - **`X-Allowed-Severity`.** Read on commands only, as a number, and capped at `Warning`.
 

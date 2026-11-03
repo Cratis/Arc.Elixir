@@ -107,7 +107,7 @@ result =
 Arc.CommandResult.success?(result)
 ```
 
-Pass `{RegisterAuthor, %{"id" => "…", "name" => "…"}}` instead of a struct to bind a wire map first. Options include `principal:`, `tenant:`, `correlation_id:`, `metadata:` and `validate_only: true`. The result is an `Arc.CommandResult`; `Arc.CommandResult.to_wire/1` is the envelope the HTTP host sends.
+Pass `{RegisterAuthor, %{"id" => "…", "name" => "…"}}` instead of a struct to bind a wire map first. Options include `principal:`, `tenant:`, `correlation_id:`, `metadata:` and `validate_only: true`. The result is an `Arc.CommandResult`; `Arc.CommandResult.to_wire/1` is the envelope the HTTP host sends. Its shape is the contract with the frontend: see [Result envelopes](results.md).
 
 ## Exceptions
 

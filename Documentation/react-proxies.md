@@ -37,6 +37,7 @@ Each artifact becomes one file, in a folder that mirrors its namespace after `se
 | a `@query` in `MyApp.Authors.Listing.Authors` | `Authors/Listing/AllAuthors.ts`: a `QueryFor` class with parameters, sorting helpers and `use`, `useWithPaging`, `useSuspense`, `useSuspenseWithPaging` and `when` |
 | an `@observe` query | the same as an `ObservableQueryFor`, plus `useChangeStream` for a list |
 | the read model's struct and nested schemas | a class with `@field` decorators |
+| the identity provider's `details:` type | a class to give `useIdentity` or `IdentityProvider.getCurrent`, so `identity.details` is typed |
 | each folder | an `index.ts` re-exporting the files in it |
 
 The React app uses them directly:
@@ -51,6 +52,18 @@ The React app uses them directly:
 ```
 
 Declared rules (`required`, `min_length`, `max_length`, `email`, `matches` and the number rules) become a validator, so the browser rejects what the server would. A command's `@moduledoc` and a field's `doc:` become the TypeScript documentation.
+
+### Identity
+
+The type named by `use Arc.Identity.Provider, details: …` is generated like any other, and the React app passes it to `useIdentity`:
+
+```tsx
+// From: Samples/frontend/src/App.tsx
+    // Who is signed in, from GET /.cratis/me. The details are typed from the backend's declared type.
+    const identity = useIdentity<IdentityDetails>(IdentityDetails);
+```
+
+`identity.details` is then an `IdentityDetails` instance with `displayName` and `canRename`, hydrated from the response.
 
 ### Type mapping
 
