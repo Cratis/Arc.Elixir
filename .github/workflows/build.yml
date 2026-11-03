@@ -75,6 +75,18 @@ jobs:
         working-directory: ./Source/arc
         run: mix test
 
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify documentation excerpts against their sources
+        run: python3 Documentation/verify-snippets.py
+
   samples:
     name: Samples
     runs-on: ubuntu-latest
