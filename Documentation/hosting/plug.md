@@ -35,12 +35,12 @@ Arc answers a request only when it is an Arc route. Everything else passes throu
 | a query route | `QUERY` | Arguments, paging and sorting in a JSON body; responses carry `Cache-Control: no-store` |
 | an observable query route | `GET` | Snapshot, or Server-Sent Events with `Accept: text/event-stream`, or a WebSocket upgrade |
 | `/.cratis/queries/ws` | WebSocket | The multiplexed observable-query hub |
-| `/.cratis/commands`, `/.cratis/queries` | `GET` | Operation catalogs; see [discovery routes](authorization-and-identity.md#discovery-routes) |
-| `/.cratis/me` | `GET` | The caller's [identity](authorization-and-identity.md#identity-for-the-frontend); served only when an identity provider exists. Private: `Cache-Control: no-store, private` |
+| `/.cratis/commands`, `/.cratis/queries` | `GET` | Operation catalogs; see [discovery routes](../authorization-and-identity.md#discovery-routes) |
+| `/.cratis/me` | `GET` | The caller's [identity](../authorization-and-identity.md#identity-for-the-frontend); served only when an identity provider exists. Private: `Cache-Control: no-store, private` |
 | `/.cratis/identity-details/schema` | `GET` | The JSON schema of the identity details type; `{}` without a typed provider |
 | `/.cratis/users`, `/.cratis/tenants` | `GET` | Development users and tenants from your providers; `[]` without any |
 
-Routes are derived from module names; see [How Arc works](concepts.md#routes-come-from-module-names). The bodies are the [result envelopes](results.md).
+Routes are derived from module names; see [How Arc works](../concepts.md#routes-come-from-module-names). The bodies are the [result envelopes](../results.md).
 
 ## Status codes
 
@@ -51,7 +51,7 @@ Selected in this order: success `200`; not authorized `403`; invalid `400`; quer
 | Header | Behavior |
 | --- | --- |
 | `X-Correlation-ID` | A valid UUID is reused; anything else is replaced. The effective value is echoed on every Arc response and appears as `correlationId` in the envelope. Configurable with `correlation_header` |
-| `X-Allowed-Severity` | The highest validation severity the caller tolerates, capped at `Warning`. See [Validation](validation.md#tolerating-warnings) |
+| `X-Allowed-Severity` | The highest validation severity the caller tolerates, capped at `Warning`. See [Validation](../validation.md#tolerating-warnings) |
 | `x-cratis-tenant-id` | Becomes `ctx.tenant`. Configurable with `tenant_header`. Arc does not enforce tenancy |
 
 Header names are matched case-insensitively.
@@ -67,7 +67,7 @@ Arc reads the body itself when `Plug.Parsers` has not. If you parse JSON earlier
 - **WebSocket, direct.** Messages carry a `type` of `Data`, `Ping` or `Pong`.
 - **WebSocket, hub.** `/.cratis/queries/ws` opens with `Connected` and then carries `Subscribe`, `Unsubscribe`, `QueryResult`, `Unauthorized`, `Error`, `Ping` and `Pong`, with per-subscription revisions. A denied subscription ends with `Unauthorized` for that query without disturbing the others.
 
-All need the Arc application in your supervision tree. See [Queries](queries.md#observable-queries) and the [limits](limits-and-gaps.md).
+All need the Arc application in your supervision tree. See [Queries](../queries.md#observable-queries) and the [limits](../limits-and-gaps.md).
 
 ## Verified with
 
