@@ -41,15 +41,32 @@ defmodule Arc.ProxyGenerator.TypeScript do
     end
   end
 
-  @doc "The folder, relative to the output directory, an artifact module is generated into."
-  @spec folder(module(), integer()) :: String.t()
+  @doc """
+  The folder, relative to the output directory, an artifact module is generated into.
+
+  `layout` is the number of leading namespace segments to drop, which mirrors the module
+  namespace, or `%{skip: n, folder: fun}`, where `fun` may answer a folder for a module (the folder
+  of its source file, for co-located proxies) or `nil` to fall back to the namespace.
+  """
+  @spec folder(module(), layout()) :: String.t()
+  def folder(module, %{skip: skip, folder: fun}) do
+    case fun.(module) do
+      nil -> folder(module, skip)
+      folder -> folder
+    end
+  end
+
   def folder(module, skip) do
     {namespace, _} = Arc.Naming.module_parts(module)
     namespace |> Enum.drop(skip) |> Enum.join("/")
   end
 
+  @typedoc "How artifact modules are laid out in the output directory."
+  @type layout ::
+          non_neg_integer() | %{skip: non_neg_integer(), folder: (module() -> String.t() | nil)}
+
   @doc "The import path of generated module `target` as seen from the folder `from`."
-  @spec import_path(String.t(), module(), integer()) :: String.t()
+  @spec import_path(String.t(), module(), layout()) :: String.t()
   def import_path(from_folder, target, skip) do
     {_ns, name} = Arc.Naming.module_parts(target)
     target_folder = folder(target, skip)
@@ -69,7 +86,7 @@ defmodule Arc.ProxyGenerator.TypeScript do
   defp common_prefix(_, _), do: []
 
   @doc "Resolves the import statements for a set of mappings, as sorted `{type, module_path}` pairs."
-  @spec imports([t()], String.t(), integer()) :: [{String.t(), String.t()}]
+  @spec imports([t()], String.t(), layout()) :: [{String.t(), String.t()}]
   def imports(mappings, from_folder, skip) do
     mappings
     |> Enum.map(& &1.import)

@@ -17,7 +17,11 @@ defmodule Arc.Context do
     * `:deadline` - monotonic millisecond deadline, or `nil`
     * `:provided` - values returned by the command's `provide/2`
     * `:allowed_severity` - the highest non-blocking validation severity the caller accepts
-    * `:chronicle` - options passed to every `Chronicle.append/3` (for example `client:`)
+    * `:chronicle` - options passed to every `Chronicle.append/3` (for example `client:`); for a named
+      tenant it carries that tenant as the Chronicle `namespace:`
+    * `:query` - while a query runs, what the caller asked for: `%{page:, page_size:, sort_by:,
+      sort_direction:}` (`sort_by` is the `camelCase` wire name). A query that pages in the database
+      reads it, for example `Arc.MongoDB.page/3`
   """
 
   alias Arc.Principal
@@ -31,7 +35,8 @@ defmodule Arc.Context do
             deadline: nil,
             provided: %{},
             allowed_severity: -1,
-            chronicle: []
+            chronicle: [],
+            query: %{}
 
   @type t :: %__MODULE__{
           application: module() | nil,
@@ -43,7 +48,8 @@ defmodule Arc.Context do
           deadline: integer() | nil,
           provided: map(),
           allowed_severity: integer(),
-          chronicle: keyword()
+          chronicle: keyword(),
+          query: map()
         }
 
   @doc "Builds a context, generating a correlation id when none is given."

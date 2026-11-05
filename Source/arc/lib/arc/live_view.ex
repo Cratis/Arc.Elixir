@@ -134,7 +134,10 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     @doc "The caller's `Arc.Identity.Result`."
     @spec identity(Phoenix.LiveView.Socket.t()) :: Arc.Identity.Result.t()
     def identity(socket),
-      do: Arc.Identity.resolve(socket.assigns.arc_application, principal(socket))
+      do:
+        Arc.Identity.resolve(socket.assigns.arc_application, principal(socket),
+          tenant: socket.assigns[:arc_tenant]
+        )
 
     # Queries
 

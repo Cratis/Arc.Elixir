@@ -14,6 +14,12 @@
   href: validation.md
 - name: Authorization and identity
   href: authorization-and-identity.md
+- name: Vertical slices
+  href: vertical-slices.md
+- name: Tenancy
+  href: tenancy.md
+- name: MongoDB
+  href: mongodb.md
 - name: Hosting
   href: hosting/toc.yml
 - name: LiveView

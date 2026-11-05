@@ -37,7 +37,7 @@ defmodule Arc.Plug.Request do
         ctx =
           Arc.context(app,
             principal: principal,
-            tenant: first_header(conn, config[:tenant_header]),
+            tenant: Arc.Tenancy.resolve(conn, principal, config),
             correlation_id: correlation,
             allowed_severity: allowed_severity(conn)
           )

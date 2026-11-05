@@ -20,6 +20,9 @@ defmodule Arc.Plug.Introspection do
       {"GET", "/.cratis/users"} -> catalog(conn, app, state, &users/2, per_user: true)
       {"GET", "/.cratis/tenants"} -> catalog(conn, app, state, &tenants/2, per_user: true)
       {"GET", "/.cratis/queries/ws"} -> hub(conn, app)
+      {"GET", "/.cratis/queries/sse"} -> sse_hub(conn, app)
+      {"POST", "/.cratis/queries/sse/subscribe"} -> sse_control(conn, app, :subscribe)
+      {"POST", "/.cratis/queries/sse/unsubscribe"} -> sse_control(conn, app, :unsubscribe)
       _ -> conn
     end
   end
@@ -28,6 +31,30 @@ defmodule Arc.Plug.Introspection do
     case Request.build(conn, app) do
       {:ok, conn, ctx} ->
         conn |> WebSockAdapter.upgrade(Arc.Plug.Hub, %{app: app, ctx: ctx}, []) |> halt()
+
+      {:unauthenticated, conn} ->
+        json(conn, 401, %{"message" => "Authentication failed."})
+    end
+  end
+
+  defp sse_hub(conn, app) do
+    case Request.build(conn, app) do
+      {:ok, conn, ctx} ->
+        conn |> Arc.Plug.SseHub.stream(app, ctx) |> halt()
+
+      {:unauthenticated, conn} ->
+        json(conn, 401, %{"message" => "Authentication failed."})
+    end
+  end
+
+  defp sse_control(conn, app, kind) do
+    case Request.build(conn, app) do
+      {:ok, conn, ctx} ->
+        case Arc.Plug.read_json(conn, app) do
+          {:ok, conn, %{} = body} -> Arc.Plug.SseHub.control(conn, app, ctx, kind, body)
+          {:ok, conn, _other} -> send_status(conn, 400)
+          {:error, conn, _message} -> send_status(conn, 400)
+        end
 
       {:unauthenticated, conn} ->
         json(conn, 401, %{"message" => "Authentication failed."})
@@ -153,7 +180,7 @@ defmodule Arc.Plug.Introspection do
             send_status(conn, 401)
 
           {:ok, conn, ctx} ->
-            result = Arc.Identity.resolve(app, ctx.principal)
+            result = Arc.Identity.resolve(app, ctx.principal, tenant: ctx.tenant)
 
             case Arc.Identity.Result.status(result) do
               200 -> json(conn, 200, Arc.Identity.Result.to_wire(result))

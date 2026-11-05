@@ -20,7 +20,8 @@ export default defineConfig({
         }
     },
     build: {
-        outDir: 'dist',
+        // The Phoenix sample sets this to its priv/spa to serve the build from one origin.
+        outDir: process.env.ARC_SPA_OUT ?? 'dist',
         emptyOutDir: true
     }
 });

@@ -32,6 +32,7 @@ defmodule Mix.Tasks.Compile.Arc do
 
       case Arc.ProxyGenerator.generate(application,
              output: output,
+             layout: Keyword.get(project, :layout, :namespace),
              remove_stale: Keyword.get(project, :remove_stale, true)
            ) do
         {:ok, %{written: [], removed: []}} -> {:noop, []}
