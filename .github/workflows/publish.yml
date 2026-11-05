@@ -64,7 +64,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Release
         id: release
@@ -81,7 +81,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Elixir and Erlang
         uses: erlef/setup-beam@v1
@@ -90,7 +90,7 @@ jobs:
           otp-version: ${{ env.OTP_VERSION }}
 
       - name: Cache Mix dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             Source/arc/deps
@@ -127,7 +127,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Elixir and Erlang
         uses: erlef/setup-beam@v1
@@ -136,7 +136,7 @@ jobs:
           otp-version: ${{ env.OTP_VERSION }}
 
       - name: Cache Mix dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             Source/arc/deps
