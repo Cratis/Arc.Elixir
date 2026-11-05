@@ -13,6 +13,7 @@ defmodule Mix.Tasks.Arc.Gen.Proxies do
 
     * `--application` - the `Arc.Application` module; defaults to `arc: [application: ...]` in `mix.exs`
     * `--output` - the output directory; defaults to `arc: [output: ...]` in `mix.exs`
+    * `--layout` - `namespace` (default) or `colocated`; defaults to `arc: [layout: ...]`
     * `--check` - write nothing; exit with an error when the proxies on disk are out of date.
       Use it in CI to keep committed proxies current.
     * `--no-remove-stale` - keep generated files of artifacts that no longer exist
@@ -25,7 +26,13 @@ defmodule Mix.Tasks.Arc.Gen.Proxies do
   @shortdoc "Generates TypeScript proxies for commands and queries"
   @requirements ["app.config"]
 
-  @switches [application: :string, output: :string, check: :boolean, remove_stale: :boolean]
+  @switches [
+    application: :string,
+    output: :string,
+    layout: :string,
+    check: :boolean,
+    remove_stale: :boolean
+  ]
 
   @impl Mix.Task
   def run(args) do
@@ -52,11 +59,20 @@ defmodule Mix.Tasks.Arc.Gen.Proxies do
     end
   end
 
+  defp layout(opts) do
+    case opts[:layout] || (Mix.Project.config()[:arc] || [])[:layout] do
+      nil -> :namespace
+      layout when is_atom(layout) -> layout
+      layout -> String.to_existing_atom(layout)
+    end
+  end
+
   defp generate(application, output, opts) do
     check? = Keyword.get(opts, :check, false)
 
     case Arc.ProxyGenerator.generate(application,
            output: output,
+           layout: layout(opts),
            dry_run: check?,
            remove_stale: Keyword.get(opts, :remove_stale, true)
          ) do

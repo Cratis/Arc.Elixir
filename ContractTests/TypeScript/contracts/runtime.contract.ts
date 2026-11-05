@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { EventSource as NodeEventSource } from "eventsource";
-import { Globals } from "@cratis/arc";
+import { Globals, ObservableQueryTransferMode } from "@cratis/arc";
 import {
     QueryHttpMethod,
     type QueryResult,
@@ -31,6 +31,8 @@ Globals.queryHttpMethod = QueryHttpMethod.Get;
 Globals.queryDirectMode = false;
 Globals.queryTransportMethod = QueryTransportMethod.WebSocket;
 Globals.queryCacheRetentionMs = 0;
+// Snapshots on every emission. The delta mode of the hubs has its own test below.
+Globals.observableQueryTransferMode = ObservableQueryTransferMode.Full;
 // SAFETY: the Node eventsource implementation provides the browser EventSource surface used by Arc.
 Globals.eventSourceFactory = (url) => new NodeEventSource(url) as unknown as EventSource;
 
@@ -186,6 +188,71 @@ test("Arc for Elixir serves the generated proxies", async (t) => {
             Globals.queryDirectMode = false;
         }
     });
+
+    await t.test("an observable query pushes updates over the multiplexed SSE hub", async () => {
+        resetSharedMultiplexer();
+        Globals.queryTransportMethod = QueryTransportMethod.ServerSentEvents;
+        Globals.queryDirectMode = false;
+        try {
+            const query = new LiveAuthors();
+            const seen: number[] = [];
+
+            const result = await new Promise<QueryResult<unknown[]>>((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error("No update was pushed over the SSE hub.")), 8000);
+                const subscription = query.subscribe((r: QueryResult<unknown[]>) => {
+                    seen.push(r.data.length);
+                    if (seen.length === 1) {
+                        void fetch(`${origin}/test/add-author?name=SseLive`);
+                    }
+                    if (seen.length >= 2 && r.data.length > seen[0]) {
+                        clearTimeout(timer);
+                        subscription.unsubscribe();
+                        resolve(r);
+                    }
+                });
+            });
+            assert.ok(result.data.length > seen[0]);
+        } finally {
+            resetSharedMultiplexer();
+            Globals.queryTransportMethod = QueryTransportMethod.WebSocket;
+        }
+    });
+
+    for (const [name, transport] of [
+        ["WebSocket", QueryTransportMethod.WebSocket],
+        ["SSE", QueryTransportMethod.ServerSentEvents],
+    ] as const) {
+        await t.test(`delta mode over the ${name} hub sends a snapshot and then only the change set`, async () => {
+            resetSharedMultiplexer();
+            Globals.queryTransportMethod = transport;
+            Globals.queryDirectMode = false;
+            Globals.observableQueryTransferMode = ObservableQueryTransferMode.Delta;
+            try {
+                const results: QueryResult<unknown[]>[] = [];
+                await new Promise<void>((resolve, reject) => {
+                    const timer = setTimeout(() => reject(new Error("No delta was pushed.")), 8000);
+                    const subscription = new LiveAuthors().subscribe((r: QueryResult<unknown[]>) => {
+                        results.push(r);
+                        if (results.length === 1) {
+                            void fetch(`${origin}/test/add-author?name=Delta${name}`);
+                        } else {
+                            clearTimeout(timer);
+                            subscription.unsubscribe();
+                            resolve();
+                        }
+                    });
+                });
+                assert.ok(results[0].data.length >= 3, "the first emission is the snapshot");
+                assert.equal(results[1].data.length, 0, "the next emission carries no snapshot");
+                assert.equal(results[1].changeSet?.added.length, 1);
+                assert.equal(results[1].changeSet?.removed.length, 0);
+            } finally {
+                resetSharedMultiplexer();
+                Globals.observableQueryTransferMode = ObservableQueryTransferMode.Full;
+                Globals.queryTransportMethod = QueryTransportMethod.WebSocket;
+            }
+        });
+    }
 
     await t.test("an anonymous caller has no identity", async () => {
         IdentityProvider.clearCache();

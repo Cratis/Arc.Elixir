@@ -150,6 +150,8 @@ defmodule Arc.Schema do
     if function_exported?(module, :__arc_schema__, 0) do
       module.__arc_schema__()
     else
+      declared = declared_types(module)
+
       module
       |> struct()
       |> Map.from_struct()
@@ -157,12 +159,18 @@ defmodule Arc.Schema do
       |> Enum.map(fn {name, default} ->
         %Field{
           name: name,
-          type: infer_type(default),
+          type: Keyword.get(declared, name, infer_type(default)),
           nullable?: is_nil(default),
           default: default
         }
       end)
     end
+  end
+
+  # A model can declare its own field types (a persistence package does, for the types its
+  # documents are stored as), so a struct says it once and every reader of it agrees.
+  defp declared_types(module) do
+    if function_exported?(module, :__arc_types__, 0), do: module.__arc_types__(), else: []
   end
 
   defp infer_type(%{__struct__: module}) when module in [Date], do: :date

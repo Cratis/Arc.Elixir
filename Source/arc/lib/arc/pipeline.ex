@@ -47,6 +47,7 @@ defmodule Arc.Pipeline do
     with_logger_metadata(ctx, fn ->
       with {:ok, command} <- bind_command(module, input, base),
            :ok <- authorize(descriptor.authorization, ctx, command, base),
+           :ok <- filter(Arc.Filter.run_command(ctx, descriptor), base),
            :ok <- validate_command(module, descriptor, command, ctx, base) do
         if opts[:validate_only],
           do: base,
@@ -81,6 +82,20 @@ defmodule Arc.Pipeline do
         {:halt, %{base | authorized?: false, authorization_failure_reason: reason}}
     end
   end
+
+  # What a cross-cutting `Arc.Filter` decided.
+  defp filter(:ok, _base), do: :ok
+
+  defp filter({:unauthorized, reason}, %CommandResult{} = base),
+    do: {:halt, %{base | authorized?: false, authorization_failure_reason: reason}}
+
+  defp filter({:unauthorized, _reason}, base), do: {:halt, %{base | authorized?: false}}
+
+  defp filter({:error, errors}, %CommandResult{} = base),
+    do: {:halt, %{base | validation_results: normalize_results({:error, errors})}}
+
+  defp filter({:error, errors}, base),
+    do: {:halt, %{base | validation_results: normalize_results({:error, errors})}}
 
   defp validate_command(module, descriptor, command, ctx, base) do
     declared = Validation.validate_fields(command, descriptor.fields)
@@ -182,7 +197,10 @@ defmodule Arc.Pipeline do
 
     with_logger_metadata(ctx, fn ->
       with :ok <- authorize_query(query.authorization, ctx, base),
+           :ok <- filter(Arc.Filter.run_query(ctx, descriptor, query), base),
            {:ok, args} <- bind_arguments(query, raw_args, base) do
+        ctx = %{ctx | query: Map.new(opts)}
+
         case apply(descriptor.module, query.name, [args, ctx]) do
           {:ok, value} ->
             shape(value, descriptor, query, opts, base)

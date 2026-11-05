@@ -29,7 +29,10 @@ config :my_app, MyApp.Arc, introspection: :authenticated
 | `trust_forwarded_identity_headers` | `false` | Let `Arc.Authentication.MicrosoftIdentityPlatform` accept the `x-ms-client-principal*` headers. Unsigned, only behind an authenticating ingress; required for the two options below |
 | `forwarded_identity` | `[enabled: false, audience: "", keys: []]` | Verify the signed `x-cratis-forwarded-identity-signature` envelope with 1 to 8 `[key_id:, secret_base64:]` keys. See [Signed forwarded identity](authorization-and-identity.md#signed-forwarded-identity) |
 | `on_behalf_of` | `[enabled: false, issuer: "", audience: "", service: "", clock_skew: 30, signing_keys: []]` | Accept an RS256 assertion that an actor acts for the user, with `[key_id:, public_key_pem:]` keys. See [Acting on behalf of a user](authorization-and-identity.md#acting-on-behalf-of-a-user) |
-| `tenant_header` | `"x-cratis-tenant-id"` | Header read into `ctx.tenant` |
+| `tenant_header` | `"x-cratis-tenant-id"` | Header the `:header` tenancy resolver reads, and the fallback of the `:subdomain` one |
+| `tenancy` | `[]` (the header resolver) | How the tenant is resolved: `resolver:` (`:header`, `:query`, `:claim`, `:subdomain`, `:fixed`, `:development` or a module), `header:`, `query_parameter:`, `claim_type:`, `base_domain:` and `tenant_id:`. See [Tenancy](tenancy.md) |
+| `filters` | `[]` | `Arc.Filter` modules: cross-cutting rules that run for every command and query |
+| `mongodb` | none | The MongoDB options of `cratis_arc_mongodb`, see [MongoDB](mongodb.md) |
 | `correlation_header` | `"x-correlation-id"` | Header reused and echoed |
 | `max_body_bytes` | `1_000_000` | Request body limit |
 | `introspection` | `:authenticated` | Who may read the five discovery routes (commands, queries, identity schema, users, tenants): `:authenticated`, `:anonymous` or `false` to remove them. `/.cratis/me` is unaffected |

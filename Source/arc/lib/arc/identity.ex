@@ -10,17 +10,30 @@ defmodule Arc.Identity.Context do
     * `:claims` - `{type, value}` string pairs from the authenticated principal, including a
       `{"role", role}` pair per role
     * `:principal` - the full `Arc.Principal`
+    * `:application` and `:tenant` - the Arc application and the tenant of the request, so a
+      provider can read tenant-scoped data. `context/1` turns them into an `Arc.Context`
   """
 
   @enforce_keys [:id, :name]
-  defstruct [:id, :name, :principal, claims: []]
+  defstruct [:id, :name, :principal, :application, :tenant, claims: []]
 
   @type t :: %__MODULE__{
           id: String.t(),
           name: String.t(),
           claims: [{String.t(), String.t()}],
-          principal: Arc.Principal.t() | nil
+          principal: Arc.Principal.t() | nil,
+          application: module() | nil,
+          tenant: String.t() | nil
         }
+
+  @doc """
+  An `Arc.Context` for the caller: the application, principal and tenant of the identity request,
+  for example to read a profile with `Arc.MongoDB`.
+  """
+  @spec context(t()) :: Arc.Context.t()
+  def context(%__MODULE__{} = identity) do
+    Arc.context(identity.application, principal: identity.principal, tenant: identity.tenant)
+  end
 end
 
 defmodule Arc.Identity.Details do
@@ -217,16 +230,22 @@ defmodule Arc.Identity do
   Resolves the identity of `principal` by running the application's identity provider.
 
   Returns an `Arc.Identity.Result`. With no provider configured the details are an empty map.
+  The `:tenant` option is the tenant of the request, given to the provider.
   """
-  @spec resolve(module(), Principal.t()) :: Result.t()
-  def resolve(_application, %Principal{authenticated?: false}), do: Result.unauthenticated()
+  @spec resolve(module(), Principal.t(), keyword()) :: Result.t()
+  def resolve(application, principal, opts \\ [])
 
-  def resolve(application, %Principal{} = principal) do
+  def resolve(_application, %Principal{authenticated?: false}, _opts),
+    do: Result.unauthenticated()
+
+  def resolve(application, %Principal{} = principal, opts) do
     context = %Context{
       id: principal.id || "unknown",
       name: principal.name || "",
       claims: claims(principal),
-      principal: principal
+      principal: principal,
+      application: application,
+      tenant: Keyword.get(opts, :tenant)
     }
 
     {authorized?, details} =

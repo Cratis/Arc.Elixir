@@ -15,7 +15,8 @@ defmodule Arc.Plug do
     * `POST` command routes and `POST <route>/validate`
     * `GET` and `QUERY` query routes, including paging and sorting
     * observable queries as an HTTP snapshot, direct Server-Sent Events and direct WebSocket
-    * the multiplexed WebSocket hub at `/.cratis/queries/ws`
+    * the multiplexed hubs: WebSocket at `/.cratis/queries/ws` and Server-Sent Events at
+      `/.cratis/queries/sse` with its `subscribe` and `unsubscribe` control routes
     * `/.cratis/commands`, `/.cratis/queries`, `/.cratis/me`, `/.cratis/identity-details/schema`,
       `/.cratis/users` and `/.cratis/tenants`
 
@@ -197,7 +198,8 @@ defmodule Arc.Plug do
     end
   end
 
-  defp read_json(conn, app) do
+  @doc false
+  def read_json(conn, app) do
     case conn.body_params do
       %Plug.Conn.Unfetched{} -> read_body_json(conn, app)
       %{"_json" => json} -> {:ok, conn, json}
