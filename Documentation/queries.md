@@ -77,10 +77,38 @@ An `@observe` query is the same function, run again whenever its inputs change, 
 - A plain `GET` returns the current result.
 - `Accept: text/event-stream` opens Server-Sent Events, one `data:` message per result.
 - A WebSocket upgrade, or the shared hub at `/.cratis/queries/ws`, which carries many subscriptions on one connection.
+- The shared Server-Sent Events hub at `/.cratis/queries/sse`: the same protocol and the same many subscriptions on one stream, for clients that cannot or do not want a WebSocket. See [Hubs](#hubs).
 
-The generated React client chooses the hub by default.
+The generated React client chooses the WebSocket hub by default; `queryTransportMethod` selects the SSE one.
+
+On the client the choice is two values, `QueryTransportMethod` and `ObservableQueryTransferMode`, which the showcase's toolbar sets:
+
+```tsx
+// From: Samples/showcase/frontend/src/main.tsx
+const [transport, setTransport] = useState<QueryTransportMethod>(QueryTransportMethod.WebSocket);
+```
+
+```tsx
+// From: Samples/showcase/frontend/src/main.tsx
+const [transferMode, setTransferMode] = useState<ObservableQueryTransferMode>(ObservableQueryTransferMode.Delta);
+```
 
 Each subscription is a process under your Arc application, started when the client subscribes and ended when its connection ends. It is `restart: :temporary`, so a failing subscription ends instead of looping; the client resubscribes. This needs `MyApp.Arc` in your supervision tree.
+
+### Hubs
+
+Both hubs speak the same protocol (`Connected`, `Subscribe`, `Unsubscribe`, `QueryResult`, `Unauthorized`, `Error`, `Ping`/`Pong`), with revisions so that a delayed subscribe cannot bring back a subscription that was cancelled. Each subscription goes through the ordinary query pipeline, so authorization, filters and the tenant apply as for a `GET`.
+
+| | WebSocket | Server-Sent Events |
+| --- | --- | --- |
+| Open | `GET /.cratis/queries/ws` upgrade | `GET /.cratis/queries/sse` streams `data:` events; the first is `Connected` with the connection id |
+| Subscribe | a `Subscribe` message | `POST /.cratis/queries/sse/subscribe` with `{connectionId, queryId, revision, request}` |
+| Unsubscribe | an `Unsubscribe` message | `POST /.cratis/queries/sse/unsubscribe` with `{connectionId, queryId, revision}` |
+| Needs | nothing special | an answer of `404` for an unknown connection or a different caller, `400` for a malformed body |
+
+A browser `WebSocket` and `EventSource` cannot set request headers, so authenticate them with cookies, which an Arc authentication handler or a plug in front of Arc can read; the showcase sample shows one that turns cookies into the identity and tenant headers.
+
+A subscription's `transferMode` shapes what it receives: `full` sends a snapshot every time, `delta` sends a snapshot first and afterwards only the change set (`added`, `replaced`, `removed`), and without a preference every emission carries both. The change set is computed on the hub, so a source needs nothing extra to support it.
 
 ### What triggers a re-run
 

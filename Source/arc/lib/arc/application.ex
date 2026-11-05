@@ -33,7 +33,13 @@ defmodule Arc.Application do
     * `:chronicle` - options given to every Chronicle call, for example `[client: MyApp.Chronicle]`
     * `:authentication` - a list of `Arc.Authentication` handler modules, run in order
     * `:policies` - `[name: PolicyModule]` for `Arc.Policy`
-    * `:tenant_header` - default `"x-cratis-tenant-id"`
+    * `:filters` - `Arc.Filter` modules: cross-cutting rules that run for every command and query
+    * `:tenant_header` - default `"x-cratis-tenant-id"`; the header the `:header` tenancy resolver
+      reads, and the fallback of the `:subdomain` one
+    * `:tenancy` - how the tenant is resolved, see `Arc.Tenancy`: `resolver` (`:header`, `:query`,
+      `:claim`, `:subdomain`, `:fixed`, `:development` or a module), `header`, `query_parameter`,
+      `claim_type`, `base_domain` and `tenant_id`. A named tenant also selects the Chronicle
+      namespace of every call made through the context
     * `:correlation_header` - default `"x-correlation-id"`
     * `:max_body_bytes` - request body limit; default `1_000_000`
     * `:introspection` - who may read the discovery routes (`/.cratis/commands`, `/.cratis/queries`,
@@ -88,7 +94,9 @@ defmodule Arc.Application do
       chronicle: [],
       authentication: [Arc.Authentication.FromAssigns],
       policies: [],
+      filters: [],
       tenant_header: "x-cratis-tenant-id",
+      tenancy: [],
       correlation_header: "x-correlation-id",
       max_body_bytes: 1_000_000,
       introspection: :authenticated,
@@ -130,6 +138,7 @@ defmodule Arc.Application do
   @spec refresh(module()) :: map()
   def refresh(app) do
     config = app.config()
+    Arc.Tenancy.validate!(config)
     descriptors = discover(config)
     commands = Enum.filter(descriptors, &(&1.kind == :command))
     read_models = Enum.filter(descriptors, &(&1.kind == :read_model))
@@ -257,6 +266,7 @@ defmodule Arc.Application do
 
       children = [
         {Registry, keys: :duplicate, name: Arc.Notifier.registry(app)},
+        {Registry, keys: :unique, name: Arc.Plug.SseHub.registry(app)},
         {Arc.Identity.ReplayCache, app},
         {DynamicSupervisor, name: Arc.Notifier.subscriptions(app), strategy: :one_for_one}
       ]

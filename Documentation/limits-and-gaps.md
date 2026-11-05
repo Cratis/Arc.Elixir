@@ -26,10 +26,11 @@ Not verified: behavior against a running Chronicle kernel in this repository's C
 
 ## Where it differs from the HTTP contract
 
-- **Delta transfer mode.** A hub subscription that asks for `transferMode: "delta"` receives full snapshots with no change set.
-- **No SSE hub.** `/.cratis/queries/sse` and its subscribe and unsubscribe routes are not served. Use the WebSocket hub (the client default) or direct Server-Sent Events per query.
+- **Change sets.** Delta and unspecified transfer modes compute the change set on the hub, per subscription, by comparing with the previous emission, so a restart of a subscription starts with a snapshot again. Items are matched on an `id` member (any case); without one, the change set lists additions and removals only and never a replacement. A query that is ordered or paged always sends the snapshot too, because a position matters there.
+- **SSE hub control requests are per request.** A subscription runs with the context of the control `POST` that created it, so the tenant of a subscription is the tenant header or cookie of that request, not of the stream. The caller of a control request must be the caller that opened the stream (same principal id), else the answer is 404.
 - **Introspection depth.** The catalogs report name, namespace, route, type, documentation summary and a payload or arguments schema. They do not report authorization or per-property validation metadata.
-- **Tenancy.** The tenant header is read into `ctx.tenant`. Arc has no resolver chain and does not require or enforce a tenant. `/.cratis/tenants` only lists what your providers return.
+- **Tenancy.** One configured resolver (header, query string, claim, subdomain, fixed or a module, see `Arc.Tenancy`) selects the tenant; there is no chain of resolvers, and Arc does not require or enforce a tenant or check membership. A named tenant also selects the Chronicle namespace. `/.cratis/tenants` only lists what your providers return.
+- **MongoDB.** `cratis_arc_mongodb` is not a port of the MongoDB C# driver conventions: documents are structs converted by `Arc.MongoDB.Codec`, there are no `IMongoCollection` injection, no serializers for `Guid` representations other than the standard one and no `MONGODB-OIDC` access tokens (the Elixir driver has none). See [MongoDB](mongodb.md).
 - **Identity cookie.** `/.cratis/me` never sets or reads a `.cratis-identity` cookie.
 - **Replay memory.** The signed forwarded-identity and on-behalf-of replay caches live in a process per application and per node. A replay is refused on the node that saw the original only, and verification fails closed if the application is not started.
 - **Admission control.** The only request limit is `max_body_bytes`. There are no connection or subscription caps.

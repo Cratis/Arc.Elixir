@@ -1,0 +1,21 @@
+# A single-node MongoDB replica set: change streams, which the observable MongoDB queries use,
+# need a replica set even with one member.
+#
+#   docker compose up -d
+#   MONGODB_URL="mongodb://localhost:27017/?directConnection=true" mix run --no-halt
+#
+# The replica set is advertised as `localhost`, so it is reachable from the host, which is where
+# the sample runs.
+services:
+  mongo:
+    image: mongo:7
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "127.0.0.1:27017:27017"
+    healthcheck:
+      test: >
+        mongosh --quiet --port 27017 --eval
+        "try { rs.status().ok } catch (e) { rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}]}).ok }"
+      interval: 3s
+      timeout: 10s
+      retries: 20

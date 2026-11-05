@@ -15,14 +15,14 @@ defmodule Arc.ProxyGenerator.Render do
   # Commands
 
   def command(%Descriptor{} = d, opts) do
-    skip = opts.segments_to_skip
+    skip = opts.layout
     folder = TS.folder(d.module, skip)
     props = Enum.map(d.fields, &property(&1, skip))
     response = d.response && TS.map(d.response, skip)
     rules = rules(d.fields)
     has_rules? = rules != []
     name = d.name
-    {module, feature, slice} = Descriptor.slice_location(d, skip)
+    {module, feature, slice} = Descriptor.slice_location(d, opts.segments_to_skip)
 
     imports =
       TS.imports(Enum.map(props, & &1.mapping) ++ List.wrap(response), folder, skip)
@@ -135,7 +135,7 @@ defmodule Arc.ProxyGenerator.Render do
   # Queries
 
   def query(%Descriptor{} = d, %Descriptor.Query{} = q, opts) do
-    skip = opts.segments_to_skip
+    skip = opts.layout
     folder = TS.folder(d.module, skip)
     name = Naming.pascal(q.name)
     model_map = TS.map(d.model, skip)
@@ -144,7 +144,7 @@ defmodule Arc.ProxyGenerator.Render do
     params = Enum.map(q.params, &property(&1, skip))
     many? = q.many?
     observable? = q.observable?
-    {module, feature, slice} = Descriptor.slice_location(d, skip)
+    {module, feature, slice} = Descriptor.slice_location(d, opts.segments_to_skip)
 
     imports = TS.imports([model_map | Enum.map(params, & &1.mapping)], folder, skip)
     rules = rules(q.params)
@@ -433,7 +433,7 @@ defmodule Arc.ProxyGenerator.Render do
   # Types
 
   def type(module, fields, opts) do
-    skip = opts.segments_to_skip
+    skip = opts.layout
     folder = TS.folder(module, skip)
     {_ns, name} = Arc.Naming.module_parts(module)
     props = Enum.map(fields, &property(&1, skip))

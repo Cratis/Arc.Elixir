@@ -51,18 +51,15 @@ defmodule Arc.Subscription do
 
   @impl true
   def handle_continue(:subscribe, state) do
-    chronicle =
-      Keyword.take(Arc.Application.state(state.app).config[:chronicle], [:client, :namespace])
-
     watchers =
-      for model <- state.query.watch, reduce: [] do
+      for target <- state.query.watch, reduce: [] do
         acc ->
-          case Chronicle.ReadModels.subscribe(model, chronicle) do
+          case watch(target, state) do
             {:ok, watcher} ->
               [watcher | acc]
 
             {:error, reason} ->
-              Logger.warning("Arc could not watch #{inspect(model)}: #{inspect(reason)}")
+              Logger.warning("Arc could not watch #{inspect(target)}: #{inspect(reason)}")
               acc
           end
       end
@@ -72,6 +69,24 @@ defmodule Arc.Subscription do
 
     send_result(state)
     {:noreply, %{state | watchers: watchers}}
+  end
+
+  # A Chronicle read model module, or `{watch_module, target}` for a source that implements
+  # `Arc.Watch`, for example `ArcMongo.watch/1`.
+  defp watch({module, target}, state) when is_atom(module) do
+    case module.subscribe(target, state.ctx, self()) do
+      {:ok, handle} -> {:ok, {:custom, module, handle}}
+      other -> other
+    end
+  end
+
+  defp watch(model, state) when is_atom(model) do
+    chronicle = Keyword.take(state.ctx.chronicle, [:client, :namespace])
+
+    case Chronicle.ReadModels.subscribe(model, chronicle) do
+      {:ok, watcher} -> {:ok, {:chronicle, watcher}}
+      other -> other
+    end
   end
 
   @impl true
@@ -95,7 +110,13 @@ defmodule Arc.Subscription do
 
   @impl true
   def terminate(_reason, state) do
-    for watcher <- state.watchers, do: Chronicle.ReadModels.unsubscribe(watcher)
+    for watcher <- state.watchers do
+      case watcher do
+        {:chronicle, handle} -> Chronicle.ReadModels.unsubscribe(handle)
+        {:custom, module, handle} -> module.unsubscribe(handle)
+      end
+    end
+
     :ok
   end
 

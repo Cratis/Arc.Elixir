@@ -142,6 +142,28 @@ Every response is private: `Cache-Control: no-store, private` and `Vary: Cookie`
 
 `assign_identity/2` assigns the same `Arc.Identity.Result` the endpoint would serve. See [LiveView](live-view.md#identity).
 
+### Authorize a whole namespace
+
+An `Arc.Filter` is a cross-cutting rule that runs for every command and query, after authorization and before validation. It sees the context and the descriptor of the artifact, and answers `:ok` or `{:unauthorized, reason}`. Register the filters on the application with `filters: [...]`. This one requires a role of every artifact in one namespace, without the artifacts saying anything about it:
+
+```elixir
+# From: Samples/showcase/lib/samples/cross_cutting_authorization/filter.ex
+  @behaviour Arc.Filter
+
+  @protected ["Samples", "CrossCuttingAuthorization"]
+  @required_role "CrossCuttingAuthorization"
+
+  @impl true
+  def on_command(ctx, %Arc.Descriptor{namespace: @protected}), do: check(ctx)
+  def on_command(_ctx, _descriptor), do: :ok
+
+  @impl true
+  def on_query(ctx, %Arc.Descriptor{namespace: @protected}, _query), do: check(ctx)
+  def on_query(_ctx, _descriptor, _query), do: :ok
+```
+
+`ctx.query` holds the paging and sorting of a query, for a filter that cares. An unauthorized result is a `403` and the artifact never runs.
+
 ### Development users and tenants
 
 Tools such as Lens read `/.cratis/users` and `/.cratis/tenants` to offer users and tenants to sign in as. Implement `Arc.Identity.UsersProvider` and `Arc.Identity.TenantsProvider` in development-only modules; Arc discovers them and concatenates what they return.

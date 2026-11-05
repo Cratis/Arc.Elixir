@@ -83,6 +83,7 @@ defmodule Arc do
   @spec context(module(), keyword()) :: Context.t()
   def context(application, opts \\ []) do
     chronicle = Arc.Application.state(application).config[:chronicle]
-    Context.new(Keyword.merge([application: application, chronicle: chronicle], opts))
+    base = Context.new(Keyword.merge([application: application, chronicle: chronicle], opts))
+    %{base | chronicle: Arc.Tenancy.chronicle_options(base.chronicle, base.tenant)}
   end
 end

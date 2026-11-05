@@ -27,3 +27,5 @@ ContractTests/TypeScript/generated/
 Samples/frontend/src/arc/
 Samples/frontend/dist/
 Samples/phoenix/priv/spa/
+Samples/showcase/priv/spa/
+Samples/showcase/dist/

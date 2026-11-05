@@ -166,4 +166,46 @@ defmodule Arc.ProxyGeneratorTest do
       Arc.Application.refresh(CollideApp)
     end
   end
+
+  describe "co-located layout" do
+    # The fixtures all live in test/support/fixtures.ex, so that is the one folder they share.
+    defp colocated(dir, opts \\ []),
+      do: generate(dir, Keyword.merge([layout: :colocated, root: "test"], opts))
+
+    test "writes each proxy beside the source file of its module", %{tmp_dir: dir} do
+      result = colocated(dir)
+
+      assert "support/RegisterAuthor.ts" in result.written
+      assert "support/AllAuthors.ts" in result.written
+      assert "support/Author.ts" in result.written
+      assert "support/index.ts" in result.written
+      refute Enum.any?(result.written, &String.starts_with?(&1, "Authors/"))
+    end
+
+    test "imports between proxies follow the folders", %{tmp_dir: dir} do
+      colocated(dir)
+
+      assert read(dir, "support/AllAuthors.ts") =~ "from './Author'"
+    end
+
+    test "is deterministic and leaves nothing to write the second time", %{tmp_dir: dir} do
+      colocated(dir)
+
+      assert %{written: [], removed: []} = colocated(dir)
+    end
+
+    test "falls back to the namespace for a module whose source is outside the root", %{
+      tmp_dir: dir
+    } do
+      result = colocated(dir, root: "lib")
+
+      assert "Authors/Registration/RegisterAuthor.ts" in result.written
+    end
+
+    test "refuses an unknown layout", %{tmp_dir: dir} do
+      assert_raise ArgumentError, ~r/Unknown proxy layout/, fn ->
+        generate(dir, layout: :scattered)
+      end
+    end
+  end
 end

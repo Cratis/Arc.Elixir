@@ -49,6 +49,10 @@ defmodule Arc.ProxyGenerator do
 
     * `:application` - the `Arc.Application` module (required)
     * `:output` - the directory to generate into (required)
+    * `:layout` - `:namespace` (default) mirrors the module namespace under `:output`;
+      `:colocated` writes each proxy beside the source file of its module, so `:output` is the
+      root that holds your Elixir and your React code, for example `"lib"`. See
+      [Vertical slices](vertical-slices.md)
     * `:remove_stale` - delete generated files for artifacts that no longer exist; default `true`
   """
 
@@ -69,14 +73,15 @@ defmodule Arc.ProxyGenerator do
   Renders every proxy without touching the file system. Returns files with a path relative to the output
   directory, the source module, and the TypeScript body.
   """
-  @spec render(module()) :: [Artifact.t()]
-  def render(application) do
+  @spec render(module(), keyword()) :: [Artifact.t()]
+  def render(application, options \\ []) do
     state = Arc.Application.state(application)
     config = state.config
 
     opts = %{
       segments_to_skip: config[:segments_to_skip],
-      route_prefix: config[:route_prefix]
+      route_prefix: config[:route_prefix],
+      layout: layout(config[:segments_to_skip], options)
     }
 
     commands =
@@ -142,8 +147,35 @@ defmodule Arc.ProxyGenerator do
       else: []
   end
 
+  # Mirror the namespace by default. Co-located, each proxy goes beside the source file of the
+  # module it was generated from, so a feature's backend, proxies and React code share a folder.
+  defp layout(skip, options) do
+    case Keyword.get(options, :layout, :namespace) do
+      :namespace ->
+        skip
+
+      :colocated ->
+        root = (options[:root] || Keyword.fetch!(options, :output)) |> Path.expand()
+        %{skip: skip, folder: &source_folder(&1, root)}
+
+      other ->
+        raise ArgumentError,
+              "Unknown proxy layout #{inspect(other)}. Use :namespace (default) or :colocated."
+    end
+  end
+
+  defp source_folder(module, root) do
+    with source when is_list(source) <- module.__info__(:compile)[:source],
+         relative = source |> List.to_string() |> Path.dirname() |> Path.relative_to(root),
+         false <- Path.type(relative) == :absolute or String.starts_with?(relative, "..") do
+      if relative == ".", do: "", else: relative
+    else
+      _ -> nil
+    end
+  end
+
   defp path(module, name, opts) do
-    folder = TypeScript.folder(module, opts.segments_to_skip)
+    folder = TypeScript.folder(module, opts.layout)
     relative = if folder == "", do: "#{name}.ts", else: "#{folder}/#{name}.ts"
     validate_path!(relative, module)
     relative
@@ -180,6 +212,8 @@ defmodule Arc.ProxyGenerator do
   ## Options
 
     * `:output` - the directory (required)
+    * `:layout` - `:namespace` (default) or `:colocated`
+    * `:root` - for `:colocated`, the directory source folders are relative to; defaults to `:output`
     * `:remove_stale` - default `true`
     * `:dry_run` - report what would change without writing
   """
@@ -187,7 +221,7 @@ defmodule Arc.ProxyGenerator do
   def generate(application, opts) do
     output = Keyword.fetch!(opts, :output)
     dry_run? = Keyword.get(opts, :dry_run, false)
-    files = render(application)
+    files = render(application, Keyword.take(opts, [:output, :layout, :root]))
     expected = MapSet.new(files, & &1.path)
 
     with {:ok, plan} <- plan(files, output) do

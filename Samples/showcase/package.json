@@ -1,0 +1,27 @@
+{
+    "name": "@cratis/arc-elixir-samples-showcase",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc --noEmit && vite build",
+        "typecheck": "tsc --noEmit",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@cratis/arc": "22.161.0",
+        "@cratis/arc.react": "22.161.0",
+        "@cratis/fundamentals": "7.33.0",
+        "react": "19.3.1",
+        "react-dom": "19.3.1"
+    },
+    "devDependencies": {
+        "@types/node": "26.6.6",
+        "@types/react": "19.3.0",
+        "@types/react-dom": "19.2.4",
+        "@vitejs/plugin-react": "5.1.0",
+        "typescript": "7.0.2",
+        "vite": "7.3.6"
+    }
+}

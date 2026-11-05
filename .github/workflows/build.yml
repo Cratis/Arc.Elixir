@@ -75,6 +75,60 @@ jobs:
         working-directory: ./Source/arc
         run: mix test
 
+  mongodb:
+    name: MongoDB package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Change streams need a replica set, which a service container cannot start.
+      - name: Start a MongoDB replica set
+        run: |
+          docker run -d --name mongo -p 27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for i in $(seq 1 30); do
+            docker exec mongo mongosh --quiet --eval 'db.runCommand({ping:1}).ok' && break
+            sleep 1
+          done
+          docker exec mongo mongosh --quiet --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
+          for i in $(seq 1 30); do
+            docker exec mongo mongosh --quiet --eval 'rs.status().members[0].stateStr' | grep -q PRIMARY && break
+            sleep 1
+          done
+
+      - name: Setup Elixir and Erlang
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+
+      - name: Install Hex and Rebar
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+
+      - name: Install dependencies
+        working-directory: ./Source/arc_mongodb
+        run: mix deps.get
+
+      - name: Check formatting
+        working-directory: ./Source/arc_mongodb
+        run: mix format --check-formatted
+
+      - name: Compile
+        working-directory: ./Source/arc_mongodb
+        env:
+          MIX_ENV: test
+        run: mix compile --warnings-as-errors
+
+      - name: Run tests
+        working-directory: ./Source/arc_mongodb
+        env:
+          MONGODB_URL: mongodb://localhost:27017/?directConnection=true
+        run: mix test
+
   documentation:
     name: Documentation
     runs-on: ubuntu-latest

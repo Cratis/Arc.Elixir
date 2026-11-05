@@ -25,7 +25,7 @@ mix arc.gen.proxies --application MyApp.Arc --output assets/src/arc
 mix arc.gen.proxies --check          # write nothing; fail if the files are out of date
 ```
 
-Use `--check` in CI when you commit the generated files. Add `remove_stale: false` to the `arc:` options (or `--no-remove-stale`) to keep generated files for artifacts that no longer exist.
+Use `--check` in CI when you commit the generated files. To keep a feature's proxies beside its Elixir and its React page, set `layout: :colocated`: see [Vertical slices](vertical-slices.md). Add `remove_stale: false` to the `arc:` options (or `--no-remove-stale`) to keep generated files for artifacts that no longer exist.
 
 ## What you get
 
