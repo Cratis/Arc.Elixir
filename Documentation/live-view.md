@@ -1,6 +1,6 @@
 ---
 title: LiveView
-description: Call Arc commands and queries from Phoenix LiveView in process, keep assigns current from observable queries, and bind forms to commands with the standard components.
+description: Call Arc commands and queries from Phoenix LiveView in process, keep assigns current from observable queries, and bind forms to commands with components.
 ---
 
 LiveView pages and React apps want the same thing from the backend: run a command, read a query, show what went wrong. Arc lets a LiveView do that by calling the pipeline directly. There is no HTTP hop, no JSON, and no generated TypeScript; authorization, validation and recording behave exactly as they do for the HTTP host.

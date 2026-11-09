@@ -1,6 +1,6 @@
 ---
 title: Tenancy
-description: Select the tenant of a request, and have it scope the Chronicle namespace and the MongoDB database.
+description: Choose how Arc for Elixir resolves the tenant of each request, and how that tenant selects the Chronicle namespace and the MongoDB database your code uses.
 ---
 
 A request is for one tenant. Tenancy has three separate decisions, and Arc treats them separately:

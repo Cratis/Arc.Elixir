@@ -1,6 +1,6 @@
 ---
 title: Build and release
-description: How Arc for Elixir is built, tested and released - the pull request checks, the proxy contract gate, the labels that decide a version, and how a merge reaches Hex.
+description: How Arc for Elixir is built and released: pull request checks, the proxy contract gate, the labels that pick a version, and how a merge is published to Hex.
 ---
 
 A change reaches users through a pull request, a label and a merge. This page explains each automated step and how to reproduce it locally, so a red check is something you can fix rather than something you wait on.
