@@ -1,6 +1,6 @@
 ---
 title: Vertical slices
-description: Keep the Elixir, the generated TypeScript proxies and the React page of a feature in one folder.
+description: Organize an Arc for Elixir application by feature, keeping the Elixir code, generated TypeScript proxies and React page of each feature together in one folder.
 ---
 
 We recommend organizing an Arc application by **feature**, not by technical layer. A feature, "show the ticker" or "register an author", is one behavior that spans the stack: a command or query on the server, the proxy the browser calls it with, and the page that shows it. Arc does not require this; it finds your commands and read models wherever they live. This page shows how to make the layout cohesive.

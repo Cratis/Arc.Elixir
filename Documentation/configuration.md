@@ -1,6 +1,6 @@
 ---
 title: Configuration reference
-description: Every option of an Arc application, the proxy settings in mix.exs, and the routes, headers and defaults they control.
+description: Reference for every Arc for Elixir application option, the proxy generation settings in mix.exs, and the routes, headers and defaults each of them controls.
 ---
 
 Options go to `use Arc.Application` and are merged under `config :my_app, MyApp.Arc, […]`, so deployment configuration wins.
