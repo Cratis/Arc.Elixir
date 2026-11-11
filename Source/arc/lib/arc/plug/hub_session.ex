@@ -87,7 +87,7 @@ defmodule Arc.Plug.HubSession do
 
       true ->
         state = stop_existing(state, query_id)
-        {out, state} = start_subscription(state, query_id, revision, request, ctx)
+        {out, state} = start_subscription(state, {query_id, revision}, request, ctx)
         {:ok, out, state}
     end
   end
@@ -155,7 +155,7 @@ defmodule Arc.Plug.HubSession do
   defp request_of(%{"request" => request}) when is_map(request), do: request
   defp request_of(_), do: nil
 
-  defp start_subscription(state, query_id, revision, request, ctx) do
+  defp start_subscription(state, {query_id, revision}, request, ctx) do
     case Map.fetch(Arc.Application.state(state.app).query_names, request["queryName"]) do
       :error ->
         {[error(query_id, "Unknown query '#{request["queryName"]}'.")], state}
@@ -233,27 +233,31 @@ defmodule Arc.Plug.HubSession do
         change_set = change_set(subscription.previous, items)
         subscription = %{subscription | previous: items}
 
-        wire =
-          cond do
-            subscription.mode == :delta and first? ->
-              wire
-
-            subscription.mode == :delta and subscription.ordered? ->
-              wire
-
-            subscription.mode == :delta and change_set.identity? ->
-              wire |> Map.delete("data") |> Map.put("changeSet", change_set.wire)
-
-            true ->
-              Map.put(wire, "changeSet", change_set.wire)
-          end
-
-        {wire, subscription}
+        {shape_change_set(wire, subscription, first?, change_set), subscription}
 
       _ ->
         {wire, subscription}
     end
   end
+
+  defp shape_change_set(wire, %{mode: :delta} = subscription, first?, change_set) do
+    cond do
+      first? ->
+        wire
+
+      subscription.ordered? ->
+        wire
+
+      change_set.identity? ->
+        wire |> Map.delete("data") |> Map.put("changeSet", change_set.wire)
+
+      true ->
+        Map.put(wire, "changeSet", change_set.wire)
+    end
+  end
+
+  defp shape_change_set(wire, _subscription, _first?, change_set),
+    do: Map.put(wire, "changeSet", change_set.wire)
 
   defp change_set(previous, current) do
     identity? = Enum.all?(current ++ (previous || []), &has_id?/1)
