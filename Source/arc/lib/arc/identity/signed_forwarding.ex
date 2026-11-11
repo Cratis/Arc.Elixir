@@ -262,7 +262,9 @@ defmodule Arc.Identity.SignedForwarding do
         |> Map.keys()
         |> Enum.sort()
 
-      if length(names) > 64, do: nil, else: build(observed, configuration, envelope, {path, names})
+      if length(names) > 64,
+        do: nil,
+        else: build(observed, configuration, envelope, {path, names})
     else
       _ -> nil
     end
