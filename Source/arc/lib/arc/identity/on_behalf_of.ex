@@ -171,7 +171,7 @@ defmodule Arc.Identity.OnBehalfOf do
          :ok <- present_value(forward.actor, :missing_actor),
          :ok <- present_value(forward.assertion, :missing_assertion),
          {:ok, key_map} <- keys_or_misconfigured(keys),
-         {:ok, assertion} <- verify_assertion(forward.assertion, key_map, options, skew, now),
+         {:ok, assertion} <- verify_assertion(forward.assertion, key_map, options, {skew, now}),
          :ok <- bind(assertion, forward, represented),
          {:ok, actor_client} <- read_actor(forward.actor),
          :ok <- actor_matches(actor_client, assertion, represented),
@@ -202,7 +202,7 @@ defmodule Arc.Identity.OnBehalfOf do
 
   # The assertion
 
-  defp verify_assertion(token, keys, options, skew, now) do
+  defp verify_assertion(token, keys, options, {skew, now}) do
     with [h, p, s] <- String.split(token, "."),
          {:ok, header_bytes} <- b64url(h),
          {:ok, payload_bytes} <- b64url(p),
@@ -314,28 +314,28 @@ defmodule Arc.Identity.OnBehalfOf do
   # Binding to the request
 
   defp bind(assertion, forward, represented) do
-    cond do
-      not hash_matches?(assertion.principal_hash, forward.principal) or
-        assertion.subject != represented.id or
-          Forwarded.decode_header_value(forward.principal_id) != represented.id ->
-        {:error, failure(:principal_mismatch)}
-
-      not hash_matches?(assertion.actor_hash, forward.actor || "") ->
-        {:error, failure(:actor_mismatch)}
-
-      not blank?(forward.tenant) and assertion.tenant != forward.tenant ->
-        {:error, failure(:tenant_mismatch)}
-
-      assertion.method != nil and assertion.method != forward.method ->
-        {:error, failure(:method_mismatch)}
-
-      assertion.target != nil and not target_matches?(assertion.target, forward.path) ->
-        {:error, failure(:target_mismatch)}
-
-      true ->
-        :ok
+    with :ok <- check(principal_matches?(assertion, forward, represented), :principal_mismatch),
+         :ok <- check(hash_matches?(assertion.actor_hash, forward.actor || ""), :actor_mismatch),
+         :ok <- check(tenant_matches?(assertion, forward), :tenant_mismatch),
+         :ok <- check(method_matches?(assertion, forward), :method_mismatch) do
+      check(request_target_matches?(assertion, forward), :target_mismatch)
     end
   end
+
+  defp principal_matches?(assertion, forward, represented) do
+    hash_matches?(assertion.principal_hash, forward.principal) and
+      assertion.subject == represented.id and
+      Forwarded.decode_header_value(forward.principal_id) == represented.id
+  end
+
+  defp tenant_matches?(assertion, forward),
+    do: blank?(forward.tenant) or assertion.tenant == forward.tenant
+
+  defp method_matches?(assertion, forward),
+    do: assertion.method == nil or assertion.method == forward.method
+
+  defp request_target_matches?(assertion, forward),
+    do: assertion.target == nil or target_matches?(assertion.target, forward.path)
 
   defp hash_matches?(expected, header_value) do
     Plug.Crypto.secure_compare(
