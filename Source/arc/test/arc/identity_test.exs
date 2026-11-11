@@ -125,6 +125,30 @@ defmodule Arc.IdentityTest do
       assert get_resp_header(users.resp_body && users, "cache-control") == ["no-store, private"]
     end
 
+    test "authentication failure remains terminal even for anonymous discovery" do
+      configure(
+        introspection: :anonymous,
+        authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
+        trust_forwarded_identity_headers: true
+      )
+
+      request =
+        conn(:get, "/.cratis/users")
+        |> put_req_header("x-ms-client-principal", "invalid")
+        |> put_req_header("x-ms-client-principal-id", "u")
+        |> put_req_header("x-ms-client-principal-name", "n")
+
+      response = call(request)
+      assert response.status == 401
+      assert Jason.decode!(response.resp_body) == %{"message" => "Authentication failed."}
+
+      assert get_resp_header(response, "cache-control") ==
+               get_resp_header(request, "cache-control")
+
+      configure(introspection: false)
+      assert call(request) == request
+    end
+
     test "they follow the discovery access setting" do
       assert (conn(:get, "/.cratis/users") |> call()).status == 401
       assert (conn(:get, "/.cratis/identity-details/schema") |> call()).status == 401

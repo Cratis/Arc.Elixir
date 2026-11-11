@@ -130,6 +130,21 @@ defmodule Arc.PlugTest do
     end
   end
 
+  describe "route admission" do
+    test "wrong methods and unknown validation routes pass through" do
+      for {method, path} <- [
+            {:get, @register},
+            {:get, @register <> "/validate"},
+            {:post, "/api/missing/validate"},
+            {:post, "/api/authors/listing/all-authors"},
+            {:delete, "/api/authors/listing/all-authors"}
+          ] do
+        request = conn(method, path)
+        assert call(request) == request
+      end
+    end
+  end
+
   describe "queries" do
     test "GET returns the data envelope" do
       conn = conn(:get, "/api/authors/listing/all-authors") |> call()
@@ -195,6 +210,20 @@ defmodule Arc.PlugTest do
       assert conn.status == 200
       assert get_resp_header(conn, "cache-control") == ["no-store"]
       assert [%{"name" => "Bob"}] = decoded(conn)["data"]
+    end
+
+    test "QUERY rejects non-map arguments, paging and sorting" do
+      for field <- ["arguments", "paging", "sorting"] do
+        request =
+          conn("QUERY", "/api/authors/listing/all-authors", Jason.encode!(%{field => []}))
+          |> put_req_header("content-type", "application/json")
+          |> call()
+
+        assert request.status == 400
+
+        assert [%{"message" => "The QUERY body is not valid."}] =
+                 decoded(request)["validationResults"]
+      end
     end
 
     test "a query with its own authorization answers 403 to an anonymous caller" do

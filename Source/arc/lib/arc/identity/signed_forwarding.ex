@@ -78,20 +78,26 @@ defmodule Arc.Identity.SignedForwarding do
     now = now || System.os_time(:second)
     observed = capture(conn, config)
 
-    cond do
-      observed != nil and not credential?(Map.keys(observed.headers)) ->
-        :anonymous
+    authenticate_observed(observed, %{app: app, config: config, now: now})
+  end
 
-      true ->
-        with %{} = observed <- observed || :invalid,
-             %{} = configuration <- configuration(config) || :invalid,
-             signature when is_binary(signature) <- observed.headers[@header] || :invalid,
-             %{} = envelope <- parse_envelope(signature) || :invalid,
-             %{} = request <- canonicalize(observed, configuration, envelope) || :invalid do
-          verify_and_build(request, envelope, configuration, app, config, now)
-        else
-          _ -> {:failed, "forwarded-identity-invalid-input"}
-        end
+  defp authenticate_observed(nil, _context),
+    do: {:failed, "forwarded-identity-invalid-input"}
+
+  defp authenticate_observed(observed, context) do
+    if credential?(Map.keys(observed.headers)),
+      do: authenticate_credential(observed, context),
+      else: :anonymous
+  end
+
+  defp authenticate_credential(observed, context) do
+    with %{} = configuration <- configuration(context.config),
+         signature when is_binary(signature) <- observed.headers[@header],
+         %{} = envelope <- parse_envelope(signature),
+         %{} = request <- canonicalize(observed, configuration, envelope) do
+      verify_and_build(request, envelope, configuration, context)
+    else
+      _ -> {:failed, "forwarded-identity-invalid-input"}
     end
   end
 
@@ -256,13 +262,15 @@ defmodule Arc.Identity.SignedForwarding do
         |> Map.keys()
         |> Enum.sort()
 
-      if length(names) > 64, do: nil, else: build(observed, configuration, envelope, path, names)
+      if length(names) > 64,
+        do: nil,
+        else: build(observed, configuration, envelope, {path, names})
     else
       _ -> nil
     end
   end
 
-  defp build(observed, configuration, envelope, path, names) do
+  defp build(observed, configuration, envelope, {path, names}) do
     prefix =
       [
         configuration.audience,
@@ -348,8 +356,8 @@ defmodule Arc.Identity.SignedForwarding do
     end
   end
 
-  defp verify_and_build(request, envelope, configuration, app, config, now) do
-    case verify(request, envelope, configuration, app, now) do
+  defp verify_and_build(request, envelope, configuration, context) do
+    case verify(request, envelope, configuration, context.app, context.now) do
       :error ->
         {:failed, "forwarded-identity-rejected"}
 
@@ -357,13 +365,13 @@ defmodule Arc.Identity.SignedForwarding do
         principal = Forwarded.to_principal(client, headers[@id_header])
 
         if OnBehalfOf.present?(&Map.has_key?(headers, &1)),
-          do: with_actor(principal, request, app, config, now),
+          do: with_actor(principal, request, context),
           else: {:authenticated, principal}
     end
   end
 
   # An actor or assertion header makes this an on-behalf forward: it is authenticated as one or not at all.
-  defp with_actor(principal, request, app, config, now) do
+  defp with_actor(principal, request, %{app: app, config: config, now: now}) do
     headers = request.headers
 
     forward = %{

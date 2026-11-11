@@ -170,6 +170,69 @@ defmodule Arc.SignedForwardingTest do
     end
   end
 
+  describe "input validation ordering" do
+    test "an invalid capture fails even without an identity credential" do
+      request = conn(:get, "/api/x")
+      request = %{request | req_headers: [{"tenant-id", "a"}, {"tenant-id", "b"}]}
+
+      assert authenticate(request) == {:failed, "forwarded-identity-invalid-input"}
+    end
+
+    test "an anonymous request does not require valid signing configuration" do
+      assert SignedForwarding.authenticate(conn(:get, "/api/x"), @app, [], @now) == :anonymous
+    end
+
+    test "canonicalization rejects invalid methods, paths and covered headers" do
+      for request <- [
+            %{signed() | method: "post"},
+            signed(target: "/bad%"),
+            signed(headers: headers(%{"x-ms-client-principal-name" => ""})),
+            signed(headers: headers(%{"tenant-id" => "bad\nvalue"})),
+            signed(headers: headers(%{"tenant-id" => String.duplicate("a", 32_768)}))
+          ] do
+        assert authenticate(request) == {:failed, "forwarded-identity-invalid-input"}
+      end
+
+      assert {:authenticated, _} = authenticate(signed())
+    end
+
+    test "signed actor headers require a valid on-behalf assertion" do
+      {private, pem} = F.generate_keypair()
+      actor = Base.encode64(F.principal_json(%{"userId" => "support"}))
+      assertion = F.jws(F.claims(@principal, actor), private)
+
+      hs =
+        headers(%{
+          "x-cratis-on-behalf-actor" => actor,
+          "x-cratis-on-behalf-assertion" => assertion
+        })
+
+      config =
+        Keyword.put(@config, :on_behalf_of,
+          enabled: true,
+          issuer: "https://authproxy.example.com",
+          audience: "https://app.example.com",
+          signing_keys: [[key_id: "authproxy", public_key_pem: pem]]
+        )
+
+      now = System.os_time(:second)
+      request = signed(headers: hs, ts: now)
+
+      assert {:authenticated, %{actor: %{id: "support"}}} =
+               SignedForwarding.authenticate(request, @app, config, now)
+
+      invalid =
+        signed(
+          headers: headers(%{"x-cratis-on-behalf-actor" => "invalid"}),
+          ts: now,
+          nonce: F.nonce(1)
+        )
+
+      assert SignedForwarding.authenticate(invalid, @app, config, now) ==
+               {:failed, "forwarded-identity-invalid-actor"}
+    end
+  end
+
   describe "freshness and replay" do
     test "the freshness edges are inclusive" do
       for {ts, nonce} <- [{1_699_999_940, 10}, {1_700_000_030, 11}] do

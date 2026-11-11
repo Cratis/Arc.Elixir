@@ -46,11 +46,10 @@ defmodule Arc.Plug do
       String.starts_with?(path, "/.cratis/") ->
         Introspection.call(conn, app, state)
 
-      conn.method == "POST" and Map.has_key?(state.command_routes, path) ->
+      command_route?(conn, state) ->
         command(conn, app, Map.fetch!(state.command_routes, path), false)
 
-      conn.method == "POST" and String.ends_with?(path, "/validate") and
-          Map.has_key?(state.command_routes, String.replace_suffix(path, "/validate", "")) ->
+      validation_route?(conn, state) ->
         command(
           conn,
           app,
@@ -58,13 +57,27 @@ defmodule Arc.Plug do
           true
         )
 
-      conn.method in ["GET", "QUERY"] and Map.has_key?(state.query_routes, path) ->
+      query_route?(conn, state) ->
         query(conn, app, Map.fetch!(state.query_routes, path))
 
       true ->
         conn
     end
   end
+
+  defp command_route?(conn, state),
+    do: conn.method == "POST" and Map.has_key?(state.command_routes, conn.request_path)
+
+  defp validation_route?(conn, state) do
+    conn.method == "POST" and String.ends_with?(conn.request_path, "/validate") and
+      Map.has_key?(
+        state.command_routes,
+        String.replace_suffix(conn.request_path, "/validate", "")
+      )
+  end
+
+  defp query_route?(conn, state),
+    do: conn.method in ["GET", "QUERY"] and Map.has_key?(state.query_routes, conn.request_path)
 
   # Commands
 
@@ -94,7 +107,7 @@ defmodule Arc.Plug do
     with_context(conn, app, fn conn, ctx ->
       cond do
         query.observable? and websocket?(conn) ->
-          upgrade_direct(conn, app, descriptor, query, ctx)
+          upgrade_direct(conn, %{app: app, descriptor: descriptor, query: query, ctx: ctx})
 
         query.observable? and event_stream?(conn) ->
           Arc.Plug.Sse.stream(conn, app, descriptor, query, ctx)
@@ -147,7 +160,7 @@ defmodule Arc.Plug do
         paging = Map.get(body, "paging", %{})
         sorting = Map.get(body, "sorting", %{})
 
-        with true <- is_map(args) and is_map(paging) and is_map(sorting),
+        with true <- query_body_maps?(args, paging, sorting),
              {:ok, page} <- non_negative(paging["page"]),
              {:ok, size} <- non_negative(paging["pageSize"]),
              {:ok, direction} <- direction(sorting["direction"]) do
@@ -164,6 +177,9 @@ defmodule Arc.Plug do
         {:error, conn, message}
     end
   end
+
+  defp query_body_maps?(args, paging, sorting),
+    do: is_map(args) and is_map(paging) and is_map(sorting)
 
   defp non_negative(nil), do: {:ok, nil}
   defp non_negative(v) when is_integer(v) and v >= 0, do: {:ok, v}
@@ -251,13 +267,9 @@ defmodule Arc.Plug do
   defp event_stream?(conn),
     do: get_req_header(conn, "accept") |> Enum.any?(&String.contains?(&1, "text/event-stream"))
 
-  defp upgrade_direct(conn, app, descriptor, query, ctx) do
+  defp upgrade_direct(conn, socket_state) do
     conn
-    |> WebSockAdapter.upgrade(
-      Arc.Plug.DirectSocket,
-      %{app: app, descriptor: descriptor, query: query, ctx: ctx},
-      []
-    )
+    |> WebSockAdapter.upgrade(Arc.Plug.DirectSocket, socket_state, [])
     |> halt()
   end
 
