@@ -13,12 +13,12 @@ defmodule Arc.Plug.Introspection do
 
   def call(conn, app, state) do
     case {conn.method, conn.request_path} do
-      {"GET", "/.cratis/commands"} -> catalog(conn, app, state, &commands/2)
-      {"GET", "/.cratis/queries"} -> catalog(conn, app, state, &queries/2)
+      {"GET", "/.cratis/commands"} -> catalog(conn, app, state, build: &commands/2)
+      {"GET", "/.cratis/queries"} -> catalog(conn, app, state, build: &queries/2)
       {"GET", "/.cratis/me"} -> identity(conn, app, state)
-      {"GET", "/.cratis/identity-details/schema"} -> catalog(conn, app, state, &identity_schema/2)
-      {"GET", "/.cratis/users"} -> catalog(conn, app, state, &users/2, per_user: true)
-      {"GET", "/.cratis/tenants"} -> catalog(conn, app, state, &tenants/2, per_user: true)
+      {"GET", "/.cratis/identity-details/schema"} -> catalog(conn, app, state, build: &identity_schema/2)
+      {"GET", "/.cratis/users"} -> catalog(conn, app, state, build: &users/2, per_user: true)
+      {"GET", "/.cratis/tenants"} -> catalog(conn, app, state, build: &tenants/2, per_user: true)
       {"GET", "/.cratis/queries/ws"} -> hub(conn, app)
       {"GET", "/.cratis/queries/sse"} -> sse_hub(conn, app)
       {"POST", "/.cratis/queries/sse/subscribe"} -> sse_control(conn, app, :subscribe)
@@ -61,24 +61,30 @@ defmodule Arc.Plug.Introspection do
     end
   end
 
-  defp catalog(conn, app, state, builder, opts \\ []) do
+  defp catalog(conn, app, state, opts) do
     case state.config[:introspection] do
-      false ->
-        conn
+      false -> conn
+      _mode -> authenticated_catalog(conn, app, state, opts)
+    end
+  end
 
-      mode ->
-        case Request.build(conn, app) do
-          {:unauthenticated, conn} ->
-            json(conn, 401, %{"message" => "Authentication failed."})
+  defp authenticated_catalog(conn, app, state, opts) do
+    case Request.build(conn, app) do
+      {:unauthenticated, conn} ->
+        json(conn, 401, %{"message" => "Authentication failed."})
 
-          {:ok, conn, ctx} ->
-            if mode == :authenticated and not ctx.principal.authenticated? do
-              json(conn, 401, %{"message" => "Authentication is required."})
-            else
-              conn = if opts[:per_user], do: no_store(conn), else: conn
-              json(conn, 200, builder.(state, state.config))
-            end
-        end
+      {:ok, conn, ctx} ->
+        render_catalog(conn, ctx, state, opts)
+    end
+  end
+
+  defp render_catalog(conn, ctx, state, opts) do
+    if state.config[:introspection] == :authenticated and not ctx.principal.authenticated? do
+      json(conn, 401, %{"message" => "Authentication is required."})
+    else
+      conn = if opts[:per_user], do: no_store(conn), else: conn
+      builder = opts[:build]
+      json(conn, 200, builder.(state, state.config))
     end
   end
 
