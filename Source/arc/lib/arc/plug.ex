@@ -70,7 +70,10 @@ defmodule Arc.Plug do
 
   defp validation_route?(conn, state) do
     conn.method == "POST" and String.ends_with?(conn.request_path, "/validate") and
-      Map.has_key?(state.command_routes, String.replace_suffix(conn.request_path, "/validate", ""))
+      Map.has_key?(
+        state.command_routes,
+        String.replace_suffix(conn.request_path, "/validate", "")
+      )
   end
 
   defp query_route?(conn, state),

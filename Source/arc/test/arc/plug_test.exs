@@ -220,6 +220,7 @@ defmodule Arc.PlugTest do
           |> call()
 
         assert request.status == 400
+
         assert [%{"message" => "The QUERY body is not valid."}] =
                  decoded(request)["validationResults"]
       end
