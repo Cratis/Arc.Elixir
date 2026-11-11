@@ -13,17 +13,38 @@ defmodule Arc.Plug.Introspection do
 
   def call(conn, app, state) do
     case {conn.method, conn.request_path} do
-      {"GET", "/.cratis/commands"} -> catalog(conn, app, state, build: &commands/2)
-      {"GET", "/.cratis/queries"} -> catalog(conn, app, state, build: &queries/2)
-      {"GET", "/.cratis/me"} -> identity(conn, app, state)
-      {"GET", "/.cratis/identity-details/schema"} -> catalog(conn, app, state, build: &identity_schema/2)
-      {"GET", "/.cratis/users"} -> catalog(conn, app, state, build: &users/2, per_user: true)
-      {"GET", "/.cratis/tenants"} -> catalog(conn, app, state, build: &tenants/2, per_user: true)
-      {"GET", "/.cratis/queries/ws"} -> hub(conn, app)
-      {"GET", "/.cratis/queries/sse"} -> sse_hub(conn, app)
-      {"POST", "/.cratis/queries/sse/subscribe"} -> sse_control(conn, app, :subscribe)
-      {"POST", "/.cratis/queries/sse/unsubscribe"} -> sse_control(conn, app, :unsubscribe)
-      _ -> conn
+      {"GET", "/.cratis/commands"} ->
+        catalog(conn, app, state, build: &commands/2)
+
+      {"GET", "/.cratis/queries"} ->
+        catalog(conn, app, state, build: &queries/2)
+
+      {"GET", "/.cratis/me"} ->
+        identity(conn, app, state)
+
+      {"GET", "/.cratis/identity-details/schema"} ->
+        catalog(conn, app, state, build: &identity_schema/2)
+
+      {"GET", "/.cratis/users"} ->
+        catalog(conn, app, state, build: &users/2, per_user: true)
+
+      {"GET", "/.cratis/tenants"} ->
+        catalog(conn, app, state, build: &tenants/2, per_user: true)
+
+      {"GET", "/.cratis/queries/ws"} ->
+        hub(conn, app)
+
+      {"GET", "/.cratis/queries/sse"} ->
+        sse_hub(conn, app)
+
+      {"POST", "/.cratis/queries/sse/subscribe"} ->
+        sse_control(conn, app, :subscribe)
+
+      {"POST", "/.cratis/queries/sse/unsubscribe"} ->
+        sse_control(conn, app, :unsubscribe)
+
+      _ ->
+        conn
     end
   end
 

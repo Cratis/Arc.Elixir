@@ -141,7 +141,9 @@ defmodule Arc.IdentityTest do
       response = call(request)
       assert response.status == 401
       assert Jason.decode!(response.resp_body) == %{"message" => "Authentication failed."}
-      assert get_resp_header(response, "cache-control") == get_resp_header(request, "cache-control")
+
+      assert get_resp_header(response, "cache-control") ==
+               get_resp_header(request, "cache-control")
 
       configure(introspection: false)
       assert call(request) == request
