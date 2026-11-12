@@ -56,6 +56,24 @@ end
 
 Arc needs Elixir 1.18 or later and brings `cratis_chronicle` with it. Phoenix, Phoenix.HTML and Phoenix LiveView are optional: the LiveView support compiles only when `phoenix_live_view` is a dependency. CI builds and tests with Elixir 1.19.5 on Erlang/OTP 28.5.
 
+## Code analysis
+
+Arc ships compile-time rules that catch misuse, such as a command Arc never discovers or an observable query that never updates. Turn them on with one line in `mix.exs`, or run `mix igniter.install cratis_arc`:
+
+```elixir
+compilers: [:arc_analyzer] ++ Mix.compilers()
+```
+
+| ID | Rule | Default |
+| --- | --- | --- |
+| [`ARCE0001`](Documentation/code-analysis/ARCE0001.md) | A module declares a schema and `handle/2` but does not `use Arc.Command` | warning |
+| [`ARCE0002`](Documentation/code-analysis/ARCE0002.md) | A command or query is both anonymous and restricted | error |
+| [`ARCE0003`](Documentation/code-analysis/ARCE0003.md) | An `@observe` query has neither `:watch` nor `:topics` | warning |
+| [`ARCE0004`](Documentation/code-analysis/ARCE0004.md) | A command appends to Chronicle itself | warning |
+| [`ARCE0005`](Documentation/code-analysis/ARCE0005.md) | Two commands or queries resolve to the same route | error |
+
+Set a rule's severity, or turn it off, with `config :cratis_arc, :analyzer, rules: [{"ARCE0003", :off}]`. See [Code analysis](Documentation/code-analysis/index.md).
+
 Add `import_deps: [:cratis_arc]` to `.formatter.exs` so `field :name, :string` is not rewritten with parentheses.
 
 ## Prerequisite: Chronicle running
@@ -81,6 +99,7 @@ The `127.0.0.1:` prefixes keep both ports on your machine: the development kerne
 - [Hosting on Plug](Documentation/hosting/plug.md) and [on Phoenix](Documentation/hosting/phoenix.md)
 - [LiveView](Documentation/live-view.md)
 - [React and generated proxies](Documentation/react-proxies.md)
+- [Code analysis](Documentation/code-analysis/index.md) — compile-time rules for Arc code, and how to configure or switch them off
 - [Testing](Documentation/testing.md), [Observability](Documentation/observability.md), [Configuration](Documentation/configuration.md)
 - [Samples](Documentation/samples.md) and [Limits and gaps](Documentation/limits-and-gaps.md)
 - [Build and release](Documentation/contributing/build-and-release.md) — the pull request checks and the publishing pipeline
