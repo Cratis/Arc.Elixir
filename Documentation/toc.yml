@@ -30,6 +30,8 @@
   href: testing.md
 - name: Observability
   href: observability.md
+- name: Code analysis
+  href: code-analysis/toc.yml
 - name: Configuration reference
   href: configuration.md
 - name: Samples

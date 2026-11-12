@@ -43,6 +43,7 @@ Not verified: behavior against a running Chronicle kernel in this repository's C
 - Sorting uses top-level fields of the model struct, in memory. Page in the database and return an `Arc.Page` for large collections.
 - `Arc.Notifier` reaches subscriptions on one node. Fan out across nodes yourself with `Phoenix.PubSub`.
 - `Arc.LiveView` has no stream helper; observable assigns replace whole lists.
+- The [analyzer](code-analysis/index.md) reads Arc's declarations and the calls the compiler reports, not the logic inside `handle/2`. It cannot tell what a function returns, so it has no rule about result shapes, and it sees a Chronicle call only when it is written as a call to a `Chronicle` module.
 
 ## Chronicle behavior to know
 

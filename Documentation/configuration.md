@@ -62,3 +62,16 @@ Add `compilers: Mix.compilers() ++ [:arc]` to generate on compile.
 ## Formatter
 
 Add `import_deps: [:cratis_arc]` to `.formatter.exs` so `field`, `authorize` and `response` stay free of parentheses.
+
+## Analyzer options
+
+The compile-time analyzer reads `config :cratis_arc, :analyzer`, separate from the application options above:
+
+```elixir
+config :cratis_arc, :analyzer,
+  enabled: true,
+  segments_to_skip: 1,
+  rules: [{"ARCE0003", :off}]
+```
+
+See [Code analysis](code-analysis/index.md) for the options, the severities and the rules.
