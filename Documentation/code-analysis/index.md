@@ -1,6 +1,6 @@
 ---
 title: Code analysis
-description: The Arc analyzer checks your code against Arc rules every time you compile, in the terminal, in your editor and in CI, with no tooling besides one line in mix.exs.
+description: "The Arc analyzer for Elixir checks your code against Arc rules at every compile, in the terminal, editor and CI, needing only one line in mix.exs."
 ---
 
 Arc ships a compile-time analyzer, the Elixir counterpart of the `ARC` Roslyn analyzers of [Arc on .NET](https://github.com/Cratis/Arc/tree/main/Documentation/backend/csharp/code-analysis). Its rules catch misuse of Arc, such as a command Arc never discovers or a query that never updates, while you compile instead of at runtime or in review.
