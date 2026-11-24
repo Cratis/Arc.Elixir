@@ -1,0 +1,37 @@
+{
+    "name": "@cratis/arc-elixir-event-model-viewer",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "description": "The event model explorer that Cratis Arc for Elixir serves under /.cratis/event-model. Built into Source/arc/priv/event_model.",
+    "license": "MIT",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "typecheck": "tsc --noEmit -p tsconfig.json"
+    },
+    "dependencies": {
+        "@cratis/components": "^4.25.0",
+        "@cratis/event-models": "^0.118.1",
+        "@cratis/fundamentals": "^7.22.0",
+        "@cratis/scene": "^0.118.1",
+        "@cratis/screenplay-language": "4.164.0",
+        "dompurify": "^3.4.17",
+        "monaco-editor": "^0.57.0",
+        "pixi.js": "8.22.0",
+        "primeicons": "^8.0.2",
+        "react": "^19.3.0",
+        "react-dom": "^19.3.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.20.5",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "@vitejs/plugin-react": "^6.1.1",
+        "typescript": "^5.9.3",
+        "vite": "^8.3.5"
+    },
+    "overrides": {
+        "dompurify": "$dompurify"
+    }
+}

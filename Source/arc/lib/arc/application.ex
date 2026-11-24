@@ -45,6 +45,9 @@ defmodule Arc.Application do
     * `:introspection` - who may read the discovery routes (`/.cratis/commands`, `/.cratis/queries`,
       `/.cratis/identity-details/schema`, `/.cratis/users`, `/.cratis/tenants`): `:authenticated`
       (default), `:anonymous` or `false` to remove them. `/.cratis/me` is not affected
+    * `:event_model` - serve the event model explorer at `/.cratis/event-model`, see `Arc.EventModel`:
+      `:auto` (default; development only), `true` or `false`. `:event_model_apps` lists further OTP
+      applications whose embedded event models it shows
     * `:expose_exceptions` - include exception messages and stack traces in results; default
       `false`, which replaces them with a generic message (the detail is always logged)
     * `:identity_details` - the `Arc.Identity.Provider` module to use; by default the single
@@ -100,6 +103,8 @@ defmodule Arc.Application do
       correlation_header: "x-correlation-id",
       max_body_bytes: 1_000_000,
       introspection: :authenticated,
+      event_model: :auto,
+      event_model_apps: [],
       trust_forwarded_identity_headers: false,
       forwarded_identity: [enabled: false, audience: "", keys: []],
       on_behalf_of: [

@@ -27,6 +27,32 @@ permissions:
   contents: read
 
 jobs:
+  event-model-viewer:
+    name: Event model explorer
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Source/event_model_viewer/package-lock.json
+
+      - name: Install, typecheck and build
+        working-directory: ./Source/event_model_viewer
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm run build
+
+      - name: The build lands where the package picks it up
+        run: test -f Source/arc/priv/event_model/index.html
+
   build:
     name: Build and test
     runs-on: ubuntu-latest

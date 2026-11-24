@@ -68,6 +68,7 @@ defmodule Arc.MixProject do
       maintainers: ["Cratis"],
       files: ~w(
         lib
+        priv/event_model
         mix.exs
         README.md
         VERSION

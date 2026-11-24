@@ -29,3 +29,7 @@ Samples/frontend/dist/
 Samples/phoenix/priv/spa/
 Samples/showcase/priv/spa/
 Samples/showcase/dist/
+
+# Event model viewer
+Source/event_model_viewer/node_modules/
+Source/arc/priv/event_model/

@@ -43,6 +43,9 @@ defmodule Arc.Plug.Introspection do
       {"POST", "/.cratis/queries/sse/unsubscribe"} ->
         sse_control(conn, app, :unsubscribe)
 
+      {"GET", "/.cratis/event-model" <> _ = path} ->
+        Arc.Plug.EventModel.call(conn, app, state, path)
+
       _ ->
         conn
     end
@@ -143,23 +146,25 @@ defmodule Arc.Plug.Introspection do
   defp route_opts(config),
     do: [route_prefix: config[:route_prefix], segments_to_skip: config[:segments_to_skip]]
 
-  defp schema(fields) do
+  @doc false
+  def schema(fields) do
     properties = Map.new(fields, fn f -> {Arc.Naming.camel(f.name), type_schema(f.type)} end)
     required = for f <- fields, f.required?, do: Arc.Naming.camel(f.name)
     %{"type" => "object", "properties" => properties, "required" => required}
   end
 
-  defp type_schema(:string), do: %{"type" => "string"}
-  defp type_schema(:integer), do: %{"type" => "integer"}
-  defp type_schema(:float), do: %{"type" => "number"}
-  defp type_schema(:boolean), do: %{"type" => "boolean"}
-  defp type_schema(:uuid), do: %{"type" => "string", "format" => "uuid"}
-  defp type_schema(:date), do: %{"type" => "string", "format" => "date"}
-  defp type_schema(:datetime), do: %{"type" => "string", "format" => "date-time"}
-  defp type_schema(:map), do: %{"type" => "object"}
-  defp type_schema({:list, inner}), do: %{"type" => "array", "items" => type_schema(inner)}
+  @doc false
+  def type_schema(:string), do: %{"type" => "string"}
+  def type_schema(:integer), do: %{"type" => "integer"}
+  def type_schema(:float), do: %{"type" => "number"}
+  def type_schema(:boolean), do: %{"type" => "boolean"}
+  def type_schema(:uuid), do: %{"type" => "string", "format" => "uuid"}
+  def type_schema(:date), do: %{"type" => "string", "format" => "date"}
+  def type_schema(:datetime), do: %{"type" => "string", "format" => "date-time"}
+  def type_schema(:map), do: %{"type" => "object"}
+  def type_schema({:list, inner}), do: %{"type" => "array", "items" => type_schema(inner)}
 
-  defp type_schema(module) when is_atom(module) do
+  def type_schema(module) when is_atom(module) do
     cond do
       Arc.Types.concept?(module) -> type_schema(Arc.Types.concept_primitive(module))
       Arc.Types.schema?(module) -> schema(module.__arc_schema__())
