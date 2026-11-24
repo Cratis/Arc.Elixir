@@ -176,6 +176,15 @@ defmodule Arc.Analyzer.RulesTest do
       assert Enum.all?(findings, &(&1.message =~ "/api/authors/register"))
     end
 
+    test "routes a command by its declared name, not its module name" do
+      a = command(A.Authors.Register, command_name: "register-author")
+      b = command(B.Authors.Register, command_name: "register-writer")
+      c = command(C.Authors.Register, command_name: "register-writer")
+
+      assert ARCE0005.check_project(project([a, b])) == []
+      assert length(ARCE0005.check_project(project([a, b, c]))) == 2
+    end
+
     test "honours segments_to_skip" do
       a = command(A.Authors.Register)
       b = command(B.Authors.Register)

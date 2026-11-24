@@ -27,6 +27,7 @@ defmodule Arc.Descriptor do
     :kind,
     :module,
     :name,
+    :route_name,
     :namespace,
     :doc,
     :fields,
@@ -51,7 +52,7 @@ defmodule Arc.Descriptor do
   """
   @spec command_route(t(), keyword()) :: String.t()
   def command_route(%__MODULE__{} = descriptor, opts \\ []),
-    do: route(descriptor, descriptor.name, opts)
+    do: route(descriptor, descriptor.route_name || descriptor.name, opts)
 
   @doc "The conventional route of a query."
   @spec query_route(t(), Query.t(), keyword()) :: String.t()

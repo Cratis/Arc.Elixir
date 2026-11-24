@@ -63,6 +63,7 @@ Rules are covered in [Validation](validation.md).
 
 ### Declarations
 
+- `command "register-author"` — an explicit, kebab-case name for the command's route (optional). Without it the route follows the module name; see [Routes come from module names](concepts.md#routes-come-from-module-names).
 - `authorize roles: [...]`, `authorize :authenticated`, `authorize policy: :name`, `allow_anonymous()` — see [Authorization and identity](authorization-and-identity.md).
 - `response type` — the type returned to the client, for the generated proxy, for example `response :string`.
 

@@ -38,8 +38,24 @@ defmodule Arc.Command do
 
   ## Declarations
 
+    * `command/1` - an explicit, stable name for the command's route (optional; see below)
     * `authorize/1` and `allow_anonymous/0` - see `Arc.Authorization`
     * `response/1` - the type returned to the client, for the generated proxy
+
+  ## Naming
+
+  By default the route follows the module path: `MyApp.Authors.Registration.RegisterAuthor` is
+  `/api/authors/registration/register-author` (after `segments_to_skip`). Treat the module as the
+  equivalent of a namespace and declare the command's own name with `command/1` to decouple the
+  route from where the file lives:
+
+      defmodule MyApp.Authors.RegisteringAuthors do
+        use Arc.Command
+        command "register-author"      # /api/authors/registering-authors/register-author
+        ...
+
+  The declaration is optional and non-breaking: without it nothing changes. The name must be
+  kebab-case.
   """
 
   @type result ::
@@ -60,11 +76,22 @@ defmodule Arc.Command do
     quote do
       use Arc.Schema
       @behaviour Arc.Command
-      import Arc.Command, only: [authorize: 1, allow_anonymous: 0, response: 1]
+      import Arc.Command, only: [command: 1, authorize: 1, allow_anonymous: 0, response: 1]
+      @arc_command_name nil
       @arc_authorization nil
       @arc_response nil
       @before_compile Arc.Command
     end
+  end
+
+  @doc "Declares the command's own name, used as the last segment of its route. Kebab-case."
+  defmacro command(name) when is_binary(name) do
+    unless name =~ ~r/\A[a-z0-9]+(-[a-z0-9]+)*\z/ do
+      raise ArgumentError,
+            "command name #{inspect(name)} must be kebab-case, e.g. \"register-author\""
+    end
+
+    quote do: @arc_command_name(unquote(name))
   end
 
   @doc "Declares who may run the command. See `Arc.Authorization`."
@@ -98,6 +125,7 @@ defmodule Arc.Command do
       kind: :command,
       module: env.module,
       name: name,
+      route_name: Module.get_attribute(env.module, :arc_command_name),
       namespace: namespace,
       doc: doc,
       fields: fields,
