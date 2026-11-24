@@ -24,6 +24,7 @@ defmodule Arc.Analyzer.ModuleFacts do
       struct?: Module.defines?(module, {:__struct__, 0}),
       handle?: Module.defines?(module, {:handle, 2}),
       authorization: module_authorization,
+      command_name: if(kind == :command, do: attribute(module, :arc_command_name, nil)),
       queries: queries(module, kind),
       ignore: ignore(module)
     }

@@ -7,6 +7,7 @@ defmodule Arc.Analyzer.Rules.ARCE0005 do
 
   Routes come from the module namespace after `segments_to_skip` and the kebab-cased name, so
   `MyApp.Authors.Register` and `Other.Authors.Register` both serve `/api/authors/register`.
+  A command that declares `command "name"` is routed by that name instead of its module name.
   Arc cannot route two commands, or two queries, to one URL, and the generated proxies would collide as well.
   The `segments_to_skip` of the analyzer configuration must match your `Arc.Application`.
   Kind: project.
@@ -49,20 +50,20 @@ defmodule Arc.Analyzer.Rules.ARCE0005 do
   end
 
   defp routes(%{kind: :command, module: module} = fact, skip),
-    do: [{route(module, nil, skip), fact, inspect(module)}]
+    do: [{route(module, nil, skip, Map.get(fact, :command_name)), fact, inspect(module)}]
 
   defp routes(%{kind: :read_model, module: module, queries: queries} = fact, skip),
     do:
       for(
         %{name: name} <- queries,
-        do: {route(module, name, skip), fact, "#{inspect(module)}.#{name}/2"}
+        do: {route(module, name, skip, nil), fact, "#{inspect(module)}.#{name}/2"}
       )
 
   defp routes(_fact, _skip), do: []
 
-  defp route(module, query, skip) do
+  defp route(module, query, skip, command_name) do
     {namespace, name} = Arc.Naming.module_parts(module)
-    last = if query, do: Atom.to_string(query), else: name
+    last = if query, do: Atom.to_string(query), else: command_name || name
 
     segments = namespace |> Enum.drop(skip) |> Enum.map(&Arc.Naming.kebab/1)
     "/" <> Enum.join(["api" | segments] ++ [Arc.Naming.kebab(last)], "/")

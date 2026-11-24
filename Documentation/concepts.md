@@ -64,6 +64,19 @@ With the default `segments_to_skip: 1` and `route_prefix: "api"`:
 | `…Registration.RegisterAuthor`, validate only | `POST /api/authors/registration/register-author/validate` |
 | query `all_authors` in `MyApp.Authors.Listing.Authors` | `GET /api/authors/listing/all-authors` |
 
+A command can declare its own name with `command/1`. It becomes the last route segment, so renaming or moving the module no longer changes the API. Treat the module path as a namespace and the declaration as the name:
+
+```elixir
+defmodule MyApp.Authors.RegisteringAuthors do
+  use Arc.Command
+  command "register-author"
+  ...
+end
+# POST /api/authors/registering-authors/register-author
+```
+
+The declaration is optional; without it nothing changes. The name must be kebab-case (`ArgumentError` at compile time otherwise). It sets the route and the descriptor's `route_name`; the generated TypeScript class still takes its name from the module.
+
 The first segment is the application name and is skipped. The namespace after it also becomes the folder of the generated TypeScript and the slice location (module, feature, slice) used by the frontend.
 
 ## The wire format
