@@ -97,6 +97,22 @@ An observable query that lists what is not available to the caller:
 
 It emits the current answer, and again whenever audiences or suspensions change. `?part=<name>&arguments=<json>` asks about one part and the data it is about. Generated proxies carry `static readonly part`, so a client knows what to ask about. A decision that cannot be made is a retryable error for the query, never a list.
 
+## Exploring availability while developing
+
+A tool such as Lens can switch availability live. In development, the application serves three routes, the same as Arc for .NET:
+
+- `GET /.cratis/structure` answers the modules, features, sub-features and slices, each with a `path` of its names joined by `/`, and the commands and read models of each slice. It does not need availability.
+- `GET /.cratis/availability/model` answers the audiences and blocks of the definition and the overrides in force.
+- `POST /.cratis/availability/overrides` replaces the overrides:
+
+```json
+{ "enabledAudiences": ["Preview"], "disabledAudiences": ["Plus"], "enabledPaths": ["Fleet/Billing"], "disabledPaths": ["Fleet/Vessels/Dock"] }
+```
+
+An enabled audience is held by every caller, a disabled one by none (disabled wins). An enabled path is available whatever its gates say, a disabled one is not available (disabled wins), and a path covers everything beneath it by whole segments. A change tells the open `/.cratis/availability` sessions, so clients decide again. The overrides apply to the whole application.
+
+The availability routes are served only when `development_tools` of the availability configuration allows it: `:auto` (default) under Mix in `:dev`, `true` or `false` otherwise. Everywhere else they are not served and the overrides are never applied. They follow the `:introspection` setting like the catalogs.
+
 ## LiveView
 
 ```heex

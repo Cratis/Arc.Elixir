@@ -19,6 +19,17 @@ defmodule Cratis.Arc.Plug.Introspection do
       {"GET", "/.cratis/queries"} ->
         catalog(conn, app, state, build: &queries/2)
 
+      {"GET", "/.cratis/structure"} ->
+        catalog(conn, app, state, build: &structure/2)
+
+      {"GET", "/.cratis/availability/model"} ->
+        development(conn, app, state, fn ->
+          catalog(conn, app, state, build: &availability_model(app, &1, &2))
+        end)
+
+      {"POST", "/.cratis/availability/overrides"} ->
+        development(conn, app, state, fn -> overrides(conn, app, state) end)
+
       {"GET", "/.cratis/me"} ->
         identity(conn, app, state)
 
@@ -140,6 +151,79 @@ defmodule Cratis.Arc.Plug.Introspection do
         "documentationSummary" => q.doc || "",
         "argumentsSchema" => schema(q.params)
       }
+    end
+  end
+
+  defp structure(state, config),
+    do: Cratis.Arc.Structure.build(state.commands, state.read_models, config[:segments_to_skip])
+
+  # The development availability routes exist only while the application allows overrides.
+  defp development(conn, app, _state, serve) do
+    if Cratis.Arc.Availability.Development.active?(app) and Cratis.Arc.Availability.enabled?(app),
+      do: serve.(),
+      else: conn
+  end
+
+  defp availability_model(app, state, _config) do
+    definition = state.availability.definition
+
+    %{
+      "overrides" => Cratis.Arc.Availability.Development.current(app),
+      "audiences" =>
+        for(
+          a <- definition.audiences,
+          do: %{"name" => a["name"], "description" => a["description"], "source" => ""}
+        ),
+      "blocks" =>
+        for(
+          b <- definition.blocks,
+          do: %{
+            "name" => b["name"],
+            "description" => b["description"],
+            "source" => "",
+            "alternatives" => []
+          }
+        ),
+      "gates" => [],
+      "contextValues" =>
+        for(
+          v <- definition.values,
+          do: %{
+            "name" => v.name,
+            "type" => "",
+            "origin" => inspect(v.provider),
+            "required" => v.required
+          }
+        ),
+      "personas" => []
+    }
+  end
+
+  defp overrides(conn, app, state) do
+    case Request.build(conn, app) do
+      {:unauthenticated, conn} ->
+        json(conn, 401, %{"message" => "Authentication failed."})
+
+      {:ok, conn, ctx} ->
+        if state.config[:introspection] == :authenticated and not ctx.principal.authenticated? do
+          json(conn, 401, %{"message" => "Authentication is required."})
+        else
+          apply_overrides(conn, app)
+        end
+    end
+  end
+
+  defp apply_overrides(conn, app) do
+    case Cratis.Arc.Plug.read_json(conn, app) do
+      {:ok, conn, %{} = body} ->
+        {:ok, applied} = Cratis.Arc.Availability.Development.apply_overrides(app, body)
+        json(conn, 200, applied)
+
+      {:ok, conn, _other} ->
+        send_status(conn, 400)
+
+      {:error, conn, _message} ->
+        send_status(conn, 400)
     end
   end
 

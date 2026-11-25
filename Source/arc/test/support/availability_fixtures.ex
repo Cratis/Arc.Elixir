@@ -118,6 +118,7 @@ defmodule ArcAvail.App do
     availability: [
       definition: ArcAvail.Fleet.Vessels.Availability,
       audience_source: Cratis.Arc.Availability.Memory,
-      suspension_source: Cratis.Arc.Availability.Memory
+      suspension_source: Cratis.Arc.Availability.Memory,
+      development_tools: true
     ]
 end

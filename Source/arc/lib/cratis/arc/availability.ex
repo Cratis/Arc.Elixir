@@ -45,7 +45,7 @@ defmodule Cratis.Arc.Availability do
   `/.cratis/availability` decide again, on every node when `:pubsub` is configured.
   """
 
-  alias Cratis.Arc.Availability.{Engine, Paths}
+  alias Cratis.Arc.Availability.{Development, Engine, Paths}
   alias Cratis.Arc.Context
 
   @topic :arc_availability
@@ -205,9 +205,17 @@ defmodule Cratis.Arc.Availability do
     state = Cratis.Arc.Application.state(app)
 
     with availability when availability != nil <- state[:availability],
-         part when part != nil <- availability.parts[key],
-         true <- decidable?(state, part) do
-      decide(app, ctx, state, part, arguments)
+         part when part != nil <- availability.parts[key] do
+      case Development.switch(Development.current(app), part) do
+        :off ->
+          {:denied, "NotAvailable"}
+
+        :on ->
+          :ok
+
+        :none ->
+          if decidable?(state, part), do: decide(app, ctx, state, part, arguments), else: :ok
+      end
     else
       _ -> :ok
     end
@@ -291,18 +299,23 @@ defmodule Cratis.Arc.Availability do
   defp wire_arguments(_other), do: %{}
 
   defp audiences(app, config, availability, ctx) do
+    declared = MapSet.new(availability.definition.audiences, & &1["name"])
+    overrides = Development.current(app)
+
+    case held(app, config, ctx) do
+      {:ok, names} ->
+        {:ok,
+         overrides |> Development.audiences(names) |> Enum.filter(&MapSet.member?(declared, &1))}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp held(app, config, ctx) do
     case config[:audience_source] do
-      nil ->
-        {:ok, []}
-
-      source ->
-        declared = MapSet.new(availability.definition.audiences, & &1["name"])
-        subject = %{tenant: ctx.tenant, user: ctx.principal.id, application: app}
-
-        case source.grants(subject) do
-          {:ok, names} -> {:ok, Enum.filter(names, &MapSet.member?(declared, &1))}
-          {:error, reason} -> {:error, reason}
-        end
+      nil -> {:ok, []}
+      source -> source.grants(%{tenant: ctx.tenant, user: ctx.principal.id, application: app})
     end
   end
 
@@ -330,8 +343,10 @@ defmodule Cratis.Arc.Availability do
 
         arguments = opts[:arguments] || %{}
 
+        overrides = Development.current(app)
+
         Enum.reduce_while(parts, {:ok, []}, fn part, {:ok, acc} ->
-          case decide(app, ctx, state, part, arguments) do
+          case decide_switched(app, ctx, state, part, arguments, overrides) do
             :ok ->
               {:cont, {:ok, acc}}
 
@@ -346,6 +361,14 @@ defmodule Cratis.Arc.Availability do
           {:ok, list} -> {:ok, Enum.reverse(list)}
           error -> error
         end
+    end
+  end
+
+  defp decide_switched(app, ctx, state, part, arguments, overrides) do
+    case Development.switch(overrides, part) do
+      :off -> {:denied, "NotAvailable"}
+      :on -> :ok
+      :none -> decide(app, ctx, state, part, arguments)
     end
   end
 
