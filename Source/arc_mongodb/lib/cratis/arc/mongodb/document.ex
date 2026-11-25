@@ -33,7 +33,7 @@ defmodule Cratis.Arc.MongoDB.Document do
   | `:date` | UTC date time at noon of the day |
   | `{:list, type}` | array; never `nil` when read |
   | `:map` | embedded document |
-  | a `Chronicle.Concept` | the primitive it wraps, with no wrapper document |
+  | a `Cratis.Chronicle.Concept` | the primitive it wraps, with no wrapper document |
   | a nested struct module | embedded document, named by the same policy |
 
   Members that the struct does not know are ignored when reading, and members missing from a

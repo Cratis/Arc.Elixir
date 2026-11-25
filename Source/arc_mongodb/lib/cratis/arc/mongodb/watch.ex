@@ -29,7 +29,11 @@ defmodule Cratis.Arc.MongoDB.Watch do
   @impl true
   def subscribe(document, %Cratis.Arc.Context{} = ctx, owner) do
     if owner != self(),
-      do: raise(ArgumentError, "Arc.MongoDB.Watch.subscribe/3 must run in the observing process.")
+      do:
+        raise(
+          ArgumentError,
+          "Cratis.Arc.MongoDB.Watch.subscribe/3 must run in the observing process."
+        )
 
     collection = Cratis.Arc.MongoDB.collection(ctx, document)
     key = {collection.connection, collection.database, collection.name}

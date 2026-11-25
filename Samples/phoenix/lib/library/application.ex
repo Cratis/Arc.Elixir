@@ -23,7 +23,7 @@ defmodule Library.Application do
   defp chronicle do
     if Application.get_env(:library, :start_chronicle, true) do
       [
-        {Chronicle.Client,
+        {Cratis.Chronicle.Client,
          connection_string: Application.fetch_env!(:library, :chronicle_connection_string),
          event_store: "library-phoenix",
          otp_app: :library}

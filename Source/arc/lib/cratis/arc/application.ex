@@ -13,7 +13,7 @@ defmodule Cratis.Arc.Application do
   Start it in your supervision tree, after the Chronicle client:
 
       children = [
-        {Chronicle.Client, ...},
+        {Cratis.Chronicle.Client, ...},
         MyApp.Arc
       ]
 

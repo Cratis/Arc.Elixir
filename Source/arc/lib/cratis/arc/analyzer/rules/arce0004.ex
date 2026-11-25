@@ -7,7 +7,7 @@ defmodule Cratis.Arc.Analyzer.Rules.ARCE0004 do
 
   A command decides; Arc appends what `handle/2` returns, as `{:append, event}`, with the
   command's key as the event source id, concurrency and constraint handling and the right
-  tenant. A direct `Chronicle.append*` call skips all of it. Kind: call.
+  tenant. A direct `Cratis.Chronicle.append*` call skips all of it. Kind: call.
   """
 
   @behaviour Cratis.Arc.Analyzer.Rule
@@ -45,7 +45,8 @@ defmodule Cratis.Arc.Analyzer.Rules.ARCE0004 do
   defp append?({module, function, _arity}) do
     name = Atom.to_string(module)
 
-    (name == "Elixir.Chronicle" or String.starts_with?(name, "Elixir.Chronicle.EventSequences")) and
+    (name == "Elixir.Cratis.Chronicle" or
+       String.starts_with?(name, "Elixir.Cratis.Chronicle.EventSequences")) and
       String.starts_with?(Atom.to_string(function), "append")
   end
 end

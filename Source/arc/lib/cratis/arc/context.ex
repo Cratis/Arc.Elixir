@@ -17,7 +17,7 @@ defmodule Cratis.Arc.Context do
     * `:deadline` - monotonic millisecond deadline, or `nil`
     * `:provided` - values returned by the command's `provide/2`
     * `:allowed_severity` - the highest non-blocking validation severity the caller accepts
-    * `:chronicle` - options passed to every `Chronicle.append/3` (for example `client:`); for a named
+    * `:chronicle` - options passed to every `Cratis.Chronicle.append/3` (for example `client:`); for a named
       tenant it carries that tenant as the Chronicle `namespace:`
     * `:query` - while a query runs, what the caller asked for: `%{page:, page_size:, sort_by:,
       sort_direction:}` (`sort_by` is the `camelCase` wire name). A query that pages in the database

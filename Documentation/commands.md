@@ -42,10 +42,10 @@ end
 | `:datetime` | ISO 8601 | `Date` |
 | `:map` | object | `object` |
 | `{:list, type}` | array | `type[]` |
-| a `Chronicle.Concept` module | the primitive it wraps | that primitive |
+| a `Cratis.Chronicle.Concept` module | the primitive it wraps | that primitive |
 | a module that `use Cratis.Arc.Schema` | object | a generated class |
 
-Use a `Chronicle.Concept` for domain values such as an author id, so the type is declared once and the same value is what Chronicle records. Nested lists are not supported.
+Use a `Cratis.Chronicle.Concept` for domain values such as an author id, so the type is declared once and the same value is what Chronicle records. Nested lists are not supported.
 
 ### Field options
 

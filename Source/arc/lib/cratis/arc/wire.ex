@@ -5,7 +5,7 @@ defmodule Cratis.Arc.Wire do
   @moduledoc """
   Converts Elixir values to the JSON-ready shape of the Arc wire format.
 
-  Struct and map keys become `camelCase`; `Chronicle.Concept` values become the primitive they
+  Struct and map keys become `camelCase`; `Cratis.Chronicle.Concept` values become the primitive they
   wrap; dates and times become ISO 8601 strings; `nil` stays `nil`.
   """
 

@@ -38,7 +38,7 @@ defmodule Cratis.Arc.MixProject do
 
   defp deps do
     [
-      {:cratis_chronicle, "~> 3.16"},
+      {:cratis_chronicle, "~> 4.0"},
       {:jason, "~> 1.4"},
       {:plug, "~> 1.16"},
       {:websock, "~> 0.5"},
@@ -80,7 +80,7 @@ defmodule Cratis.Arc.MixProject do
 
   defp docs do
     [
-      main: "Arc",
+      main: "Cratis.Arc",
       extras: ["README.md"],
       groups_for_modules: [
         Authoring: [

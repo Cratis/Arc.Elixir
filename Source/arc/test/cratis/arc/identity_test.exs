@@ -164,7 +164,7 @@ defmodule Cratis.Arc.IdentityTest do
     end
   end
 
-  describe "Arc.Authentication.MicrosoftIdentityPlatform" do
+  describe "Cratis.Arc.Authentication.MicrosoftIdentityPlatform" do
     @payload %{
                identityProvider: "aad",
                userId: "alice@contoso.com",
@@ -290,7 +290,7 @@ defmodule Cratis.Arc.IdentityTest do
     end
   end
 
-  describe "Arc.Identity.resolve/2" do
+  describe "Cratis.Arc.Identity.resolve/2" do
     test "an anonymous principal is unauthenticated without calling the provider" do
       assert %Cratis.Arc.Identity.Result{authenticated?: false} =
                Cratis.Arc.Identity.resolve(@app, Cratis.Arc.Principal.anonymous())

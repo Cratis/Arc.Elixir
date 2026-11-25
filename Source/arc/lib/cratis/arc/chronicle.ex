@@ -6,7 +6,7 @@ defmodule Cratis.Arc.Chronicle do
   Appends the events a command returned to Chronicle.
 
   Events are grouped by event source id, in the order returned, and each group is appended
-  atomically (`Chronicle.append_with_result/3` for one event, `append_many_with_result/3` for several). Constraint and concurrency violations
+  atomically (`Cratis.Chronicle.append_with_result/3` for one event, `append_many_with_result/3` for several). Constraint and concurrency violations
   become validation results (`"constraintViolation"`, `"concurrencyViolation"`) so a client can
   show them like any other rejection.
   """
@@ -14,7 +14,7 @@ defmodule Cratis.Arc.Chronicle do
   require Logger
 
   alias Cratis.Arc.{Context, Validation}
-  alias Chronicle.EventSequences.AppendResult
+  alias Cratis.Chronicle.EventSequences.AppendResult
 
   @doc """
   Appends `events` for a command whose key is `default_source`.
@@ -71,10 +71,11 @@ defmodule Cratis.Arc.Chronicle do
   end
 
   # A single event takes the single-event path; several append atomically in one call.
-  defp append_group(source, [event], opts), do: Chronicle.append_with_result(source, event, opts)
+  defp append_group(source, [event], opts),
+    do: Cratis.Chronicle.append_with_result(source, event, opts)
 
   defp append_group(source, events, opts),
-    do: Chronicle.append_many_with_result(source, events, opts)
+    do: Cratis.Chronicle.append_many_with_result(source, events, opts)
 
   @doc false
   @spec options(Cratis.Arc.Context.t()) :: keyword()
@@ -86,16 +87,16 @@ defmodule Cratis.Arc.Chronicle do
         %{authenticated?: true, actor: %{id: actor_id, name: actor_name}, id: id, name: name} ->
           [
             identity:
-              Chronicle.Identity.new(
+              Cratis.Chronicle.Identity.new(
                 actor_id,
                 actor_name || actor_id,
                 "",
-                Chronicle.Identity.new(id, name || id)
+                Cratis.Chronicle.Identity.new(id, name || id)
               )
           ]
 
         %{authenticated?: true, id: id, name: name} ->
-          [identity: Chronicle.Identity.new(id, name || id)]
+          [identity: Cratis.Chronicle.Identity.new(id, name || id)]
 
         _ ->
           []

@@ -114,7 +114,9 @@ defmodule Cratis.Arc.PipelineTest do
       opts = Cratis.Arc.Chronicle.options(ctx)
 
       assert opts[:correlation_id] == "c1"
-      assert %Chronicle.Identity{subject: "ada", name: "ada", on_behalf_of: nil} = opts[:identity]
+
+      assert %Cratis.Chronicle.Identity{subject: "ada", name: "ada", on_behalf_of: nil} =
+               opts[:identity]
     end
 
     test "an actor acting for a user is the identity, on behalf of that user" do
@@ -125,10 +127,10 @@ defmodule Cratis.Arc.PipelineTest do
 
       ctx = %Cratis.Arc.Context{principal: principal, correlation_id: "c1"}
 
-      assert %Chronicle.Identity{
+      assert %Cratis.Chronicle.Identity{
                subject: "support",
                name: "Support Person",
-               on_behalf_of: %Chronicle.Identity{subject: "ada"}
+               on_behalf_of: %Cratis.Chronicle.Identity{subject: "ada"}
              } = Cratis.Arc.Chronicle.options(ctx)[:identity]
     end
   end

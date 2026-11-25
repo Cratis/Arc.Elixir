@@ -64,7 +64,7 @@ Without `types:`, a field is stored as its value is: `types:` is for what the st
 | `:date` | a UTC date time at noon of the day |
 | `{:list, type}` | an array, never `nil` when read |
 | `:map` | an embedded document |
-| a `Chronicle.Concept` | the primitive it wraps |
+| a `Cratis.Chronicle.Concept` | the primitive it wraps |
 | a struct module | an embedded document |
 
 The `id` field is stored as `_id`. The naming policy names members and collections: with `:camel_case`, `display_name` is `displayName` and `Library.Books.Book` is the collection `book`; a document can name its own collection with `collection:`. Members the struct does not know are ignored when reading, and members missing from a document take the struct's defaults.

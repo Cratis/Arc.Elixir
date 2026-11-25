@@ -7,8 +7,10 @@ defmodule Counters.Counting.Counters do
   use Cratis.Arc.ReadModel, model: Counters.Counter, types: [id: :uuid]
 
   @query params: [id: :uuid], many: false
-  def counter(%{id: id}, ctx), do: Chronicle.read_model(Counters.Counter, id, ctx.chronicle)
+  def counter(%{id: id}, ctx),
+    do: Cratis.Chronicle.read_model(Counters.Counter, id, ctx.chronicle)
 
   @observe params: [id: :uuid], many: false, watch: [Counters.Counter]
-  def live_counter(%{id: id}, ctx), do: Chronicle.read_model(Counters.Counter, id, ctx.chronicle)
+  def live_counter(%{id: id}, ctx),
+    do: Cratis.Chronicle.read_model(Counters.Counter, id, ctx.chronicle)
 end

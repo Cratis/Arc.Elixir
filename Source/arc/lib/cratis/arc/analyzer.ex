@@ -69,6 +69,6 @@ defmodule Cratis.Arc.Analyzer do
 
   defp chronicle?(module) do
     name = Atom.to_string(module)
-    name == "Elixir.Chronicle" or String.starts_with?(name, "Elixir.Chronicle.")
+    name == "Elixir.Cratis.Chronicle" or String.starts_with?(name, "Elixir.Cratis.Chronicle.")
   end
 end
