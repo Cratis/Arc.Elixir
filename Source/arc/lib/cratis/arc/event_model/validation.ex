@@ -9,8 +9,6 @@ defmodule Cratis.Arc.EventModel.Validation do
   # events it consumes, an automation has the event it reacts to and the facts it records, every
   # consumed event is produced by a slice, and a fact is drawn before whatever uses it.
 
-  alias Cratis.Arc.EventModel.Order
-
   @doc "The problems of the slices (in reading order) as `\"Module/Feature/Slice: what is wrong\"` strings."
   @spec check([map()]) :: [String.t()]
   def check(slices) do
