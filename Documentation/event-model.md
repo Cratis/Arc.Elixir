@@ -49,6 +49,14 @@ The model names a command, an event type, a reactor and a read model by the `id:
 
 A state view lists the events it consumes and an automation starts from the first event it handles, each pointing at the event of the slice that owns it, so the board connects the slices.
 
+## Sub-features, order and checks
+
+Folders below the module are features, and a feature inside a feature is a sub-feature: `Prism.Access.ApiCredentials.Secrets.RotatingSecrets` is the slice `RotatingSecrets` of the sub-feature `Secrets` of `ApiCredentials`. The board nests them and the Screenplay source nests `feature` inside `feature`.
+
+The model reads in order: a fact is drawn before whatever uses it. A view or an automation comes after the slices that produce the events it consumes; features follow the same order, and a feature's own slices come before its sub-features, so a slice that uses events of a sub-feature belongs in a sub-feature of its own.
+
+The compiler checks the model and warns about what is missing: a state change without a command or events, a view without a read model or consumed events (name events read some other way with `consumes:` on the read model), an automation that reacts to or records nothing, an event no slice produces, a fact used before it is produced. Set `event_model_strict: true` in the project's `arc:` options to make them errors.
+
 ## Embedded at build time
 
 The model is not worked out when a request arrives. The compiler writes it to `priv/cratis/event_model/` of your application: a `catalog.json`, and for each document a `*.model.json` (the document [`@cratis/event-models`](https://www.npmjs.com/package/@cratis/event-models) draws) and a `*.screenplay`. It is part of every release, the way the C# build embeds it in the assembly, and nothing is analysed in production. The explorer itself ships inside the `cratis_arc` package.

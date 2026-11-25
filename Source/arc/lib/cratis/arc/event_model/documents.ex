@@ -28,30 +28,75 @@ defmodule Cratis.Arc.EventModel.Documents do
       end
 
     feature_docs =
-      for {module, features} <- modules, {feature, slice_list} <- features, feature != "" do
-        parent = "#{project_id}.#{module}"
-        id = "#{parent}.#{feature}"
-
-        document(id, feature, "#{module}.#{feature}", :feature, parent, feature, [
-          {module, [{feature, slice_list}]}
-        ])
+      for {module, nodes} <- modules,
+          doc <- feature_documents(nodes, project_id, "#{project_id}.#{module}", module, module) do
+        doc
       end
 
     [root_doc | module_docs ++ feature_docs]
   end
 
+  # One document per feature at every depth; a feature's document holds its sub-features too.
+  defp feature_documents(nodes, project_id, parent_id, module, namespace) do
+    for %{name: name} = node <- nodes,
+        name != "",
+        doc <- feature_document(node, project_id, parent_id, module, namespace) do
+      doc
+    end
+  end
+
+  defp feature_document(
+         %{name: name, children: children} = node,
+         project_id,
+         parent_id,
+         module,
+         namespace
+       ) do
+    id = "#{parent_id}.#{name}"
+    ns = "#{namespace}.#{name}"
+
+    [
+      document(id, name, ns, :feature, parent_id, name, [{module, [node]}])
+      | feature_documents(children, project_id, id, module, ns)
+    ]
+  end
+
   defp by_module(slices, app_name) do
     slices
-    |> Enum.group_by(&module_name(&1, app_name))
-    |> Enum.sort_by(&elem(&1, 0))
-    |> Enum.map(fn {module, in_module} ->
-      features =
-        in_module
-        |> Enum.group_by(& &1.feature)
-        |> Enum.sort_by(&elem(&1, 0))
-
-      {module, features}
+    |> Enum.uniq_by(&module_name(&1, app_name))
+    |> Enum.map(&module_name(&1, app_name))
+    |> Enum.map(fn module ->
+      in_module = Enum.filter(slices, &(module_name(&1, app_name) == module))
+      {module, nodes(in_module, 0)}
     end)
+  end
+
+  # The features of a module as a tree, in the order the slices arrive (reading order): `%{name,
+  # slices, children}`. Slices without a feature sit in a node with no name.
+  defp nodes(slices, depth) do
+    {own, deeper} =
+      Enum.split_with(slices, &(length(Cratis.Arc.EventModel.Order.path(&1)) == depth))
+
+    names =
+      deeper |> Enum.map(&Enum.at(Cratis.Arc.EventModel.Order.path(&1), depth)) |> Enum.uniq()
+
+    own_nodes =
+      if own == [],
+        do: [],
+        else: [%{name: if(depth == 0, do: "", else: nil), slices: own, children: []}]
+
+    children =
+      for name <- names do
+        group =
+          Enum.filter(deeper, &(Enum.at(Cratis.Arc.EventModel.Order.path(&1), depth) == name))
+
+        {own_here, below} =
+          Enum.split_with(group, &(length(Cratis.Arc.EventModel.Order.path(&1)) == depth + 1))
+
+        %{name: name, slices: own_here, children: nodes(below, depth + 1)}
+      end
+
+    if depth == 0, do: own_nodes ++ children, else: children
   end
 
   defp module_name(%{module: ""}, app_name), do: app_name
@@ -97,19 +142,20 @@ defmodule Cratis.Arc.EventModel.Documents do
     %{
       "id" => guid([doc, name, "module"]),
       "name" => name,
-      "features" =>
-        features |> Enum.map(fn {feature, slices} -> feature_json(doc, name, feature, slices) end),
+      "features" => Enum.map(features, &feature_json(doc, name, &1)),
       "collapsed" => false,
       "sortOrder" => index,
       "commentCount" => 0
     }
   end
 
-  defp feature_json(doc, module, feature, slices) do
+  defp feature_json(doc, module, %{name: feature, slices: slices, children: children}, path \\ []) do
+    path = if feature == "", do: path, else: path ++ [feature]
+
     %{
-      "id" => guid([doc, module, feature, "feature"]),
+      "id" => guid([module, Enum.join(path, "."), "feature"]),
       "name" => if(feature == "", do: module, else: feature),
-      "subFeatures" => [],
+      "subFeatures" => Enum.map(children, &feature_json(doc, module, &1, path)),
       "slices" =>
         slices |> Enum.with_index() |> Enum.map(fn {slice, i} -> slice_json(doc, slice, i) end),
       "collapsed" => false,

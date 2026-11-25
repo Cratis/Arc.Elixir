@@ -34,10 +34,28 @@ defmodule Mix.Tasks.Compile.ArcEventModel do
         Code.ensure_loaded(application)
 
         try do
-          {:ok, %{written: written}} =
+          {:ok, %{written: written, problems: problems}} =
             Cratis.Arc.EventModel.generate(application, Keyword.take(project, [:output]))
 
-          if written == [], do: {:noop, []}, else: {:ok, []}
+          severity = if project[:event_model_strict], do: :error, else: :warning
+
+          diagnostics =
+            for problem <- problems do
+              %Mix.Task.Compiler.Diagnostic{
+                compiler_name: "arc_event_model",
+                file: "mix.exs",
+                message: "Event model: " <> problem,
+                position: 0,
+                severity: severity
+              }
+            end
+
+          cond do
+            severity == :error and problems != [] -> {:error, diagnostics}
+            problems != [] -> {:ok, diagnostics}
+            written == [] -> {:noop, []}
+            true -> {:ok, []}
+          end
         rescue
           error ->
             {:error,

@@ -40,6 +40,7 @@ defmodule Cratis.Arc.Descriptor do
     :model_types,
     :queries,
     :availability,
+    consumes: [],
     authorization: %{roles: [], policy: nil, allow_anonymous: false, authenticated?: false}
   ]
 

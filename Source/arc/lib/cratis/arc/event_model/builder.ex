@@ -59,9 +59,96 @@ defmodule Cratis.Arc.EventModel.Builder do
         List.wrap(slice(key, group, skip, state, event_types))
       end)
       |> Enum.map(&name_artifacts(&1, skip))
-      |> Enum.sort_by(fn s -> {s.module, s.feature, s.name} end)
+      |> add_model_events(chronicle, skip)
+      |> assign_owners()
+      |> Cratis.Arc.EventModel.Order.sort()
 
-    %{name: otp_app |> to_string() |> Macro.camelize(), slices: slices}
+    %{
+      name: otp_app |> to_string() |> Macro.camelize(),
+      slices: slices,
+      problems: Cratis.Arc.EventModel.Validation.check(slices)
+    }
+  end
+
+  # A view that shows a model another slice builds (a second read model over the same reducer) still
+  # consumes the events that reducer handles, and a read model may declare `consumes:` itself.
+  defp add_model_events(slices, chronicle, skip) do
+    handled_by_model =
+      for module <- chronicle.reducers ++ chronicle.projections,
+          model = model_of_module(module),
+          not is_nil(model),
+          reduce: %{} do
+        acc -> Map.update(acc, model, handled(module), &Enum.uniq(&1 ++ handled(module)))
+      end
+
+    Enum.map(slices, fn
+      %{type: 1} = slice ->
+        declared = Enum.flat_map(slice.read_models, & &1.consumes)
+        inherited = Map.get(handled_by_model, slice.model, [])
+        have = Enum.map(slice.events ++ slice.external, & &1.module)
+        missing = Enum.uniq(declared ++ inherited) -- have
+        style = slice.config[:display_names] || :pascal_case
+
+        extra =
+          missing
+          |> events_of()
+          |> Enum.map(&name_event(&1, style, skip))
+
+        %{slice | external: slice.external ++ extra}
+
+      slice ->
+        slice
+    end)
+  end
+
+  defp model_of_module(module) do
+    cond do
+      function_exported?(module, :__chronicle_reducer__, 1) ->
+        module.__chronicle_reducer__(:model)
+
+      function_exported?(module, :__chronicle_projection__, 1) ->
+        module.__chronicle_projection__(:model)
+
+      true ->
+        nil
+    end
+  end
+
+  # An event belongs to the slice whose command appends it (or that holds its module), so every
+  # other slice points at one place.
+  defp assign_owners(slices) do
+    owners =
+      for slice <- slices, event <- slice.events, reduce: %{} do
+        acc ->
+          candidate = {rank(slice, event), slice.key}
+          Map.update(acc, event.event_type, candidate, &min(&1, candidate))
+      end
+
+    fix = fn event ->
+      case Map.get(owners, event.event_type) do
+        {_, key} -> Map.put(event, :owner, key)
+        nil -> Map.put(event, :owner, nil)
+      end
+    end
+
+    Enum.map(slices, fn slice ->
+      events = Enum.map(slice.events, fix)
+      external = Enum.map(slice.external, fix)
+
+      # A view only consumes: an event it lists that another slice owns is one it reads.
+      {mine, theirs} =
+        if slice.type == @state_view,
+          do: Enum.split_with(events, &(&1.owner == slice.key)),
+          else: {events, []}
+
+      %{slice | events: mine, external: Enum.uniq_by(external ++ theirs, & &1.event_type)}
+    end)
+  end
+
+  # Lower wins: a state change beats an automation and a view, and among those the one that holds
+  # the event module beats one that only appends it.
+  defp rank(%{type: type, key: key}, %{owner: owner}) do
+    {if(type == @state_change, do: 0, else: 1), if(owner == key, do: 0, else: 1)}
   end
 
   # -- grouping -----------------------------------------------------------------------------------

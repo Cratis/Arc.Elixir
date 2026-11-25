@@ -52,14 +52,15 @@ defmodule Cratis.Arc.EventModelTest do
       assert slice.model == ArcFixtures.Authors.Author
     end
 
-    test "a reducer makes its model a state view, owning the events defined beside it", %{
+    test "a reducer makes its model a state view that consumes the events a command appends", %{
       built: built
     } do
       slice = Enum.find(built.slices, &(&1.name == "Authors"))
 
       assert slice.type == 1
-      assert Enum.map(slice.events, & &1.name) == ["AuthorRegistered"]
-      assert slice.external == []
+      assert slice.events == []
+      assert Enum.map(slice.external, & &1.name) == ["AuthorRegistered"]
+      assert hd(slice.external).owner == ["", "Authors", "Registration"]
     end
   end
 
