@@ -51,7 +51,8 @@ defmodule Arc.ReadModel do
     types = Keyword.get(opts, :types, [])
 
     quote do
-      import Arc.ReadModel, only: [authorize: 1, allow_anonymous: 0]
+      import Arc.ReadModel, only: [authorize: 1, allow_anonymous: 0, available: 1]
+      Module.register_attribute(__MODULE__, :arc_available, accumulate: true)
       Module.register_attribute(__MODULE__, :arc_queries, accumulate: true)
       Module.register_attribute(__MODULE__, :query, [])
       Module.register_attribute(__MODULE__, :observe, [])
@@ -66,6 +67,14 @@ defmodule Arc.ReadModel do
   @doc "Declares who may run every query of the module. See `Arc.Authorization`."
   defmacro authorize(requirement) do
     quote do: @arc_authorization(unquote(requirement))
+  end
+
+  @doc """
+  Declares when every query of the module is available: `available for: "Plus"`. A single query
+  declares its own with the `:available` option of `@query` and `@observe`. See `Arc.Availability`.
+  """
+  defmacro available(lines) do
+    quote do: @arc_available(unquote(lines))
   end
 
   @doc "Allows anonymous callers for every query of the module."
@@ -134,6 +143,11 @@ defmodule Arc.ReadModel do
       model: model,
       model_types: Module.get_attribute(env.module, :arc_model_types),
       queries: queries,
+      availability:
+        env.module
+        |> Module.get_attribute(:arc_available)
+        |> Enum.reverse()
+        |> Arc.Availability.Declaration.gate(),
       authorization: module_auth
     }
 
@@ -172,9 +186,14 @@ defmodule Arc.ReadModel do
       watch: Keyword.get(opts, :watch, []),
       topics: Keyword.get(opts, :topics, []),
       http_method: Keyword.get(opts, :http_method),
+      route: Keyword.get(opts, :route),
+      availability: opts |> Keyword.get(:available) |> query_gate(),
       authorization: authorization
     }
   end
+
+  defp query_gate(nil), do: nil
+  defp query_gate(lines), do: Arc.Availability.Declaration.gate(lines)
 
   defp param(name, type, optional?) do
     %Arc.Schema.Field{name: name, type: type, nullable?: optional?, required?: not optional?}

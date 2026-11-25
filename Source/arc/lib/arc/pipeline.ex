@@ -45,7 +45,8 @@ defmodule Arc.Pipeline do
     descriptor = module.__arc__()
 
     with_logger_metadata(ctx, fn ->
-      with {:ok, command} <- bind_command(module, input, base),
+      with :ok <- available(Arc.Availability.check_command(ctx, module, input), base),
+           {:ok, command} <- bind_command(module, input, base),
            :ok <- authorize(descriptor.authorization, ctx, command, base),
            :ok <- filter(Arc.Filter.run_command(ctx, descriptor), base),
            :ok <- validate_command(module, descriptor, command, ctx, base) do
@@ -59,6 +60,28 @@ defmodule Arc.Pipeline do
   rescue
     exception -> exception_result(exception, __STACKTRACE__, ctx)
   end
+
+  # What availability decided. It runs first: before binding, authorization, filters and validation.
+  defp available(:ok, _base), do: :ok
+
+  defp available({:denied, reason}, base),
+    do: {:halt, %{base | authorized?: false, authorization_failure_reason: reason}}
+
+  defp available({:error, reason}, base), do: {:halt, retryable(base, reason)}
+
+  # A decision that could not be made is a retryable error, never a denial.
+  defp retryable(base, reason) do
+    require Logger
+    Logger.error("Arc availability could not be decided: #{inspect(reason)}")
+    retryable(base)
+  end
+
+  defp retryable(base),
+    do: %{
+      base
+      | retryable?: true,
+        exception_messages: ["The availability could not be decided. Try again."]
+    }
 
   defp bind_command(_module, %{__struct__: _} = command, _base), do: {:ok, command}
 
@@ -196,7 +219,8 @@ defmodule Arc.Pipeline do
     base = %QueryResult{correlation_id: ctx.correlation_id}
 
     with_logger_metadata(ctx, fn ->
-      with :ok <- authorize_query(query.authorization, ctx, base),
+      with :ok <- available(Arc.Availability.check_query(ctx, descriptor, query, raw_args), base),
+           :ok <- authorize_query(query.authorization, ctx, base),
            :ok <- filter(Arc.Filter.run_query(ctx, descriptor, query), base),
            {:ok, args} <- bind_arguments(query, raw_args, base) do
         ctx = %{ctx | query: Map.new(opts)}
@@ -207,6 +231,9 @@ defmodule Arc.Pipeline do
 
           {:error, errors} ->
             %{base | validation_results: normalize_results({:error, errors})}
+
+          {:retryable, _message} ->
+            retryable(base)
 
           other ->
             raise ArgumentError,

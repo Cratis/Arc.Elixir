@@ -32,6 +32,7 @@ config :my_app, MyApp.Arc, introspection: :authenticated
 | `tenant_header` | `"x-cratis-tenant-id"` | Header the `:header` tenancy resolver reads, and the fallback of the `:subdomain` one |
 | `tenancy` | `[]` (the header resolver) | How the tenant is resolved: `resolver:` (`:header`, `:query`, `:claim`, `:subdomain`, `:fixed`, `:development` or a module), `header:`, `query_parameter:`, `claim_type:`, `base_domain:` and `tenant_id:`. See [Tenancy](tenancy.md) |
 | `filters` | `[]` | `Arc.Filter` modules: cross-cutting rules that run for every command and query |
+| `availability` | not set | `[definition:, audience_source:, suspension_source:, pubsub:]`, see [Availability](availability.md) |
 | `mongodb` | none | The MongoDB options of `cratis_arc_mongodb`, see [MongoDB](mongodb.md) |
 | `correlation_header` | `"x-correlation-id"` | Header reused and echoed |
 | `max_body_bytes` | `1_000_000` | Request body limit |

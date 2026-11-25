@@ -38,7 +38,8 @@ Not verified: behavior against a running Chronicle kernel in this repository's C
 
 ## Authoring limits
 
-- Nested lists, enums and derived types are not supported in schemas or generated proxies.
+- Nested lists (`{:list, {:list, t}}`), enums (`{:enum, [atoms]}`) and derived types (`{:one_of, [modules]}`) are generated for read models; the generated `@field` of a nested list is declared once with `enumerable` true, so the hydration of the inner list is the client's. They are not inferred from struct defaults: declare them with `types:` or `__arc_types__/0`.
+- Availability: no environment switch that grants every audience, no per-level audience records (a source returns the names the caller holds), no condition that reads another provided value, and no MCP filter (Arc for Elixir has no MCP). See [Availability](availability.md).
 - A command has one `key` field.
 - Sorting uses top-level fields of the model struct, in memory. Page in the database and return an `Arc.Page` for large collections.
 - `Arc.Notifier` reaches subscriptions on one node. Fan out across nodes yourself with `Phoenix.PubSub`.

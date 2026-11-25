@@ -27,6 +27,23 @@ defmodule Arc.ProxyGeneratorTest do
     assert "Authors/Listing/index.ts" in result.written
   end
 
+  test "a command and a query carry the identity of the part they are", %{tmp_dir: dir} do
+    generate(dir)
+
+    command = read(dir, "Authors/Registration/RenameAuthor.ts")
+
+    assert command =~
+             "static readonly part: PartIdentity = new PartIdentity('ArcFixtures.Authors.Registration.RenameAuthor', '', 'Authors', 'Registration');"
+
+    assert command =~
+             "import { SliceLocation as ArcSliceLocation, PartIdentity, PropertyDescriptor }"
+
+    query = read(dir, "Authors/Listing/AllAuthors.ts")
+
+    assert query =~
+             "static readonly part: PartIdentity = new PartIdentity('ArcFixtures.Authors.Listing.Authors.AllAuthors', '', 'Authors', 'Listing');"
+  end
+
   test "every file starts with the generated marker, source and hash", %{tmp_dir: dir} do
     generate(dir)
 
@@ -206,6 +223,25 @@ defmodule Arc.ProxyGeneratorTest do
       assert_raise ArgumentError, ~r/Unknown proxy layout/, fn ->
         generate(dir, layout: :scattered)
       end
+    end
+  end
+
+  describe "read model shapes" do
+    test "nested lists, enums and derived types are generated", %{tmp_dir: dir} do
+      {:ok, _} = ProxyGenerator.generate(ArcShapes.App, output: dir)
+      model = read(dir, "Drawing.ts")
+
+      assert model =~ "grid!: number[][];"
+      assert model =~ "status!: 'draft' | 'published';"
+      assert model =~ "shape?: Circle | Square;"
+      assert model =~ "import { Circle } from"
+      assert model =~ "import { Square } from"
+    end
+
+    test "an enum and a derived type are cast from the wire" do
+      assert {:ok, :draft} = Arc.Types.cast({:enum, [:draft, :published]}, "draft")
+      assert :error = Arc.Types.cast({:enum, [:draft]}, "nope")
+      assert Arc.Types.describe({:enum, [:a, :b]}) == "one of a, b"
     end
   end
 end

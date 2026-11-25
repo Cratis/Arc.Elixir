@@ -49,7 +49,7 @@ defmodule Arc.ProxyGenerator.Render do
       @notice,
       "import { #{command_imports} } from '@cratis/arc/commands';",
       "import { type ClearCommandValues, type SetCommandValues, useCommand } from '@cratis/arc.react/commands';",
-      "import { SliceLocation as ArcSliceLocation, PropertyDescriptor } from '@cratis/arc/reflection';"
+      "import { SliceLocation as ArcSliceLocation, PartIdentity, PropertyDescriptor } from '@cratis/arc/reflection';"
     ]
   end
 
@@ -62,7 +62,7 @@ defmodule Arc.ProxyGenerator.Render do
   end
 
   defp response_generic(nil), do: ""
-  defp response_generic(r), do: ", #{r.type}#{if r.enumerable?, do: "[]"}"
+  defp response_generic(r), do: ", #{TS.ts_type(r)}"
 
   defp command_class_head(d, response_generic) do
     doc_block(d.doc) ++
@@ -85,6 +85,7 @@ defmodule Arc.ProxyGenerator.Render do
 
     [
       "    static readonly sliceLocation: ArcSliceLocation = new ArcSliceLocation('#{module}', '#{feature}', '#{slice}');",
+      "    static readonly part: PartIdentity = new PartIdentity('#{inspect(d.module)}', '#{module}', '#{feature}', '#{slice}');",
       "    readonly route: string = '#{route}';"
     ] ++
       if(has_rules?,
@@ -238,6 +239,7 @@ defmodule Arc.ProxyGenerator.Render do
 
     [
       "    static readonly sliceLocation: ArcSliceLocation = new ArcSliceLocation('#{module}', '#{feature}', '#{slice}');",
+      "    static readonly part: PartIdentity = new PartIdentity('#{Descriptor.query_name(d, q)}', '#{module}', '#{feature}', '#{slice}');",
       "    readonly route: string = '#{route}';",
       "    readonly queryName: string = '#{Descriptor.query_name(d, q)}';"
     ] ++
@@ -342,7 +344,7 @@ defmodule Arc.ProxyGenerator.Render do
       @notice,
       first,
       second,
-      "import { SliceLocation as ArcSliceLocation, ParameterDescriptor } from '@cratis/arc/reflection';"
+      "import { SliceLocation as ArcSliceLocation, ParameterDescriptor, PartIdentity } from '@cratis/arc/reflection';"
     ]
   end
 
@@ -574,7 +576,7 @@ defmodule Arc.ProxyGenerator.Render do
       field: field,
       camel: Naming.camel(field.name),
       mapping: mapping,
-      ts: mapping.type <> if(mapping.enumerable?, do: "[]", else: "")
+      ts: TS.ts_type(mapping)
     }
   end
 

@@ -178,3 +178,41 @@ defmodule ArcFixtures.App do
       ArcFixtures.Identity.Tenants
     ]
 end
+
+defmodule ArcShapes.Circle do
+  @moduledoc false
+  defstruct radius: 0
+end
+
+defmodule ArcShapes.Square do
+  @moduledoc false
+  defstruct side: 0
+end
+
+defmodule ArcShapes.Drawing do
+  @moduledoc false
+  defstruct id: "", grid: [[0]], status: :draft, shape: nil
+
+  def __arc_types__ do
+    [
+      grid: {:list, {:list, :integer}},
+      status: {:enum, [:draft, :published]},
+      shape: {:one_of, [ArcShapes.Circle, ArcShapes.Square]}
+    ]
+  end
+end
+
+defmodule ArcShapes.Shapes.Drawings do
+  @moduledoc "Queries over drawings."
+  use Arc.ReadModel, model: ArcShapes.Drawing
+  allow_anonymous()
+
+  @query many: true
+  def all_drawings(_args, _ctx), do: {:ok, []}
+end
+
+defmodule ArcShapes.App do
+  use Arc.Application,
+    otp_app: :cratis_arc,
+    artifacts: [ArcShapes.Shapes.Drawings]
+end
