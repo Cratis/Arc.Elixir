@@ -179,6 +179,19 @@ defmodule Cratis.Arc.EventModelHierarchyTest do
       assert by_id["app.M.Orders.Placing"].namespace == "M.Orders.Placing"
     end
 
+    test "declare a read model once and name the stream an event is produced for", %{
+      documents: documents
+    } do
+      add = change("F", "Add", ["Added"])
+      a = view("F", "ListA", ["Added"], %{"Added" => add.key})
+      b = view("F", "ListB", ["Added"], %{"Added" => add.key})
+
+      [root | _] = Documents.build(%{name: "App", slices: [add, a, b], problems: []}, "app")
+
+      assert length(String.split(root.source, "readmodel Author\n")) == 2
+      _ = documents
+    end
+
     test "write nested features in the Screenplay source", %{documents: [root | _]} do
       assert root.source =~ "  feature Orders\n"
       assert root.source =~ "    feature Placing\n      slice StateChange Add\n"
