@@ -6,39 +6,28 @@ defmodule Library.AuthorsTest do
     application: Library.Arc,
     event_types: [Library.Authors.AuthorRegistered, Library.Authors.AuthorRenamed]
 
+  alias Cratis.Arc
   alias Library.Authors.{AuthorRegistered, AuthorRenamed}
   alias Library.Authors.Registration.{RegisterAuthor, RenameAuthor}
 
   test "registering an author records AuthorRegistered on the author's event source", %{arc: arc} do
-    id = Cratis.Arc.new_id()
+    id = Arc.new_id()
 
-    result =
-      Cratis.Arc.Test.execute(arc, {RegisterAuthor, %{"id" => id, "name" => "Ada Lovelace"}})
+    result = Arc.Test.execute(arc, {RegisterAuthor, %{"id" => id, "name" => "Ada Lovelace"}})
 
-    Cratis.Arc.Test.assert_success(result)
-
-    Cratis.Arc.Test.assert_appended(arc, %AuthorRegistered{name: "Ada Lovelace"},
-      event_source_id: id
-    )
+    Arc.Test.assert_success(result)
+    Arc.Test.assert_appended(arc, %AuthorRegistered{name: "Ada Lovelace"}, event_source_id: id)
   end
 
   test "a name that is too short is rejected before anything is recorded", %{arc: arc} do
-    result =
-      Cratis.Arc.Test.execute(
-        arc,
-        {RegisterAuthor, %{"id" => Cratis.Arc.new_id(), "name" => "A"}}
-      )
+    result = Arc.Test.execute(arc, {RegisterAuthor, %{"id" => Arc.new_id(), "name" => "A"}})
 
-    Cratis.Arc.Test.assert_invalid(result, :name)
-    Cratis.Arc.Test.refute_appended(arc, AuthorRegistered)
+    Arc.Test.assert_invalid(result, :name)
+    Arc.Test.refute_appended(arc, AuthorRegistered)
   end
 
   test "a reserved name is rejected by the command's own rule", %{arc: arc} do
-    result =
-      Cratis.Arc.Test.execute(
-        arc,
-        {RegisterAuthor, %{"id" => Cratis.Arc.new_id(), "name" => "admin"}}
-      )
+    result = Arc.Test.execute(arc, {RegisterAuthor, %{"id" => Arc.new_id(), "name" => "admin"}})
 
     assert [%{message: "That name is reserved.", members: [:name]}] = result.validation_results
   end
@@ -47,18 +36,12 @@ defmodule Library.AuthorsTest do
     arc: arc
   } do
     first =
-      Cratis.Arc.Test.execute(
-        arc,
-        {RegisterAuthor, %{"id" => Cratis.Arc.new_id(), "name" => "Grace Hopper"}}
-      )
+      Arc.Test.execute(arc, {RegisterAuthor, %{"id" => Arc.new_id(), "name" => "Grace Hopper"}})
 
     second =
-      Cratis.Arc.Test.execute(
-        arc,
-        {RegisterAuthor, %{"id" => Cratis.Arc.new_id(), "name" => "Grace Hopper"}}
-      )
+      Arc.Test.execute(arc, {RegisterAuthor, %{"id" => Arc.new_id(), "name" => "Grace Hopper"}})
 
-    Cratis.Arc.Test.assert_success(first)
+    Arc.Test.assert_success(first)
 
     assert [
              %{
@@ -70,21 +53,18 @@ defmodule Library.AuthorsTest do
   end
 
   test "only editors may rename", %{arc: arc} do
-    id = Cratis.Arc.new_id()
+    id = Arc.new_id()
     command = {RenameAuthor, %{"id" => id, "name" => "Ada King"}}
 
-    Cratis.Arc.Test.assert_forbidden(Cratis.Arc.Test.execute(arc, command))
+    Arc.Test.assert_forbidden(Arc.Test.execute(arc, command))
 
-    Cratis.Arc.Test.assert_forbidden(
-      Cratis.Arc.Test.execute(arc, command, principal: Cratis.Arc.Test.principal("ada"))
+    Arc.Test.assert_forbidden(
+      Arc.Test.execute(arc, command, principal: Arc.Test.principal("ada"))
     )
 
-    result =
-      Cratis.Arc.Test.execute(arc, command,
-        principal: Cratis.Arc.Test.principal("ed", ["editor"])
-      )
+    result = Arc.Test.execute(arc, command, principal: Arc.Test.principal("ed", ["editor"]))
 
-    Cratis.Arc.Test.assert_success(result)
-    Cratis.Arc.Test.assert_appended(arc, %AuthorRenamed{name: "Ada King"}, event_source_id: id)
+    Arc.Test.assert_success(result)
+    Arc.Test.assert_appended(arc, %AuthorRenamed{name: "Ada King"}, event_source_id: id)
   end
 end

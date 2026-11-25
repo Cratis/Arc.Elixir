@@ -163,12 +163,12 @@ LiveView calls the same modules in process. The page keeps the list current and 
 ```elixir
 # From: Samples/phoenix/test/library/authors_test.exs
       test "registering an author records AuthorRegistered on the author's event source", %{arc: arc} do
-        id = Cratis.Arc.new_id()
+        id = Arc.new_id()
 
-        result = Cratis.Arc.Test.execute(arc, {RegisterAuthor, %{"id" => id, "name" => "Ada Lovelace"}})
+        result = Arc.Test.execute(arc, {RegisterAuthor, %{"id" => id, "name" => "Ada Lovelace"}})
 
-        Cratis.Arc.Test.assert_success(result)
-        Cratis.Arc.Test.assert_appended(arc, %AuthorRegistered{name: "Ada Lovelace"}, event_source_id: id)
+        Arc.Test.assert_success(result)
+        Arc.Test.assert_appended(arc, %AuthorRegistered{name: "Ada Lovelace"}, event_source_id: id)
       end
 ```
 

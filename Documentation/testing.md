@@ -10,10 +10,10 @@ Test what the application does, not how it is wired. `Cratis.Arc.Test` runs the 
 ```elixir
 # From: Samples/phoenix/test/library/authors_test.exs
       test "a name that is too short is rejected before anything is recorded", %{arc: arc} do
-        result = Cratis.Arc.Test.execute(arc, {RegisterAuthor, %{"id" => Cratis.Arc.new_id(), "name" => "A"}})
+        result = Arc.Test.execute(arc, {RegisterAuthor, %{"id" => Arc.new_id(), "name" => "A"}})
 
-        Cratis.Arc.Test.assert_invalid(result, :name)
-        Cratis.Arc.Test.refute_appended(arc, AuthorRegistered)
+        Arc.Test.assert_invalid(result, :name)
+        Arc.Test.refute_appended(arc, AuthorRegistered)
       end
 ```
 
