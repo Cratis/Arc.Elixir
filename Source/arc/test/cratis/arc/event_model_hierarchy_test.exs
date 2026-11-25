@@ -77,6 +77,21 @@ defmodule Cratis.Arc.EventModelHierarchyTest do
       assert names(sorted) == ["Open", "Add", "Charge"]
     end
 
+    test "a feature is as late as its latest slice" do
+      # Grants holds a command and a reaction to events of Credentials, so it follows Credentials.
+      add = change("Credentials", "Add", ["Added"])
+      set = change("Grants", "Set", ["Set"])
+
+      apply_grants = %{
+        slice("Grants", "Apply", 2, %{})
+        | external: [event("Added", add.key)],
+          events: [event("Applied", ["M", "Grants", "Apply"])]
+      }
+
+      assert names(Order.sort([set, apply_grants, add])) == ["Add", "Set", "Apply"]
+      assert Validation.check(Order.sort([set, apply_grants, add])) == []
+    end
+
     test "a cycle does not stop the order" do
       a = slice("F", "A", 2, %{external: [event("B", ["M", "F", "B"])]})
       b = slice("F", "B", 2, %{external: [event("A", ["M", "F", "A"])]})
