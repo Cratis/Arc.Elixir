@@ -11,13 +11,13 @@ defmodule Library.Authors.Listing.Authors do
 
   @doc "All authors."
   @query many: true
-  def all_authors(_args, ctx), do: Chronicle.all(Author, ctx.chronicle)
+  def all_authors(_args, ctx), do: Cratis.Chronicle.all(Author, ctx.chronicle)
 
   @doc "One author by id."
   @query params: [id: :uuid], many: false
-  def author_by_id(%{id: id}, ctx), do: Chronicle.read_model(Author, id, ctx.chronicle)
+  def author_by_id(%{id: id}, ctx), do: Cratis.Chronicle.read_model(Author, id, ctx.chronicle)
 
   @doc "All authors, kept current: re-runs whenever Chronicle changes an author."
   @observe many: true, watch: [Author]
-  def live_authors(_args, ctx), do: Chronicle.all(Author, ctx.chronicle)
+  def live_authors(_args, ctx), do: Cratis.Chronicle.all(Author, ctx.chronicle)
 end

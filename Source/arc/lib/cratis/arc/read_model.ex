@@ -13,13 +13,13 @@ defmodule Cratis.Arc.ReadModel do
         use Cratis.Arc.ReadModel, model: MyApp.Authors.Author
 
         @query many: true
-        def all_authors(_args, _ctx), do: Chronicle.all(MyApp.Authors.Author)
+        def all_authors(_args, _ctx), do: Cratis.Chronicle.all(MyApp.Authors.Author)
 
         @query params: [id: :uuid], many: false
-        def by_id(%{id: id}, _ctx), do: Chronicle.read_model(MyApp.Authors.Author, id)
+        def by_id(%{id: id}, _ctx), do: Cratis.Chronicle.read_model(MyApp.Authors.Author, id)
 
         @observe many: true, watch: [MyApp.Authors.Author]
-        def live_authors(_args, _ctx), do: Chronicle.all(MyApp.Authors.Author)
+        def live_authors(_args, _ctx), do: Cratis.Chronicle.all(MyApp.Authors.Author)
       end
 
   Each annotated function takes `(args, ctx)` where `args` is a map of the declared, converted

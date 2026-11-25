@@ -40,7 +40,7 @@ defmodule Cratis.Arc.EventModel.Builder do
     config = state.config
     otp_app = Keyword.fetch!(config, :otp_app)
     skip = config[:segments_to_skip]
-    chronicle = Chronicle.Artifacts.discover(otp_app)
+    chronicle = Cratis.Chronicle.Artifacts.discover(otp_app)
     event_types = chronicle.event_types
 
     groups =
@@ -261,7 +261,7 @@ defmodule Cratis.Arc.EventModel.Builder do
   end
 
   defp schema_of(module) do
-    module |> Chronicle.Schemas.JsonSchemaGenerator.generate() |> Jason.decode!()
+    module |> Cratis.Chronicle.Schemas.JsonSchemaGenerator.generate() |> Jason.decode!()
   rescue
     _ -> %{"type" => "object"}
   end

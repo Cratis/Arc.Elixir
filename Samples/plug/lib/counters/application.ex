@@ -15,7 +15,7 @@ defmodule Counters.Application do
   defp chronicle do
     if Application.get_env(:counters, :start_chronicle, true) do
       [
-        {Chronicle.Client,
+        {Cratis.Chronicle.Client,
          connection_string: Application.fetch_env!(:counters, :chronicle_connection_string),
          event_store: "counters-plug",
          otp_app: :counters}

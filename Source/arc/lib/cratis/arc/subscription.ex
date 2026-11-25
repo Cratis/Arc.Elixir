@@ -83,7 +83,7 @@ defmodule Cratis.Arc.Subscription do
   defp watch(model, state) when is_atom(model) do
     chronicle = Keyword.take(state.ctx.chronicle, [:client, :namespace])
 
-    case Chronicle.ReadModels.subscribe(model, chronicle) do
+    case Cratis.Chronicle.ReadModels.subscribe(model, chronicle) do
       {:ok, watcher} -> {:ok, {:chronicle, watcher}}
       other -> other
     end
@@ -112,7 +112,7 @@ defmodule Cratis.Arc.Subscription do
   def terminate(_reason, state) do
     for watcher <- state.watchers do
       case watcher do
-        {:chronicle, handle} -> Chronicle.ReadModels.unsubscribe(handle)
+        {:chronicle, handle} -> Cratis.Chronicle.ReadModels.unsubscribe(handle)
         {:custom, module, handle} -> module.unsubscribe(handle)
       end
     end

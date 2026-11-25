@@ -2,11 +2,11 @@
 # Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 defmodule ArcFixtures.Authors.AuthorId do
-  use Chronicle.Concept, type: :uuid, event_source_id: true
+  use Cratis.Chronicle.Concept, type: :uuid, event_source_id: true
 end
 
 defmodule ArcFixtures.Authors.AuthorRegistered do
-  use Chronicle.Events.EventType, id: "arc-fixture-author-registered"
+  use Cratis.Chronicle.Events.EventType, id: "arc-fixture-author-registered"
   defstruct name: ""
 end
 
@@ -15,7 +15,7 @@ defmodule ArcFixtures.Authors.Author do
 end
 
 defmodule ArcFixtures.Authors.AuthorReducer do
-  use Chronicle.Reducers.Reducer, model: ArcFixtures.Authors.Author
+  use Cratis.Chronicle.Reducers.Reducer, model: ArcFixtures.Authors.Author
 
   @handles ArcFixtures.Authors.AuthorRegistered
 

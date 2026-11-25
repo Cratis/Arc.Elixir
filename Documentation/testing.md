@@ -25,7 +25,7 @@ use Cratis.Arc.Test.Case,
   event_types: [Library.Authors.AuthorRegistered, Library.Authors.AuthorRenamed]
 ```
 
-Every option of `Chronicle.Testing.start_supervised_client/1` is accepted (`event_types`, `reactors`, `reducers`, `constraints`). Each test has its own kernel, so `async: true` is safe.
+Every option of `Cratis.Chronicle.Testing.start_supervised_client/1` is accepted (`event_types`, `reactors`, `reducers`, `constraints`). Each test has its own kernel, so `async: true` is safe.
 
 ## Functions
 
@@ -55,7 +55,7 @@ Then drive the endpoint with `Plug.Test` and `Phoenix.LiveViewTest` as usual. Fo
 
 ## What the in-memory kernel cannot do
 
-Chronicle's test kernel runs appends, constraints and concurrency checks for real, and runs reactors and reducers synchronously after each append. It has no read-model query surface, so `Chronicle.all/2` and `Chronicle.read_model/3` do not work against it. That has two consequences:
+Chronicle's test kernel runs appends, constraints and concurrency checks for real, and runs reactors and reducers synchronously after each append. It has no read-model query surface, so `Cratis.Chronicle.all/2` and `Cratis.Chronicle.read_model/3` do not work against it. That has two consequences:
 
 - Queries that read Chronicle read models cannot be exercised end to end in these tests. Test the decision (the command) and the data shaping separately, and verify queries against a development kernel.
 - A LiveView page that lists a read model renders an empty list in tests. The Phoenix sample says so and tests the form, validation and recording instead.

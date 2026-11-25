@@ -44,7 +44,7 @@ Events are Chronicle event types. The read model is a Chronicle projection: Chro
 defmodule Library.Authors.AuthorRegistered do
   @moduledoc "An author was registered."
 
-  use Chronicle.Events.EventType, id: "library-author-registered"
+  use Cratis.Chronicle.Events.EventType, id: "library-author-registered"
 
   defstruct name: ""
 
@@ -59,7 +59,7 @@ end
 defmodule Library.Authors.Author do
   @moduledoc "An author as the application shows it. Chronicle keeps it current from the events."
 
-  use Chronicle.ReadModels.ReadModel
+  use Cratis.Chronicle.ReadModels.ReadModel
 
   defstruct id: "", name: ""
 
@@ -74,7 +74,7 @@ The command at the top of the [overview](index.md) is the whole write side. Thre
 
 - `schema` declares the request. The `key: true` field is the event source: whatever `handle/2` appends goes to that id.
 - Declarative options (`required`, `min_length`, `max_length`) are validated by the server and, with proxies, by the browser.
-- `handle/2` returns `{:append, event}`. It does not call `Chronicle.append` itself.
+- `handle/2` returns `{:append, event}`. It does not call `Cratis.Chronicle.append` itself.
 
 ## Define a query
 
@@ -84,7 +84,7 @@ A read model module holds the queries over one model. A query is a function that
 # From: Samples/phoenix/lib/library/authors/listing/authors.ex
       @doc "All authors."
       @query many: true
-      def all_authors(_args, ctx), do: Chronicle.all(Author, ctx.chronicle)
+      def all_authors(_args, ctx), do: Cratis.Chronicle.all(Author, ctx.chronicle)
 ```
 
 `ctx.chronicle` carries the options Arc was configured with, for example which Chronicle client to use. Pass it on to Chronicle calls.

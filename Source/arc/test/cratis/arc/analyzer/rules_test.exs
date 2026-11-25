@@ -147,11 +147,11 @@ defmodule Cratis.Arc.Analyzer.RulesTest do
       fact = command(Foo)
 
       assert [%{line: 9}] =
-               ARCE0004.check_call(call(Foo, {Chronicle, :append, 2}), project([fact]))
+               ARCE0004.check_call(call(Foo, {Cratis.Chronicle, :append, 2}), project([fact]))
 
       assert [_] =
                ARCE0004.check_call(
-                 call(Foo, {Chronicle.EventSequences.EventLog, :append_many, 3}),
+                 call(Foo, {Cratis.Chronicle.EventSequences.EventLog, :append_many, 3}),
                  project([fact])
                )
     end
@@ -160,8 +160,11 @@ defmodule Cratis.Arc.Analyzer.RulesTest do
       fact = command(Foo)
       other = module_fact(Bar)
 
-      assert ARCE0004.check_call(call(Foo, {Chronicle, :read_model, 2}), project([fact])) == []
-      assert ARCE0004.check_call(call(Bar, {Chronicle, :append, 2}), project([other])) == []
+      assert ARCE0004.check_call(call(Foo, {Cratis.Chronicle, :read_model, 2}), project([fact])) ==
+               []
+
+      assert ARCE0004.check_call(call(Bar, {Cratis.Chronicle, :append, 2}), project([other])) ==
+               []
     end
   end
 

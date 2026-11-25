@@ -24,7 +24,7 @@ defmodule ContractServer do
 end
 
 {:ok, client} =
-  Chronicle.Testing.start_supervised_client(event_types: [ArcFixtures.Authors.AuthorRegistered])
+  Cratis.Chronicle.Testing.start_supervised_client(event_types: [ArcFixtures.Authors.AuthorRegistered])
 
 # The unsigned x-ms-client-principal headers are trusted here because this server is only reachable
 # by the contract test; a real application enables that only behind an authenticating ingress.

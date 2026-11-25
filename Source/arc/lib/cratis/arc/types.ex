@@ -6,7 +6,7 @@ defmodule Cratis.Arc.Types do
   The field types Arc understands, and conversion between wire values and Elixir values.
 
   A type is one of `:string`, `:integer`, `:float`, `:boolean`, `:uuid`, `:date`, `:datetime`,
-  `:map`, `{:list, type}`, a `Chronicle.Concept` module (a strongly typed wrapper over one
+  `:map`, `{:list, type}`, a `Cratis.Chronicle.Concept` module (a strongly typed wrapper over one
   primitive), or a module that `use Cratis.Arc.Schema` (a nested type). Lists nest: `{:list, {:list, :integer}}`.
 
   Two more forms describe what a read model stores:
@@ -25,7 +25,7 @@ defmodule Cratis.Arc.Types do
   @spec primitive?(term()) :: boolean()
   def primitive?(type), do: type in @primitives
 
-  @doc "Whether `module` is a `Chronicle.Concept`."
+  @doc "Whether `module` is a `Cratis.Chronicle.Concept`."
   @spec concept?(term()) :: boolean()
   def concept?(module) when is_atom(module),
     do: Code.ensure_loaded?(module) and function_exported?(module, :__chronicle_concept__, 1)

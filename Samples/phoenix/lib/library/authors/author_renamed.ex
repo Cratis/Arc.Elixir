@@ -4,7 +4,7 @@
 defmodule Library.Authors.AuthorRenamed do
   @moduledoc "An author was renamed."
 
-  use Chronicle.Events.EventType, id: "library-author-renamed"
+  use Cratis.Chronicle.Events.EventType, id: "library-author-renamed"
 
   defstruct name: ""
 end

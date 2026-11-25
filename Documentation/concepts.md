@@ -80,7 +80,7 @@ The first segment is the application name and is skipped. The namespace after it
 
 ## The wire format
 
-Struct fields are `snake_case`; the wire and the generated TypeScript use `camelCase`. `Chronicle.Concept` values travel as the primitive they wrap. Dates and times are ISO 8601 strings. `nil` is `null`. The result envelopes are documented in the [Arc HTTP contract](/arc/http-contract/).
+Struct fields are `snake_case`; the wire and the generated TypeScript use `camelCase`. `Cratis.Chronicle.Concept` values travel as the primitive they wrap. Dates and times are ISO 8601 strings. `nil` is `null`. The result envelopes are documented in the [Arc HTTP contract](/arc/http-contract/).
 
 ## Recording events
 

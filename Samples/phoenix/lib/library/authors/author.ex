@@ -4,7 +4,7 @@
 defmodule Library.Authors.Author do
   @moduledoc "An author as the application shows it. Chronicle keeps it current from the events."
 
-  use Chronicle.ReadModels.ReadModel
+  use Cratis.Chronicle.ReadModels.ReadModel
 
   defstruct id: "", name: ""
 

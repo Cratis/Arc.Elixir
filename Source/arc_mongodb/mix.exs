@@ -75,7 +75,7 @@ defmodule Cratis.Arc.MongoDB.MixProject do
 
   defp docs do
     [
-      main: "Arc.MongoDB",
+      main: "Cratis.Arc.MongoDB",
       extras: ["README.md"],
       groups_for_modules: [
         Persistence: [

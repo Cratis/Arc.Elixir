@@ -4,7 +4,7 @@
 defmodule Counters.Counter do
   @moduledoc "A counter's current value, kept current by Chronicle."
 
-  use Chronicle.ReadModels.ReadModel
+  use Cratis.Chronicle.ReadModels.ReadModel
 
   defstruct id: "", value: 0
 

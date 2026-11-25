@@ -4,7 +4,7 @@
 defmodule Library.Authors.AuthorRegistered do
   @moduledoc "An author was registered."
 
-  use Chronicle.Events.EventType, id: "library-author-registered"
+  use Cratis.Chronicle.Events.EventType, id: "library-author-registered"
 
   defstruct name: ""
 

@@ -19,7 +19,7 @@ defmodule Cratis.Arc.Test do
       end
 
   Validation, authorization, binding and the Chronicle append all run for real; nothing is
-  mocked. Reactors and reducers run synchronously after each append, as in `Chronicle.Testing`.
+  mocked. Reactors and reducers run synchronously after each append, as in `Cratis.Chronicle.Testing`.
   Each test gets its own kernel, so `async: true` is safe.
   """
 
@@ -81,7 +81,7 @@ defmodule Cratis.Arc.Test do
   @doc "Waits until Chronicle's in-memory observers have processed every appended event."
   @spec wait_for_observers(Scenario.t()) :: :ok
   def wait_for_observers(%Scenario{client: client}),
-    do: Chronicle.Testing.wait_for_observers(client)
+    do: Cratis.Chronicle.Testing.wait_for_observers(client)
 
   @doc "An authenticated principal."
   @spec principal(String.t(), [String.t()]) :: Principal.t()
@@ -119,17 +119,17 @@ defmodule Cratis.Arc.Test do
     do:
       assert(result.authorized? == false, "expected forbidden, got: #{inspect(summary(result))}")
 
-  @doc "Asserts an event was appended. See `Chronicle.Testing.Assertions.assert_appended/3`."
+  @doc "Asserts an event was appended. See `Cratis.Chronicle.Testing.Assertions.assert_appended/3`."
   @spec assert_appended(Scenario.t(), struct() | module() | (struct() -> boolean()), keyword()) ::
           true
   def assert_appended(%Scenario{client: client}, matcher, opts \\ []),
-    do: Chronicle.Testing.Assertions.assert_appended(client, matcher, opts)
+    do: Cratis.Chronicle.Testing.Assertions.assert_appended(client, matcher, opts)
 
   @doc "Asserts no matching event was appended."
   @spec refute_appended(Scenario.t(), struct() | module() | (struct() -> boolean()), keyword()) ::
           false
   def refute_appended(%Scenario{client: client}, matcher, opts \\ []),
-    do: Chronicle.Testing.Assertions.refute_appended(client, matcher, opts)
+    do: Cratis.Chronicle.Testing.Assertions.refute_appended(client, matcher, opts)
 
   defp summary(%CommandResult{} = r),
     do:
@@ -149,7 +149,7 @@ defmodule Cratis.Arc.Test.Case do
   `ExUnit.CaseTemplate` that starts an in-memory Chronicle client per test and puts an
   `Cratis.Arc.Test.Scenario` in the context as `:arc`.
 
-  Options: `:application` (required) and every option of `Chronicle.Testing.start_supervised_client/1`
+  Options: `:application` (required) and every option of `Cratis.Chronicle.Testing.start_supervised_client/1`
   (`:event_types`, `:reactors`, `:reducers`, `:constraints`, ...). Also:
 
     * `configure: true` - point the application's configuration at the test client with
@@ -169,8 +169,8 @@ defmodule Cratis.Arc.Test.Case do
 
     quote do
       setup do
-        {:ok, client} = Chronicle.Testing.start_supervised_client(unquote(chronicle_opts))
-        on_exit(fn -> Chronicle.Testing.stop_supervised_client(client) end)
+        {:ok, client} = Cratis.Chronicle.Testing.start_supervised_client(unquote(chronicle_opts))
+        on_exit(fn -> Cratis.Chronicle.Testing.stop_supervised_client(client) end)
 
         if unquote(configure), do: Cratis.Arc.Test.configure(unquote(application), client)
         if unquote(observable), do: start_supervised!(unquote(application))

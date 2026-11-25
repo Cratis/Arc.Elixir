@@ -37,7 +37,7 @@ The result is `ctx.tenant`: a string, or `nil`. `nil`, an empty value and `"Defa
 
 ## What the tenant selects
 
-- **Chronicle.** A named tenant becomes the `namespace:` of every Chronicle call made through the context, so `Chronicle.all(Author, ctx.chronicle)` and the events a command appends go to that tenant's namespace. The default tenant uses the default namespace. An explicit `namespace:` in `chronicle:` wins.
+- **Chronicle.** A named tenant becomes the `namespace:` of every Chronicle call made through the context, so `Cratis.Chronicle.all(Author, ctx.chronicle)` and the events a command appends go to that tenant's namespace. The default tenant uses the default namespace. An explicit `namespace:` in `chronicle:` wins.
 - **MongoDB.** Each tenant is a database of its own. See [MongoDB](mongodb.md#tenancy).
 - **Identity.** The identity details provider receives the tenant, `Cratis.Arc.Identity.Context.tenant`, and `Cratis.Arc.Identity.Context.context/1` turns it into a `Cratis.Arc.Context`. The showcase reports it in its details:
 

@@ -4,5 +4,5 @@
 defmodule Counters.CounterId do
   @moduledoc "Identifies a counter; the event source of its events."
 
-  use Chronicle.Concept, type: :uuid, event_source_id: true
+  use Cratis.Chronicle.Concept, type: :uuid, event_source_id: true
 end

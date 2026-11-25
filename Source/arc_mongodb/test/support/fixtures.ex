@@ -2,7 +2,7 @@
 # Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 defmodule MongoFixtures.Isbn do
-  use Chronicle.Concept, type: :string
+  use Cratis.Chronicle.Concept, type: :string
 end
 
 defmodule MongoFixtures.Books.Book do

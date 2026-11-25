@@ -4,7 +4,7 @@
 defmodule Counters.CounterIncremented do
   @moduledoc "A counter went up."
 
-  use Chronicle.Events.EventType, id: "counters-counter-incremented"
+  use Cratis.Chronicle.Events.EventType, id: "counters-counter-incremented"
 
   defstruct by: 0
 end

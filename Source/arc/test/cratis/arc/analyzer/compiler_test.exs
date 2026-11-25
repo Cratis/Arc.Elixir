@@ -31,7 +31,7 @@ defmodule Cratis.Arc.Analyzer.CompilerTest do
     end
 
     def handle(command, _ctx) do
-      Chronicle.append(command, command)
+      Cratis.Chronicle.append(command, command)
       {:ok, 1}
     end
   end
