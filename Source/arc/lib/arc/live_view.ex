@@ -69,10 +69,25 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         |> assign(:arc_application, application)
         |> assign(:arc_principal_resolver, principal)
         |> assign(:arc_subscriptions, %{})
+        |> assign(:arc_availability, 0)
         |> attach_hook(:arc_query_results, :handle_info, &handle_info/2)
 
+      watch_availability(socket, application)
       {:cont, socket}
     end
+
+    # A connected LiveView re-renders what it hides when audiences or suspensions change.
+    defp watch_availability(socket, application) do
+      registry = Arc.Notifier.registry(application)
+
+      if connected?(socket) and Arc.Availability.enabled?(application) and
+           Process.whereis(registry) != nil do
+        Registry.register(registry, Arc.Availability.topic(), nil)
+      end
+    end
+
+    defp handle_info({:arc_notify, :arc_availability}, socket),
+      do: {:halt, assign(socket, :arc_availability, socket.assigns.arc_availability + 1)}
 
     defp handle_info({:arc_query_result, key, %QueryResult{} = result}, socket)
          when is_atom(key) do
@@ -86,6 +101,32 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     end
 
     defp handle_info(_message, socket), do: {:cont, socket}
+
+    @doc """
+    Whether a command or a query is available to the caller, for hiding what they could not use.
+    Pass `{read_model, query_name}` for a query. `arguments` are the data it is about.
+
+    This is the same decision the pipeline makes first; hiding is presentation, the server still
+    refuses. Use `Arc.LiveView.Availability.available/1` in a template.
+    """
+    @spec available?(Phoenix.LiveView.Socket.t(), module() | {module(), atom()}, map()) ::
+            boolean()
+    def available?(socket, part, arguments \\ %{}) do
+      ctx = context(socket)
+
+      verdict =
+        case part do
+          {read_model, name} ->
+            descriptor = read_model.__arc__()
+            query = Enum.find(descriptor.queries, &(&1.name == name))
+            Arc.Availability.check_query(ctx, descriptor, query, arguments)
+
+          command ->
+            Arc.Availability.check_command(ctx, command, arguments)
+        end
+
+      verdict == :ok
+    end
 
     @doc "Builds the Arc context for the current caller."
     @spec context(Phoenix.LiveView.Socket.t(), keyword()) :: Arc.Context.t()

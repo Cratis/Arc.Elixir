@@ -46,6 +46,7 @@ defmodule Arc.MixProject do
       {:telemetry, "~> 1.0"},
       {:phoenix, "~> 1.7", optional: true},
       {:phoenix_html, "~> 4.0", optional: true},
+      {:phoenix_pubsub, "~> 2.1", optional: true},
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:bandit, "~> 1.5", only: [:dev, :test]},
       {:lazy_html, ">= 0.1.0", only: :test},

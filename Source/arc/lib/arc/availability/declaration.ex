@@ -67,7 +67,8 @@ defmodule Arc.Availability.Declaration do
   defp condition(%{"kind" => _} = data), do: data
 
   defp condition(module) when is_atom(module) do
-    unless Code.ensure_loaded?(module) and function_exported?(module, :evaluate, 1) do
+    unless match?({:module, _}, Code.ensure_compiled(module)) and
+             function_exported?(module, :evaluate, 1) do
       raise ArgumentError,
             "#{inspect(module)} is not an availability condition: implement Arc.Availability.Condition"
     end
