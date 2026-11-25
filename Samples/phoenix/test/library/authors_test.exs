@@ -2,10 +2,11 @@
 # Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 defmodule Library.AuthorsTest do
-  use Arc.Test.Case,
+  use Cratis.Arc.Test.Case,
     application: Library.Arc,
     event_types: [Library.Authors.AuthorRegistered, Library.Authors.AuthorRenamed]
 
+  alias Cratis.Arc
   alias Library.Authors.{AuthorRegistered, AuthorRenamed}
   alias Library.Authors.Registration.{RegisterAuthor, RenameAuthor}
 

@@ -7,14 +7,14 @@ defmodule Samples.Identity.Provider do
   The provider is given the tenant of the request, so a real one can read tenant-scoped data.
   """
 
-  use Arc.Identity.Provider, details: Samples.Identity.IdentityDetails
+  use Cratis.Arc.Identity.Provider, details: Samples.Identity.IdentityDetails
 
   @impl true
-  def details(%Arc.Identity.Context{name: name, tenant: tenant}) do
+  def details(%Cratis.Arc.Identity.Context{name: name, tenant: tenant}) do
     {:ok,
      %Samples.Identity.IdentityDetails{
        display_name: "Hello, #{name}",
-       tenant: if(Arc.Tenancy.default?(tenant), do: "Default", else: tenant)
+       tenant: if(Cratis.Arc.Tenancy.default?(tenant), do: "Default", else: tenant)
      }}
   end
 end

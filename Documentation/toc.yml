@@ -18,6 +18,8 @@
   href: availability.md
 - name: Vertical slices
   href: vertical-slices.md
+- name: Event model
+  href: event-model.md
 - name: Tenancy
   href: tenancy.md
 - name: MongoDB

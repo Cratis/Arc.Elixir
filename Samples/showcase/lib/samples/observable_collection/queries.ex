@@ -4,7 +4,7 @@
 defmodule Samples.ObservableCollection.Queries do
   @moduledoc "Queries over the observable collection."
 
-  use Arc.ReadModel, model: Samples.ObservableCollection.ObservableCollectionItem
+  use Cratis.Arc.ReadModel, model: Samples.ObservableCollection.ObservableCollectionItem
   allow_anonymous()
 
   @doc "Observes the current collection: pushed when items are added or removed."

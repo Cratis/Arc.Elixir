@@ -4,7 +4,7 @@
 defmodule Samples.ObservableCollectionWithGuid.AddObservableCollectionWithGuidItem do
   @moduledoc "Appends an item to the collection."
 
-  use Arc.Command
+  use Cratis.Arc.Command
   allow_anonymous()
 
   schema do

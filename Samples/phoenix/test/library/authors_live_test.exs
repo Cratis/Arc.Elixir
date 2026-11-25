@@ -3,7 +3,7 @@
 
 defmodule Library.AuthorsLiveTest do
   # Not async: the endpoint and the Arc application are registered by name.
-  use Arc.Test.Case,
+  use Cratis.Arc.Test.Case,
     application: Library.Arc,
     configure: true,
     event_types: [Library.Authors.AuthorRegistered, Library.Authors.AuthorRenamed]
@@ -29,7 +29,7 @@ defmodule Library.AuthorsLiveTest do
     html = view |> form("#register", command: %{name: "Ada Lovelace"}) |> render_submit()
 
     assert html =~ "Registered."
-    Arc.Test.assert_appended(arc, Library.Authors.AuthorRegistered, [])
+    Cratis.Arc.Test.assert_appended(arc, Library.Authors.AuthorRegistered, [])
   end
 
   test "a reserved name is rejected by the command" do

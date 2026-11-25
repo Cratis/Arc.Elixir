@@ -36,7 +36,7 @@ end
 
 defmodule ArcFixtures.Authors.Registration.RegisterAuthor do
   @moduledoc "Registers a new author."
-  use Arc.Command
+  use Cratis.Arc.Command
 
   schema do
     field(:id, ArcFixtures.Authors.AuthorId,
@@ -52,7 +52,7 @@ defmodule ArcFixtures.Authors.Registration.RegisterAuthor do
   end
 
   def validate(%__MODULE__{name: "forbidden"}, _ctx),
-    do: {:error, Arc.Validation.error("That name is not allowed.", [:name])}
+    do: {:error, Cratis.Arc.Validation.error("That name is not allowed.", [:name])}
 
   def validate(_command, _ctx), do: :ok
 
@@ -62,7 +62,7 @@ end
 
 defmodule ArcFixtures.Authors.Registration.RenameAuthor do
   @moduledoc "Renames an author; only admins may."
-  use Arc.Command
+  use Cratis.Arc.Command
   authorize roles: ["admin"]
   response :string
 
@@ -80,7 +80,7 @@ end
 
 defmodule ArcFixtures.Authors.Registration.Explode do
   @moduledoc false
-  use Arc.Command
+  use Cratis.Arc.Command
   allow_anonymous()
 
   schema do
@@ -92,7 +92,7 @@ end
 
 defmodule ArcFixtures.Authors.Listing.Authors do
   @moduledoc "Queries over authors."
-  use Arc.ReadModel, model: ArcFixtures.Authors.Author
+  use Cratis.Arc.ReadModel, model: ArcFixtures.Authors.Author
 
   @doc "All authors."
   @query many: true
@@ -116,7 +116,7 @@ defmodule ArcFixtures.Store do
 end
 
 defmodule ArcFixtures.Identity.Details do
-  use Arc.Schema
+  use Cratis.Arc.Schema
 
   schema do
     field :display_name, :string, required: true
@@ -125,13 +125,13 @@ defmodule ArcFixtures.Identity.Details do
 end
 
 defmodule ArcFixtures.Identity.Provider do
-  use Arc.Identity.Provider, details: ArcFixtures.Identity.Details
+  use Cratis.Arc.Identity.Provider, details: ArcFixtures.Identity.Details
 
   @impl true
-  def details(%Arc.Identity.Context{name: "banned"}),
+  def details(%Cratis.Arc.Identity.Context{name: "banned"}),
     do: {:unauthorized, %ArcFixtures.Identity.Details{display_name: "banned"}}
 
-  def details(%Arc.Identity.Context{} = context) do
+  def details(%Cratis.Arc.Identity.Context{} = context) do
     {:ok,
      %ArcFixtures.Identity.Details{
        display_name: "Hello " <> context.name,
@@ -141,12 +141,12 @@ defmodule ArcFixtures.Identity.Provider do
 end
 
 defmodule ArcFixtures.Identity.Users do
-  @behaviour Arc.Identity.UsersProvider
+  @behaviour Cratis.Arc.Identity.UsersProvider
 
   @impl true
   def users do
     [
-      %Arc.Identity.User{
+      %Cratis.Arc.Identity.User{
         user_id: "ada@example.com",
         user_details: "Ada",
         roles: ["editor"],
@@ -158,14 +158,14 @@ defmodule ArcFixtures.Identity.Users do
 end
 
 defmodule ArcFixtures.Identity.Tenants do
-  @behaviour Arc.Identity.TenantsProvider
+  @behaviour Cratis.Arc.Identity.TenantsProvider
 
   @impl true
-  def tenants, do: [%Arc.Identity.Tenant{id: "acme", name: "ACME"}]
+  def tenants, do: [%Cratis.Arc.Identity.Tenant{id: "acme", name: "ACME"}]
 end
 
 defmodule ArcFixtures.App do
-  use Arc.Application,
+  use Cratis.Arc.Application,
     otp_app: :cratis_arc,
     artifacts: [
       ArcFixtures.Authors.Registration.RegisterAuthor,
@@ -204,7 +204,7 @@ end
 
 defmodule ArcShapes.Shapes.Drawings do
   @moduledoc "Queries over drawings."
-  use Arc.ReadModel, model: ArcShapes.Drawing
+  use Cratis.Arc.ReadModel, model: ArcShapes.Drawing
   allow_anonymous()
 
   @query many: true
@@ -212,7 +212,7 @@ defmodule ArcShapes.Shapes.Drawings do
 end
 
 defmodule ArcShapes.App do
-  use Arc.Application,
+  use Cratis.Arc.Application,
     otp_app: :cratis_arc,
     artifacts: [ArcShapes.Shapes.Drawings]
 end

@@ -6,7 +6,7 @@ defmodule MongoFixtures.Isbn do
 end
 
 defmodule MongoFixtures.Books.Book do
-  use Arc.MongoDB.Document,
+  use Cratis.Arc.MongoDB.Document,
     collection: "books",
     types: [id: :uuid, published: :date, added: :datetime, isbn: MongoFixtures.Isbn]
 
@@ -22,25 +22,25 @@ defmodule MongoFixtures.Books.Book do
 end
 
 defmodule MongoFixtures.Shelf do
-  # No `use Arc.MongoDB.Document`: any struct is a document, named by the policy.
+  # No `use Cratis.Arc.MongoDB.Document`: any struct is a document, named by the policy.
   defstruct id: "", label: "", display_name: "", tags: nil
 end
 
 defmodule MongoFixtures.Books.Listing.Books do
   @moduledoc "Queries over books."
-  use Arc.ReadModel, model: MongoFixtures.Books.Book
+  use Cratis.Arc.ReadModel, model: MongoFixtures.Books.Book
 
   alias MongoFixtures.Books.Book
 
   @query many: true
-  def all_books(_args, ctx), do: {:ok, Arc.MongoDB.page({ctx, Book}, %{})}
+  def all_books(_args, ctx), do: {:ok, Cratis.Arc.MongoDB.page({ctx, Book}, %{})}
 
-  @observe many: true, watch: [Arc.MongoDB.watch(Book)]
-  def live_books(_args, ctx), do: {:ok, Arc.MongoDB.all({ctx, Book}, sort: [title: :asc])}
+  @observe many: true, watch: [Cratis.Arc.MongoDB.watch(Book)]
+  def live_books(_args, ctx), do: {:ok, Cratis.Arc.MongoDB.all({ctx, Book}, sort: [title: :asc])}
 end
 
 defmodule MongoFixtures.App do
-  use Arc.Application,
+  use Cratis.Arc.Application,
     otp_app: :cratis_arc_mongodb,
     artifacts: [MongoFixtures.Books.Listing.Books]
 end

@@ -4,7 +4,7 @@
 defmodule Samples.CrossCuttingAuthorization.Queries do
   @moduledoc "Queries that are protected by `Samples.CrossCuttingAuthorization.Filter`."
 
-  use Arc.ReadModel,
+  use Cratis.Arc.ReadModel,
     model: Samples.CrossCuttingAuthorization.CrossCuttingAuthorizationStatus,
     types: [checked_at: :datetime]
 

@@ -7,10 +7,10 @@ LiveView pages and React apps want the same thing from the backend: run a comman
 
 ```elixir
 use Phoenix.LiveView
-use Arc.LiveView, application: Library.Arc
+use Cratis.Arc.LiveView, application: Library.Arc
 ```
 
-`use Arc.LiveView` imports the helpers below and attaches a hook that applies query updates, so there are no `handle_info` callbacks to write for them.
+`use Cratis.Arc.LiveView` imports the helpers below and attaches a hook that applies query updates, so there are no `handle_info` callbacks to write for them.
 
 ## Read a query
 
@@ -31,7 +31,7 @@ use Arc.LiveView, application: Library.Arc
       end
 ```
 
-After `mount`, `@authors` holds the list and `@authors_result` the full `Arc.QueryResult`. The assign is always populated, so the connected render never flashes empty; a failed query assigns `[]` (or `nil` for a single-model query).
+After `mount`, `@authors` holds the list and `@authors_result` the full `Cratis.Arc.QueryResult`. The assign is always populated, so the connected render never flashes empty; a failed query assigns `[]` (or `nil` for a single-model query).
 
 `assign_observable` subscribes only once the socket is connected, so the static render is a one-shot read. The subscription is a process that ends with the LiveView. The Arc application must be running under your supervision tree.
 
@@ -55,7 +55,7 @@ After `mount`, `@authors` holds the list and `@authors_result` the full `Arc.Que
 
 ## Identity
 
-`assign_identity/2` assigns the `Arc.Identity.Result` for the current caller, the same data `GET /.cratis/me` serves, computed by the same `Arc.Identity.resolve/2`.
+`assign_identity/2` assigns the `Cratis.Arc.Identity.Result` for the current caller, the same data `GET /.cratis/me` serves, computed by the same `Cratis.Arc.Identity.resolve/2`.
 
 ```elixir
 # From: Samples/phoenix/lib/library/web/authors_live.ex
@@ -92,15 +92,15 @@ Form values arrive as strings. Empty strings become `nil` for fields that are no
 
 Arc reads the principal from the socket's assigns each time it runs something, not once at mount, so a signed-out or demoted user is caught on the next call. It looks at `assigns.arc_principal`, then `assigns.current_scope.user`, then `assigns.current_user`. With `phx.gen.auth` that works as is, provided your authentication hook runs in `on_mount` before the page's `mount`.
 
-To resolve it your own way, give the function that takes the socket and returns an `Arc.Principal`:
+To resolve it your own way, give the function that takes the socket and returns a `Cratis.Arc.Principal`:
 
 ```elixir
-use Arc.LiveView, application: MyApp.Arc, principal: {MyAppWeb.Auth, :arc_principal}
+use Cratis.Arc.LiveView, application: MyApp.Arc, principal: {MyAppWeb.Auth, :arc_principal}
 ```
 
 ## Test it
 
-`Phoenix.LiveViewTest` works unchanged, with `Arc.Test.Case` providing the in-memory kernel:
+`Phoenix.LiveViewTest` works unchanged, with `Cratis.Arc.Test.Case` providing the in-memory kernel:
 
 ```elixir
 # From: Samples/phoenix/test/library/authors_live_test.exs
@@ -117,7 +117,7 @@ See [Testing](testing.md) for the options.
 
 ## Limits
 
-There is no stream helper yet: observable queries assign whole lists. The in-memory kernel used by `Arc.Test` has no read-model query surface, so the list stays empty in such tests; see [Testing](testing.md#what-the-in-memory-kernel-cannot-do).
+There is no stream helper yet: observable queries assign whole lists. The in-memory kernel used by `Cratis.Arc.Test` has no read-model query surface, so the list stays empty in such tests; see [Testing](testing.md#what-the-in-memory-kernel-cannot-do).
 
 ## Next steps
 

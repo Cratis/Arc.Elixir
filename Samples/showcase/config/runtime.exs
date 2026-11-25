@@ -20,7 +20,7 @@ config :showcase, Samples.Arc,
   # Arc turns the cookies into headers. The unsigned `x-ms-client-principal` headers are trusted
   # only because this is a sample. A real application authenticates with its own scheme, or
   # trusts them only behind an ingress that sets them.
-  authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
+  authentication: [Cratis.Arc.Authentication.MicrosoftIdentityPlatform],
   trust_forwarded_identity_headers: true,
   introspection: :anonymous,
   # Tenant by header, `x-cratis-tenant-id`. Other resolvers: `:query`, `:claim`, `:subdomain`.

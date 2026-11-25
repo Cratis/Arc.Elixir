@@ -4,7 +4,7 @@
 defmodule Samples.ChangeStream.UpdateChangeStreamItem do
   @moduledoc "Replaces the label and value of an item."
 
-  use Arc.Command
+  use Cratis.Arc.Command
   allow_anonymous()
 
   schema do

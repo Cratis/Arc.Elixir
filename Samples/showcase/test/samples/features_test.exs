@@ -14,9 +14,9 @@ defmodule Samples.FeaturesTest do
   end
 
   defp query(model, name, args \\ %{}, opts \\ []),
-    do: Arc.query(Samples.Arc, model, name, args, opts)
+    do: Cratis.Arc.query(Samples.Arc, model, name, args, opts)
 
-  defp execute(command), do: Arc.execute(Samples.Arc, command)
+  defp execute(command), do: Cratis.Arc.execute(Samples.Arc, command)
 
   describe "the ticker" do
     test "is observed with its count and time" do
@@ -83,7 +83,7 @@ defmodule Samples.FeaturesTest do
     end
 
     test "with GUID identities" do
-      id = Arc.new_id()
+      id = Cratis.Arc.new_id()
 
       execute(%ObservableCollectionWithGuid.AddObservableCollectionWithGuidItem{
         id: id,
@@ -113,37 +113,39 @@ defmodule Samples.FeaturesTest do
       assert %{authorized?: true} = query(@queries, :anonymous)
       assert %{authorized?: false} = query(@queries, :authenticated)
 
-      signed_in = Arc.Principal.new("u", "User")
+      signed_in = Cratis.Arc.Principal.new("u", "User")
 
       assert %{authorized?: true} =
-               Arc.query(Samples.Arc, @queries, :authenticated, %{}, principal: signed_in)
+               Cratis.Arc.query(Samples.Arc, @queries, :authenticated, %{}, principal: signed_in)
     end
   end
 
   describe "cross-cutting authorization" do
     alias Samples.CrossCuttingAuthorization, as: Secured
 
-    defp principal(roles), do: Arc.Principal.new("u", "User", roles: roles)
+    defp principal(roles), do: Cratis.Arc.Principal.new("u", "User", roles: roles)
 
     test "the filter protects the commands of the namespace" do
       command = %Secured.RunSecuredCommand{message: "hi"}
 
-      denied = Arc.execute(Samples.Arc, command, principal: principal(["User"]))
+      denied = Cratis.Arc.execute(Samples.Arc, command, principal: principal(["User"]))
       refute denied.authorized?
       assert denied.authorization_failure_reason =~ "CrossCuttingAuthorization"
 
       allowed =
-        Arc.execute(Samples.Arc, command, principal: principal(["CrossCuttingAuthorization"]))
+        Cratis.Arc.execute(Samples.Arc, command,
+          principal: principal(["CrossCuttingAuthorization"])
+        )
 
       assert allowed.authorized?
       assert allowed.response =~ "— hi"
     end
 
     test "and its queries" do
-      refute Arc.query(Samples.Arc, Secured.Queries, :secured).authorized?
+      refute Cratis.Arc.query(Samples.Arc, Secured.Queries, :secured).authorized?
 
       allowed =
-        Arc.query(Samples.Arc, Secured.Queries, :secured, %{},
+        Cratis.Arc.query(Samples.Arc, Secured.Queries, :secured, %{},
           principal: principal(["CrossCuttingAuthorization"])
         )
 
@@ -152,7 +154,7 @@ defmodule Samples.FeaturesTest do
     end
 
     test "and nothing outside of it" do
-      assert Arc.query(Samples.Arc, QueryShowcase.Queries, :get_all).authorized?
+      assert Cratis.Arc.query(Samples.Arc, QueryShowcase.Queries, :get_all).authorized?
     end
   end
 end

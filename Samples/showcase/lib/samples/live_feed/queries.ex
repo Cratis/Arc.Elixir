@@ -4,7 +4,7 @@
 defmodule Samples.LiveFeed.Queries do
   @moduledoc "Queries over the live feed."
 
-  use Arc.ReadModel, model: Samples.LiveFeed.LiveFeed, types: [posted_at: :datetime]
+  use Cratis.Arc.ReadModel, model: Samples.LiveFeed.LiveFeed, types: [posted_at: :datetime]
   allow_anonymous()
 
   alias Samples.Store

@@ -16,7 +16,7 @@ defmodule Samples.AuthenticationQueries.Clock do
 
   @impl true
   def handle_info(:tick, state) do
-    Arc.Notifier.notify(Samples.Arc, "authentication")
+    Cratis.Arc.Notifier.notify(Samples.Arc, "authentication")
     schedule()
     {:noreply, state}
   end

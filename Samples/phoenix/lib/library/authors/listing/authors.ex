@@ -5,7 +5,7 @@ defmodule Library.Authors.Listing.Authors do
   @moduledoc "Queries over authors."
 
   # `types:` tells the proxy generator the id is a UUID; the struct default is only a string.
-  use Arc.ReadModel, model: Library.Authors.Author, types: [id: :uuid]
+  use Cratis.Arc.ReadModel, model: Library.Authors.Author, types: [id: :uuid]
 
   alias Library.Authors.Author
 

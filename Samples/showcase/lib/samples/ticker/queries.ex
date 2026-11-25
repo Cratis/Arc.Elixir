@@ -4,7 +4,7 @@
 defmodule Samples.Ticker.Queries do
   @moduledoc "Queries over the ticker."
 
-  use Arc.ReadModel, model: Samples.Ticker.Ticker, types: [last_updated: :datetime]
+  use Cratis.Arc.ReadModel, model: Samples.Ticker.Ticker, types: [last_updated: :datetime]
   allow_anonymous()
 
   alias Samples.Store

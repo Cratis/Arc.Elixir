@@ -4,13 +4,13 @@
 defmodule Samples.Identity.DevUsers do
   @moduledoc "The users a development tool such as Lens can sign in as. Not authentication."
 
-  @behaviour Arc.Identity.UsersProvider
+  @behaviour Cratis.Arc.Identity.UsersProvider
 
   @impl true
   def users do
     [
-      %Arc.Identity.User{user_id: "demo-user", user_details: "Demo User", roles: ["User"]},
-      %Arc.Identity.User{
+      %Cratis.Arc.Identity.User{user_id: "demo-user", user_details: "Demo User", roles: ["User"]},
+      %Cratis.Arc.Identity.User{
         user_id: "secure-user",
         user_details: "Secure User",
         roles: ["User", "CrossCuttingAuthorization"]

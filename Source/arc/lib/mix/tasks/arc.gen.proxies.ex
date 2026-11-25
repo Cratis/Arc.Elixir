@@ -11,14 +11,14 @@ defmodule Mix.Tasks.Arc.Gen.Proxies do
 
   ## Options
 
-    * `--application` - the `Arc.Application` module; defaults to `arc: [application: ...]` in `mix.exs`
+    * `--application` - the `Cratis.Arc.Application` module; defaults to `arc: [application: ...]` in `mix.exs`
     * `--output` - the output directory; defaults to `arc: [output: ...]` in `mix.exs`
     * `--layout` - `namespace` (default) or `colocated`; defaults to `arc: [layout: ...]`
     * `--check` - write nothing; exit with an error when the proxies on disk are out of date.
       Use it in CI to keep committed proxies current.
     * `--no-remove-stale` - keep generated files of artifacts that no longer exist
 
-  See `Arc.ProxyGenerator`.
+  See `Cratis.Arc.ProxyGenerator`.
   """
 
   use Mix.Task
@@ -70,7 +70,7 @@ defmodule Mix.Tasks.Arc.Gen.Proxies do
   defp generate(application, output, opts) do
     check? = Keyword.get(opts, :check, false)
 
-    case Arc.ProxyGenerator.generate(application,
+    case Cratis.Arc.ProxyGenerator.generate(application,
            output: output,
            layout: layout(opts),
            dry_run: check?,

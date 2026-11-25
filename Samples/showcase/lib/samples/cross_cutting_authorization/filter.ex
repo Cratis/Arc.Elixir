@@ -10,17 +10,17 @@ defmodule Samples.CrossCuttingAuthorization.Filter do
   `CrossCuttingAuthorization` of every artifact in the namespace.
   """
 
-  @behaviour Arc.Filter
+  @behaviour Cratis.Arc.Filter
 
   @protected ["Samples", "CrossCuttingAuthorization"]
   @required_role "CrossCuttingAuthorization"
 
   @impl true
-  def on_command(ctx, %Arc.Descriptor{namespace: @protected}), do: check(ctx)
+  def on_command(ctx, %Cratis.Arc.Descriptor{namespace: @protected}), do: check(ctx)
   def on_command(_ctx, _descriptor), do: :ok
 
   @impl true
-  def on_query(ctx, %Arc.Descriptor{namespace: @protected}, _query), do: check(ctx)
+  def on_query(ctx, %Cratis.Arc.Descriptor{namespace: @protected}, _query), do: check(ctx)
   def on_query(_ctx, _descriptor, _query), do: :ok
 
   defp check(ctx) do

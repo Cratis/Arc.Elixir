@@ -21,7 +21,7 @@ Override with `CHRONICLE_CONNECTION_STRING`. See [the samples guide](../Document
 
 ## plug
 
-`./run.sh` serves the contract at `http://localhost:4001`. It uses Arc without Phoenix: `Arc.Plug` inside a Plug router.
+`./run.sh` serves the contract at `http://localhost:4001`. It uses Arc without Phoenix: `Cratis.Arc.Plug` inside a Plug router.
 
 ## phoenix
 

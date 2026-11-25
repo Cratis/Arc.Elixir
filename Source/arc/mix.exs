@@ -1,7 +1,7 @@
 # Copyright (c) Cratis. All rights reserved.
 # Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-defmodule Arc.MixProject do
+defmodule Cratis.Arc.MixProject do
   use Mix.Project
 
   @version Path.join(__DIR__, "VERSION")
@@ -69,6 +69,7 @@ defmodule Arc.MixProject do
       maintainers: ["Cratis"],
       files: ~w(
         lib
+        priv/event_model
         mix.exs
         README.md
         VERSION
@@ -82,12 +83,29 @@ defmodule Arc.MixProject do
       main: "Arc",
       extras: ["README.md"],
       groups_for_modules: [
-        Authoring: [Arc.Command, Arc.ReadModel, Arc.Schema, Arc.Validation, Arc.ValidationResult],
-        Runtime: [Arc.Application, Arc.Context, Arc.Principal, Arc.Pipeline, Arc.Notifier],
-        Hosting: [Arc.Plug, Arc.Plug.Hub, Arc.Plug.SinglePage, Arc.Authentication],
-        Phoenix: [Arc.LiveView, Arc.LiveView.Form],
-        "Proxy generation": [Arc.ProxyGenerator],
-        Testing: [Arc.Test]
+        Authoring: [
+          Cratis.Arc.Command,
+          Cratis.Arc.ReadModel,
+          Cratis.Arc.Schema,
+          Cratis.Arc.Validation,
+          Cratis.Arc.ValidationResult
+        ],
+        Runtime: [
+          Cratis.Arc.Application,
+          Cratis.Arc.Context,
+          Cratis.Arc.Principal,
+          Cratis.Arc.Pipeline,
+          Cratis.Arc.Notifier
+        ],
+        Hosting: [
+          Cratis.Arc.Plug,
+          Cratis.Arc.Plug.Hub,
+          Cratis.Arc.Plug.SinglePage,
+          Cratis.Arc.Authentication
+        ],
+        Phoenix: [Cratis.Arc.LiveView, Cratis.Arc.LiveView.Form],
+        "Proxy generation": [Cratis.Arc.ProxyGenerator],
+        Testing: [Cratis.Arc.Test]
       ]
     ]
   end

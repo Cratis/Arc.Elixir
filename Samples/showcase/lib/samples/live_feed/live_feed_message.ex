@@ -4,7 +4,7 @@
 defmodule Samples.LiveFeed.LiveFeedMessage do
   @moduledoc "The message a poster gets back."
 
-  use Arc.Schema
+  use Cratis.Arc.Schema
 
   schema do
     field :author, :string

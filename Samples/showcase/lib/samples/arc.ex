@@ -8,5 +8,5 @@ defmodule Samples.Arc do
   Configuration is in `config/runtime.exs`.
   """
 
-  use Arc.Application, otp_app: :showcase
+  use Cratis.Arc.Application, otp_app: :showcase
 end

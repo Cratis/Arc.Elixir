@@ -55,7 +55,7 @@ Declared rules (`required`, `min_length`, `max_length`, `email`, `matches` and t
 
 ### Identity
 
-The type named by `use Arc.Identity.Provider, details: …` is generated like any other, and the React app passes it to `useIdentity`:
+The type named by `use Cratis.Arc.Identity.Provider, details: …` is generated like any other, and the React app passes it to `useIdentity`:
 
 ```tsx
 // From: Samples/frontend/src/App.tsx
@@ -78,9 +78,9 @@ The type named by `use Arc.Identity.Provider, details: …` is generated like an
 | `:map` | `object` |
 | `{:list, t}` | `t[]` |
 | `Chronicle.Concept` | the primitive it wraps |
-| a struct or `Arc.Schema` module | a generated class |
+| a struct or `Cratis.Arc.Schema` module | a generated class |
 
-A read model's fields come from its struct defaults, and a `nil` or `""` default reads as a string. Override with `use Arc.ReadModel, types: [id: :uuid]`, or declare the model with `Arc.Schema`.
+A read model's fields come from its struct defaults, and a `nil` or `""` default reads as a string. Override with `use Cratis.Arc.ReadModel, types: [id: :uuid]`, or declare the model with `Cratis.Arc.Schema`.
 
 ## Safety
 

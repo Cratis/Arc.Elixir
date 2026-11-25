@@ -7,14 +7,14 @@ A command is a request to change something. In Arc it is one module: the fields 
 
 ## Declare the request
 
-`use Arc.Command` and a `schema` block define the struct. Each `field` has a name, a type and options.
+`use Cratis.Arc.Command` and a `schema` block define the struct. Each `field` has a name, a type and options.
 
 ```elixir
 # From: Samples/phoenix/lib/library/authors/registration/rename_author.ex
 defmodule Library.Authors.Registration.RenameAuthor do
   @moduledoc "Renames an author. Only editors may."
 
-  use Arc.Command
+  use Cratis.Arc.Command
 
   authorize roles: ["editor"]
 
@@ -43,7 +43,7 @@ end
 | `:map` | object | `object` |
 | `{:list, type}` | array | `type[]` |
 | a `Chronicle.Concept` module | the primitive it wraps | that primitive |
-| a module that `use Arc.Schema` | object | a generated class |
+| a module that `use Cratis.Arc.Schema` | object | a generated class |
 
 Use a `Chronicle.Concept` for domain values such as an author id, so the type is declared once and the same value is what Chronicle records. Nested lists are not supported.
 
@@ -63,7 +63,7 @@ Rules are covered in [Validation](validation.md).
 
 ### Declarations
 
-- `command "register-author"` — an explicit, kebab-case name for the command's route (optional). Without it the route follows the module name; see [Routes come from module names](concepts.md#routes-come-from-module-names).
+- `use Cratis.Arc.Command, id: "register-author"` — an explicit, kebab-case id for the command's route (optional). Without it the route follows the module name; see [Routes come from module names](concepts.md#routes-come-from-module-names).
 - `authorize roles: [...]`, `authorize :authenticated`, `authorize policy: :name`, `allow_anonymous()` — see [Authorization and identity](authorization-and-identity.md).
 - `response type` — the type returned to the client, for the generated proxy, for example `response :string`.
 
@@ -85,7 +85,7 @@ Only `handle/2` is required. The order is validate, `provide/2`, then `handle/2`
 | `{:append, [event, …]}` | Record several, in order |
 | `{:append, events, response}` | Record, and return `response` to the client |
 | `{:ok, response}` | Succeed without recording, for example a command that only calls a collaborator |
-| `{:error, result_or_results}` | Reject with `Arc.Validation.error/3` results |
+| `{:error, result_or_results}` | Reject with `Cratis.Arc.Validation.error/3` results |
 
 A command either records what happened or is rejected. Prefer `{:append, …}` for state changes; `{:ok, response}` is for the rare command with nothing to record.
 
@@ -99,16 +99,16 @@ A constraint or concurrency rejection from Chronicle never reaches your code as 
 
 ## Run a command from code
 
-`Arc.execute/3` runs the full pipeline, with the same checks as HTTP.
+`Cratis.Arc.execute/3` runs the full pipeline, with the same checks as HTTP.
 
 ```elixir
 result =
-  Arc.execute(MyApp.Arc, %RegisterAuthor{id: Arc.new_id(), name: "Ada"}, principal: principal)
+  Cratis.Arc.execute(MyApp.Arc, %RegisterAuthor{id: Cratis.Arc.new_id(), name: "Ada"}, principal: principal)
 
-Arc.CommandResult.success?(result)
+Cratis.Arc.CommandResult.success?(result)
 ```
 
-Pass `{RegisterAuthor, %{"id" => "…", "name" => "…"}}` instead of a struct to bind a wire map first. Options include `principal:`, `tenant:`, `correlation_id:`, `metadata:` and `validate_only: true`. The result is an `Arc.CommandResult`; `Arc.CommandResult.to_wire/1` is the envelope the HTTP host sends. Its shape is the contract with the frontend: see [Result envelopes](results.md).
+Pass `{RegisterAuthor, %{"id" => "…", "name" => "…"}}` instead of a struct to bind a wire map first. Options include `principal:`, `tenant:`, `correlation_id:`, `metadata:` and `validate_only: true`. The result is a `Cratis.Arc.CommandResult`; `Cratis.Arc.CommandResult.to_wire/1` is the envelope the HTTP host sends. Its shape is the contract with the frontend: see [Result envelopes](results.md).
 
 ## Exceptions
 

@@ -7,10 +7,10 @@ defmodule Library.Identity.Provider do
   shows. Renaming itself is protected by `authorize roles: ["editor"]` on the command.
   """
 
-  use Arc.Identity.Provider, details: Library.Identity.IdentityDetails
+  use Cratis.Arc.Identity.Provider, details: Library.Identity.IdentityDetails
 
   @impl true
-  def details(%Arc.Identity.Context{name: name, principal: principal}) do
+  def details(%Cratis.Arc.Identity.Context{name: name, principal: principal}) do
     {:ok,
      %Library.Identity.IdentityDetails{
        display_name: "Hello, #{name}",

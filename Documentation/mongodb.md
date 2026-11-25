@@ -24,7 +24,7 @@ and start the package after the Arc application:
 
 ```elixir
 # From: Samples/showcase/lib/samples/application.ex
-      [Samples.Store, Samples.Arc, {Arc.MongoDB, application: Samples.Arc}] ++
+      [Samples.Store, Samples.Arc, {Cratis.Arc.MongoDB, application: Samples.Arc}] ++
 ```
 
 Change streams, which [observation](#observe-a-collection) needs, require a replica set or a sharded cluster. A single node started with `--replSet` is enough; the showcase sample's `docker-compose.yml` starts one.
@@ -35,20 +35,20 @@ Change streams, which [observation](#observe-a-collection) needs, require a repl
 | --- | --- | --- |
 | `server` | none, required | The connection string. Keep credentials out of source control |
 | `database` | none, required | The database of the default tenant |
-| `naming_policy` | `:none` | `:none`, `:camel_case`, `:snake_case` or a module implementing `Arc.MongoDB.NamingPolicy` |
+| `naming_policy` | `:none` | `:none`, `:camel_case`, `:snake_case` or a module implementing `Cratis.Arc.MongoDB.NamingPolicy` |
 | `direct_connection` | the connection string decides | Connect to the one server given instead of discovering the replica set |
-| `database_resolver` | the default naming | A module implementing `Arc.MongoDB.DatabaseNameResolver` |
-| `server_resolver` | the configured `server` | A module implementing `Arc.MongoDB.ServerResolver` |
+| `database_resolver` | the default naming | A module implementing `Cratis.Arc.MongoDB.DatabaseNameResolver` |
+| `server_resolver` | the configured `server` | A module implementing `Cratis.Arc.MongoDB.ServerResolver` |
 | `connection_resolution` | none | Where to connect, and as whom, per tenant: [see below](#place-tenants-on-their-own-servers) |
 | `pool_size` | `5` | Connections per server and identity |
 
 ## Documents
 
-A document is a struct. `use Arc.MongoDB.Document` says more than the struct's defaults can.
+A document is a struct. `use Cratis.Arc.MongoDB.Document` says more than the struct's defaults can.
 
 ```elixir
 # From: Samples/showcase/lib/samples/mongo_watcher/watcher_item.ex
-  use Arc.MongoDB.Document, types: [id: :uuid, created_at: :datetime]
+  use Cratis.Arc.MongoDB.Document, types: [id: :uuid, created_at: :datetime]
 
   defstruct id: "", name: "", created_at: ~U[1970-01-01 00:00:00Z]
 ```
@@ -74,24 +74,24 @@ The `id` field is stored as `_id`. The naming policy names members and collectio
 Every function takes `{ctx, document_module}`: the collection is resolved from the context, so the tenant of the request picks the database.
 
 ```elixir
-# Illustrative; `Book` is any `Arc.MongoDB.Document`
-Arc.MongoDB.insert({ctx, Book}, %Book{id: Arc.new_id(), title: "Dune"})
-Arc.MongoDB.find({ctx, Book}, %{title: "Dune"}, sort: [published: :desc], limit: 10)
-Arc.MongoDB.find_by_id({ctx, Book}, id)
-Arc.MongoDB.update({ctx, Book}, id, %{"$set" => %{title: "Dune Messiah"}, "$inc" => %{copies: 1}})
-Arc.MongoDB.save({ctx, Book}, book)       # replace, or create
-Arc.MongoDB.delete({ctx, Book}, id)
-Arc.MongoDB.count({ctx, Book}, %{copies: %{"$gt" => 0}})
+# Illustrative; `Book` is any `Cratis.Arc.MongoDB.Document`
+Cratis.Arc.MongoDB.insert({ctx, Book}, %Book{id: Cratis.Arc.new_id(), title: "Dune"})
+Cratis.Arc.MongoDB.find({ctx, Book}, %{title: "Dune"}, sort: [published: :desc], limit: 10)
+Cratis.Arc.MongoDB.find_by_id({ctx, Book}, id)
+Cratis.Arc.MongoDB.update({ctx, Book}, id, %{"$set" => %{title: "Dune Messiah"}, "$inc" => %{copies: 1}})
+Cratis.Arc.MongoDB.save({ctx, Book}, book)       # replace, or create
+Cratis.Arc.MongoDB.delete({ctx, Book}, id)
+Cratis.Arc.MongoDB.count({ctx, Book}, %{copies: %{"$gt" => 0}})
 ```
 
-In a filter, atom keys are fields of the struct, translated to their stored names and values (a UUID field takes a UUID string), while string keys are raw MongoDB (`"$or"`, `"$text"`, dotted paths). A field the struct does not have raises instead of matching nothing. An insert or save that breaks a unique index (`Arc.MongoDB.create_index/3`) returns `{:error, :duplicate}`.
+In a filter, atom keys are fields of the struct, translated to their stored names and values (a UUID field takes a UUID string), while string keys are raw MongoDB (`"$or"`, `"$text"`, dotted paths). A field the struct does not have raises instead of matching nothing. An insert or save that breaks a unique index (`Cratis.Arc.MongoDB.create_index/3`) returns `{:error, :duplicate}`.
 
-`Arc.MongoDB.provide/4` loads a document for a command's `provide/2`, and `Arc.MongoDB.page/3` returns an `Arc.Page` paged and sorted in the database from what the client asked for:
+`Cratis.Arc.MongoDB.provide/4` loads a document for a command's `provide/2`, and `Cratis.Arc.MongoDB.page/3` returns a `Cratis.Arc.Page` paged and sorted in the database from what the client asked for:
 
 ```elixir
 # From: Samples/showcase/lib/samples/mongo_watcher/items/queries.ex
   @query many: true
-  def paged(_args, ctx), do: {:ok, Arc.MongoDB.page({ctx, WatcherItem}, %{})}
+  def paged(_args, ctx), do: {:ok, Cratis.Arc.MongoDB.page({ctx, WatcherItem}, %{})}
 ```
 
 ## Tenancy
@@ -100,7 +100,7 @@ The tenant of the request (see [Tenancy](tenancy.md)) is a database. The default
 
 ```elixir
 defmodule MyApp.TenantDatabases do
-  @behaviour Arc.MongoDB.DatabaseNameResolver
+  @behaviour Cratis.Arc.MongoDB.DatabaseNameResolver
 
   @impl true
   def resolve(nil, options), do: options.database
@@ -123,32 +123,32 @@ connection_resolution: [
 ]
 ```
 
-A module implements `Arc.MongoDB.ConnectionResolver` and answers `{:ok, %Arc.MongoDB.ResolvedConnection{}}`. Answers are cached in memory by purpose and tenant, never by credential, until one minute before their expiry; a connection that fails to authenticate drops its cached answer so the next attempt picks up rotated credentials. Clients are shared per server and identity. A resolved `database` replaces the `database+tenant` naming entirely, including for the default tenant, which resolves as `Default`. An OIDC `accessToken` is refused: the Elixir MongoDB driver has no such mechanism.
+A module implements `Cratis.Arc.MongoDB.ConnectionResolver` and answers `{:ok, %Cratis.Arc.MongoDB.ResolvedConnection{}}`. Answers are cached in memory by purpose and tenant, never by credential, until one minute before their expiry; a connection that fails to authenticate drops its cached answer so the next attempt picks up rotated credentials. Clients are shared per server and identity. A resolved `database` replaces the `database+tenant` naming entirely, including for the default tenant, which resolves as `Default`. An OIDC `accessToken` is refused: the Elixir MongoDB driver has no such mechanism.
 
 ## Observe a collection
 
 ```elixir
 # From: Samples/showcase/lib/samples/mongo_watcher/notes/queries.ex
   @observe many: true,
-           watch: [Arc.MongoDB.watch(WatcherNote), Arc.MongoDB.watch(WatcherItem)]
+           watch: [Cratis.Arc.MongoDB.watch(WatcherNote), Cratis.Arc.MongoDB.watch(WatcherItem)]
   def watch_all(_args, ctx),
-    do: {:ok, Arc.MongoDB.all({ctx, WatcherNote}, sort: [created_at: :asc])}
+    do: {:ok, Cratis.Arc.MongoDB.all({ctx, WatcherNote}, sort: [created_at: :asc])}
 ```
 
 This query watches both the notes and the items, so it re-runs when either changes. Watch only the notes, as `observe_all` in the same module does, to re-run on notes alone.
 
 The query re-runs when the collection changes, with the tenant of each subscription, and the result is pushed over either hub. One database-level change stream is shared by every observer of a database, however many queries watch it; it reopens from its resume token after a failure, tells the observers to run again, and closes when the last observer is gone. A query can watch several collections, and a watch on a collection another query writes to is what lets one change update several lists. Observation says that a collection changed; the query decides what to send.
 
-`Arc.Watch` is the behaviour behind this: any module can be a source of changes for `watch:`.
+`Cratis.Arc.Watch` is the behaviour behind this: any module can be a source of changes for `watch:`.
 
 ## Test
 
 ```elixir
 setup do
-  database = Arc.MongoDB.Test.unique_database("library")
+  database = Cratis.Arc.MongoDB.Test.unique_database("library")
   # configure `mongodb: [server: url, database: database]`, then
-  start_supervised!({Arc.MongoDB, application: MyApp.Arc})
-  on_exit(fn -> Arc.MongoDB.Test.drop_databases(MyApp.Arc, database, ["acme"]) end)
+  start_supervised!({Cratis.Arc.MongoDB, application: MyApp.Arc})
+  on_exit(fn -> Cratis.Arc.MongoDB.Test.drop_databases(MyApp.Arc, database, ["acme"]) end)
 end
 ```
 

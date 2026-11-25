@@ -4,5 +4,5 @@
 defmodule Library.Arc do
   @moduledoc "The Arc application: discovers the commands and read models under `Library`."
 
-  use Arc.Application, otp_app: :library
+  use Cratis.Arc.Application, otp_app: :library
 end

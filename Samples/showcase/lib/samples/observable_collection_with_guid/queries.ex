@@ -4,7 +4,7 @@
 defmodule Samples.ObservableCollectionWithGuid.Queries do
   @moduledoc "Queries over the observable collection with GUID identities."
 
-  use Arc.ReadModel,
+  use Cratis.Arc.ReadModel,
     model: Samples.ObservableCollectionWithGuid.ObservableCollectionWithGuidItem,
     types: [id: :uuid]
 

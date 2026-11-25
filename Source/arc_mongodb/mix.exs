@@ -1,7 +1,7 @@
 # Copyright (c) Cratis. All rights reserved.
 # Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-defmodule Arc.MongoDB.MixProject do
+defmodule Cratis.Arc.MongoDB.MixProject do
   use Mix.Project
 
   @version Path.join(__DIR__, "VERSION")
@@ -78,16 +78,20 @@ defmodule Arc.MongoDB.MixProject do
       main: "Arc.MongoDB",
       extras: ["README.md"],
       groups_for_modules: [
-        Persistence: [Arc.MongoDB, Arc.MongoDB.Document, Arc.MongoDB.Collection],
-        Tenancy: [Arc.MongoDB.DatabaseNameResolver, Arc.MongoDB.ServerResolver],
-        "Connection resolution": [
-          Arc.MongoDB.ConnectionResolver,
-          Arc.MongoDB.ConnectionResolver.Http,
-          Arc.MongoDB.ConnectionResolver.Template
+        Persistence: [
+          Cratis.Arc.MongoDB,
+          Cratis.Arc.MongoDB.Document,
+          Cratis.Arc.MongoDB.Collection
         ],
-        Conventions: [Arc.MongoDB.NamingPolicy, Arc.MongoDB.Codec],
-        Observation: [Arc.MongoDB.Watch, Arc.MongoDB.Watcher],
-        Testing: [Arc.MongoDB.Test]
+        Tenancy: [Cratis.Arc.MongoDB.DatabaseNameResolver, Cratis.Arc.MongoDB.ServerResolver],
+        "Connection resolution": [
+          Cratis.Arc.MongoDB.ConnectionResolver,
+          Cratis.Arc.MongoDB.ConnectionResolver.Http,
+          Cratis.Arc.MongoDB.ConnectionResolver.Template
+        ],
+        Conventions: [Cratis.Arc.MongoDB.NamingPolicy, Cratis.Arc.MongoDB.Codec],
+        Observation: [Cratis.Arc.MongoDB.Watch, Cratis.Arc.MongoDB.Watcher],
+        Testing: [Cratis.Arc.MongoDB.Test]
       ]
     ]
   end

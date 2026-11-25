@@ -4,5 +4,5 @@
 defmodule Counters.Arc do
   @moduledoc "The Arc application for the sample."
 
-  use Arc.Application, otp_app: :counters
+  use Cratis.Arc.Application, otp_app: :counters
 end

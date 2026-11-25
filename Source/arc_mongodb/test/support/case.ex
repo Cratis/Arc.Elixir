@@ -13,7 +13,7 @@ defmodule MongoFixtures.Case do
   end
 
   setup context do
-    database = Arc.MongoDB.Test.unique_database("arc_test")
+    database = Cratis.Arc.MongoDB.Test.unique_database("arc_test")
     url = System.get_env("MONGODB_URL", "mongodb://localhost:27017/?directConnection=true")
 
     mongodb =
@@ -27,24 +27,24 @@ defmodule MongoFixtures.Case do
       tenancy: Map.get(context, :tenancy, [])
     )
 
-    Arc.Application.refresh(MongoFixtures.App)
+    Cratis.Arc.Application.refresh(MongoFixtures.App)
     start_supervised!(MongoFixtures.App)
-    start_supervised!({Arc.MongoDB, application: MongoFixtures.App})
+    start_supervised!({Cratis.Arc.MongoDB, application: MongoFixtures.App})
 
     on_exit(fn ->
       cleanup(database, url)
       if previous, do: Application.put_env(:cratis_arc_mongodb, MongoFixtures.App, previous)
     end)
 
-    %{database: database, url: url, ctx: Arc.context(MongoFixtures.App)}
+    %{database: database, url: url, ctx: Cratis.Arc.context(MongoFixtures.App)}
   end
 
-  def tenant(tenant), do: Arc.context(MongoFixtures.App, tenant: tenant)
+  def tenant(tenant), do: Cratis.Arc.context(MongoFixtures.App, tenant: tenant)
 
   # The app is stopped by the time on_exit runs, so reach the databases through a connection of
   # our own.
   defp cleanup(database, url) do
-    conn = Arc.MongoDB.Test.connect(url)
+    conn = Cratis.Arc.MongoDB.Test.connect(url)
 
     {:ok, %{"databases" => databases}} =
       Mongo.issue_command(conn, [listDatabases: 1], :read, database: "admin")

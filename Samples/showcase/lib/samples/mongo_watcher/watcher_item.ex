@@ -9,7 +9,7 @@ defmodule Samples.MongoWatcher.WatcherItem do
   not: the id is a UUID (BSON binary, subtype 4) and `created_at` a date time.
   """
 
-  use Arc.MongoDB.Document, types: [id: :uuid, created_at: :datetime]
+  use Cratis.Arc.MongoDB.Document, types: [id: :uuid, created_at: :datetime]
 
   defstruct id: "", name: "", created_at: ~U[1970-01-01 00:00:00Z]
 end

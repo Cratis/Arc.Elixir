@@ -4,7 +4,7 @@
 defmodule Samples.MongoWatcher.Notes.Queries do
   @moduledoc "Queries over the watcher notes."
 
-  use Arc.ReadModel,
+  use Cratis.Arc.ReadModel,
     model: Samples.MongoWatcher.WatcherNote,
     types: [id: :uuid, created_at: :datetime]
 
@@ -14,12 +14,12 @@ defmodule Samples.MongoWatcher.Notes.Queries do
 
   @doc "Observes all notes. Re-runs when the notes or the items change."
   @observe many: true,
-           watch: [Arc.MongoDB.watch(WatcherNote), Arc.MongoDB.watch(WatcherItem)]
+           watch: [Cratis.Arc.MongoDB.watch(WatcherNote), Cratis.Arc.MongoDB.watch(WatcherItem)]
   def watch_all(_args, ctx),
-    do: {:ok, Arc.MongoDB.all({ctx, WatcherNote}, sort: [created_at: :asc])}
+    do: {:ok, Cratis.Arc.MongoDB.all({ctx, WatcherNote}, sort: [created_at: :asc])}
 
   @doc "Observes all notes, re-running only when a note changes."
-  @observe many: true, watch: [Arc.MongoDB.watch(WatcherNote)]
+  @observe many: true, watch: [Cratis.Arc.MongoDB.watch(WatcherNote)]
   def observe_all(_args, ctx),
-    do: {:ok, Arc.MongoDB.all({ctx, WatcherNote}, sort: [created_at: :asc])}
+    do: {:ok, Cratis.Arc.MongoDB.all({ctx, WatcherNote}, sort: [created_at: :asc])}
 end

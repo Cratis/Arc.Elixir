@@ -8,15 +8,15 @@ defmodule ContractServer do
   use Plug.Builder
   import Plug.Conn
 
-  plug Arc.Plug, application: ArcFixtures.App
+  plug Cratis.Arc.Plug, application: ArcFixtures.App
   plug :test_routes
 
   # Adds an author and notifies the observable queries, so the runtime contract can watch a push.
   def test_routes(%{request_path: "/test/add-author"} = conn, _opts) do
     %{"name" => name} = Plug.Conn.Query.decode(conn.query_string)
-    id = Arc.Context.new_correlation_id()
+    id = Cratis.Arc.Context.new_correlation_id()
     ArcFixtures.Store.put(ArcFixtures.Store.all() ++ [%ArcFixtures.Authors.Author{id: id, name: name}])
-    Arc.Notifier.notify(ArcFixtures.App, "authors")
+    Cratis.Arc.Notifier.notify(ArcFixtures.App, "authors")
     conn |> send_resp(200, id) |> halt()
   end
 
@@ -31,10 +31,10 @@ end
 Application.put_env(:cratis_arc, ArcFixtures.App,
   chronicle: [client: client],
   introspection: :anonymous,
-  authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
+  authentication: [Cratis.Arc.Authentication.MicrosoftIdentityPlatform],
   trust_forwarded_identity_headers: true
 )
-Arc.Application.refresh(ArcFixtures.App)
+Cratis.Arc.Application.refresh(ArcFixtures.App)
 
 {:ok, _} = Supervisor.start_link([ArcFixtures.App], strategy: :one_for_one)
 

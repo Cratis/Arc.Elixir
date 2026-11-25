@@ -4,7 +4,7 @@
 defmodule Counters.Counting.IncrementCounter do
   @moduledoc "Raises a counter by an amount."
 
-  use Arc.Command
+  use Cratis.Arc.Command
 
   schema do
     field :id, Counters.CounterId, key: true, required: true

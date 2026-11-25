@@ -19,7 +19,7 @@ defmodule Library.Application do
     Supervisor.start_link(children, strategy: :one_for_one, name: Library.Supervisor)
   end
 
-  # Tests run against Chronicle's in-memory kernel, started per test by Arc.Test.Case.
+  # Tests run against Chronicle's in-memory kernel, started per test by Cratis.Arc.Test.Case.
   defp chronicle do
     if Application.get_env(:library, :start_chronicle, true) do
       [

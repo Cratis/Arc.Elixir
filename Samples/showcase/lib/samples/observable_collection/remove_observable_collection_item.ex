@@ -4,7 +4,7 @@
 defmodule Samples.ObservableCollection.RemoveObservableCollectionItem do
   @moduledoc "Removes an item from the collection."
 
-  use Arc.Command
+  use Cratis.Arc.Command
   allow_anonymous()
 
   schema do

@@ -5,7 +5,7 @@
 - **Tenancy.** The tenant of a request selects the database: the configured one for the default tenant and `<database>+<tenant>` for a named one, or your own naming.
 - **Conventions.** Structs are the documents. Naming policies, `_id`, standard UUIDs, dates, concepts and nested documents are handled in one place.
 - **Connection resolution.** Place tenants on servers and credentials of their own, by rule, by an endpoint that follows the shared connection resolution contract, or by a module.
-- **Observation.** `@observe watch: [Arc.MongoDB.watch(Book)]` re-runs a query when a collection changes, over one shared change stream per database.
+- **Observation.** `@observe watch: [Cratis.Arc.MongoDB.watch(Book)]` re-runs a query when a collection changes, over one shared change stream per database.
 
 ```elixir
 {:cratis_arc_mongodb, "~> 0.0"}

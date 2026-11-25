@@ -26,7 +26,7 @@ A policy is a module that decides from the full context. Register it by name on 
 
 ```elixir
 defmodule MyApp.Policies.CanPublish do
-  @behaviour Arc.Policy
+  @behaviour Cratis.Arc.Policy
 
   @impl true
   def authorize?(ctx, _subject), do: ctx.principal.claims["publisher"] == true
@@ -41,7 +41,7 @@ config :my_app, MyApp.Arc, policies: [can_publish: MyApp.Policies.CanPublish]
 
 ## Tell Arc who is calling
 
-An `Arc.Principal` holds `id`, `name`, `authenticated?`, `roles` and `claims`. Arc builds one from your authentication through a chain of handlers, in the order of the `authentication:` option. The first handler that recognizes the request decides:
+A `Cratis.Arc.Principal` holds `id`, `name`, `authenticated?`, `roles` and `claims`. Arc builds one from your authentication through a chain of handlers, in the order of the `authentication:` option. The first handler that recognizes the request decides:
 
 | A handler returns | Result |
 | --- | --- |
@@ -49,24 +49,24 @@ An `Arc.Principal` holds `id`, `name`, `authenticated?`, `roles` and `claims`. A
 | `:failed` | Terminal: later handlers do not run and the caller gets a generic 401 |
 | `:anonymous` | Not recognized; the next handler tries. Anonymous is final only when none recognized the request |
 
-The default handler, `Arc.Authentication.FromAssigns`, reads what your own plug assigned:
+The default handler, `Cratis.Arc.Authentication.FromAssigns`, reads what your own plug assigned:
 
-- `conn.assigns.arc_principal`, an `Arc.Principal`;
+- `conn.assigns.arc_principal`, a `Cratis.Arc.Principal`;
 - `conn.assigns.current_scope.user`, the `phx.gen.auth` shape;
 - `conn.assigns.current_user`, a map with `:id` and optionally `:name`, `:email`, `:roles`.
 
-So with `phx.gen.auth`, put `Arc.Plug` after the plug that fetches the current user and nothing else is needed. For tokens or a gateway, write a plug that assigns `arc_principal`, or implement `Arc.Authentication`:
+So with `phx.gen.auth`, put `Cratis.Arc.Plug` after the plug that fetches the current user and nothing else is needed. For tokens or a gateway, write a plug that assigns `arc_principal`, or implement `Cratis.Arc.Authentication`:
 
 ```elixir
 defmodule MyApp.TokenAuthentication do
-  @behaviour Arc.Authentication
+  @behaviour Cratis.Arc.Authentication
 
   @impl true
   def authenticate(conn) do
     case Plug.Conn.get_req_header(conn, "authorization") do
       ["Bearer " <> token] ->
         case MyApp.Tokens.verify(token) do
-          {:ok, user} -> {:authenticated, Arc.Principal.new(user.id, user.name, roles: user.roles)}
+          {:ok, user} -> {:authenticated, Cratis.Arc.Principal.new(user.id, user.name, roles: user.roles)}
           :error -> :failed
         end
 
@@ -87,14 +87,14 @@ Identity is presentation data and never an authorization decision. It adds no tr
 
 ### Provide the details
 
-Implement `Arc.Identity.Provider`. Arc finds it in your application, so there is nothing to register.
+Implement `Cratis.Arc.Identity.Provider`. Arc finds it in your application, so there is nothing to register.
 
 ```elixir
 # From: Samples/phoenix/lib/library/identity/provider.ex
-      use Arc.Identity.Provider, details: Library.Identity.IdentityDetails
+      use Cratis.Arc.Identity.Provider, details: Library.Identity.IdentityDetails
 
       @impl true
-      def details(%Arc.Identity.Context{name: name, principal: principal}) do
+      def details(%Cratis.Arc.Identity.Context{name: name, principal: principal}) do
         {:ok,
          %Library.Identity.IdentityDetails{
            display_name: "Hello, #{name}",
@@ -103,11 +103,11 @@ Implement `Arc.Identity.Provider`. Arc finds it in your application, so there is
       end
 ```
 
-`details:` names the type of the details, an `Arc.Schema` module:
+`details:` names the type of the details, a `Cratis.Arc.Schema` module:
 
 ```elixir
 # From: Samples/phoenix/lib/library/identity/identity_details.ex
-      use Arc.Schema
+      use Cratis.Arc.Schema
 
       schema do
         field :display_name, :string, required: true
@@ -117,16 +117,16 @@ Implement `Arc.Identity.Provider`. Arc finds it in your application, so there is
 
 It does three jobs. `/.cratis/identity-details/schema` serves its JSON schema. [Proxy generation](react-proxies.md) turns it into a TypeScript class, so `useIdentity` is typed. And the wire uses its `camelCase` field names.
 
-The callback receives an `Arc.Identity.Context` built from the request principal on every call, so cache expensive lookups inside it:
+The callback receives a `Cratis.Arc.Identity.Context` built from the request principal on every call, so cache expensive lookups inside it:
 
 | Field | Meaning |
 | --- | --- |
 | `id` | The identity identifier; `"unknown"` when the principal has none |
 | `name` | The display name |
 | `claims` | `{type, value}` string pairs from the principal, plus a `{"role", role}` pair per role |
-| `principal` | The full `Arc.Principal` |
+| `principal` | The full `Cratis.Arc.Principal` |
 
-It returns `{:ok, details}`, or `{:unauthorized, details}` when the user is signed in but may not use the application at all. An `Arc.Identity.Details` struct says the same with a flag. An application without a provider does not serve `/.cratis/me`, and the client treats that as "no identity endpoint". Give the application more than one provider and startup fails, naming them; pick one with the `identity_details:` option.
+It returns `{:ok, details}`, or `{:unauthorized, details}` when the user is signed in but may not use the application at all. A `Cratis.Arc.Identity.Details` struct says the same with a flag. An application without a provider does not serve `/.cratis/me`, and the client treats that as "no identity endpoint". Give the application more than one provider and startup fails, naming them; pick one with the `identity_details:` option.
 
 ### What the endpoint answers
 
@@ -140,25 +140,25 @@ Every response is private: `Cache-Control: no-store, private` and `Vary: Cookie`
 
 ### In LiveView
 
-`assign_identity/2` assigns the same `Arc.Identity.Result` the endpoint would serve. See [LiveView](live-view.md#identity).
+`assign_identity/2` assigns the same `Cratis.Arc.Identity.Result` the endpoint would serve. See [LiveView](live-view.md#identity).
 
 ### Authorize a whole namespace
 
-An `Arc.Filter` is a cross-cutting rule that runs for every command and query, after authorization and before validation. It sees the context and the descriptor of the artifact, and answers `:ok` or `{:unauthorized, reason}`. Register the filters on the application with `filters: [...]`. This one requires a role of every artifact in one namespace, without the artifacts saying anything about it:
+A `Cratis.Arc.Filter` is a cross-cutting rule that runs for every command and query, after authorization and before validation. It sees the context and the descriptor of the artifact, and answers `:ok` or `{:unauthorized, reason}`. Register the filters on the application with `filters: [...]`. This one requires a role of every artifact in one namespace, without the artifacts saying anything about it:
 
 ```elixir
 # From: Samples/showcase/lib/samples/cross_cutting_authorization/filter.ex
-  @behaviour Arc.Filter
+  @behaviour Cratis.Arc.Filter
 
   @protected ["Samples", "CrossCuttingAuthorization"]
   @required_role "CrossCuttingAuthorization"
 
   @impl true
-  def on_command(ctx, %Arc.Descriptor{namespace: @protected}), do: check(ctx)
+  def on_command(ctx, %Cratis.Arc.Descriptor{namespace: @protected}), do: check(ctx)
   def on_command(_ctx, _descriptor), do: :ok
 
   @impl true
-  def on_query(ctx, %Arc.Descriptor{namespace: @protected}, _query), do: check(ctx)
+  def on_query(ctx, %Cratis.Arc.Descriptor{namespace: @protected}, _query), do: check(ctx)
   def on_query(_ctx, _descriptor, _query), do: :ok
 ```
 
@@ -166,17 +166,17 @@ An `Arc.Filter` is a cross-cutting rule that runs for every command and query, a
 
 ### Development users and tenants
 
-Tools such as Lens read `/.cratis/users` and `/.cratis/tenants` to offer users and tenants to sign in as. Implement `Arc.Identity.UsersProvider` and `Arc.Identity.TenantsProvider` in development-only modules; Arc discovers them and concatenates what they return.
+Tools such as Lens read `/.cratis/users` and `/.cratis/tenants` to offer users and tenants to sign in as. Implement `Cratis.Arc.Identity.UsersProvider` and `Cratis.Arc.Identity.TenantsProvider` in development-only modules; Arc discovers them and concatenates what they return.
 
 ```elixir
 # From: Samples/phoenix/lib/library/identity/dev_users.ex
-      @behaviour Arc.Identity.UsersProvider
+      @behaviour Cratis.Arc.Identity.UsersProvider
 
       @impl true
       def users do
         [
-          %Arc.Identity.User{user_id: "ada", user_details: "ada", roles: []},
-          %Arc.Identity.User{user_id: "ed", user_details: "ed", roles: ["editor"]}
+          %Cratis.Arc.Identity.User{user_id: "ada", user_details: "ada", roles: []},
+          %Cratis.Arc.Identity.User{user_id: "ed", user_details: "ed", roles: ["editor"]}
         ]
       end
 ```
@@ -185,7 +185,7 @@ A user is listed on the wire as a `microsoftIdentity` client principal (`identit
 
 ## Signing in through an ingress or Lens
 
-`Arc.Authentication.MicrosoftIdentityPlatform` authenticates from the Microsoft identity platform headers an ingress supplies, and from the same headers Lens injects in development. It matches Arc on .NET:
+`Cratis.Arc.Authentication.MicrosoftIdentityPlatform` authenticates from the Microsoft identity platform headers an ingress supplies, and from the same headers Lens injects in development. It matches Arc on .NET:
 
 | Header | Content |
 | --- | --- |
@@ -197,7 +197,7 @@ All three headers are required on the unsigned path. The id comes from `x-ms-cli
 
 ```elixir
 config :my_app, MyApp.Arc,
-  authentication: [Arc.Authentication.MicrosoftIdentityPlatform, Arc.Authentication.FromAssigns],
+  authentication: [Cratis.Arc.Authentication.MicrosoftIdentityPlatform, Cratis.Arc.Authentication.FromAssigns],
   trust_forwarded_identity_headers: true
 ```
 
@@ -211,7 +211,7 @@ The signed envelope lets the application verify that the identity headers came f
 
 ```elixir
 config :my_app, MyApp.Arc,
-  authentication: [Arc.Authentication.MicrosoftIdentityPlatform],
+  authentication: [Cratis.Arc.Authentication.MicrosoftIdentityPlatform],
   trust_forwarded_identity_headers: true,
   forwarded_identity: [
     enabled: true,
@@ -225,7 +225,7 @@ Each secret is exactly 32 random bytes, standard-base64 encoded. Configure one t
 The MAC covers the audience, key id, timestamp, nonce, method, canonical path and query, the tenant header, and the identity headers, so none can be changed in flight. A signature is accepted for 60 seconds in the past and 30 seconds ahead, and a nonce can be used once per audience and key.
 
 :::note[Replay memory is per node]
-Seen nonces are kept in memory by a process that `Arc.Application` starts, up to 100,000 entries. A replay is refused only on the node that saw the original, so give each node its own key or route a caller to one node if that matters. If the application is not started, verification fails closed.
+Seen nonces are kept in memory by a process that `Cratis.Arc.Application` starts, up to 100,000 entries. A replay is refused only on the node that saw the original, so give each node its own key or route a caller to one node if that matters. If the application is not started, verification fails closed.
 :::
 
 ## Acting on behalf of a user
@@ -247,7 +247,7 @@ config :my_app, MyApp.Arc,
 
 The assertion is an RS256 JWS. Arc checks the signature against RSA public keys of at least 2048 bits (a private key is refused), then the issuer, audience, optional service, the key id, a lifetime of at most five minutes, a unique `jti`, the HTTP method and path, the tenant, and hashes that bind the assertion to the user and actor headers. Any failure is a 401 with a fixed message and never reveals which check failed.
 
-On success `Arc.Principal.actor/1` returns the acting principal and `Arc.Principal.acted_on_behalf_of?/1` is true. Chronicle records the actor as the cause of an append, on behalf of the user. Without the `on_behalf_of` option, a request that carries an assertion is rejected rather than ignored.
+On success `Cratis.Arc.Principal.actor/1` returns the acting principal and `Cratis.Arc.Principal.acted_on_behalf_of?/1` is true. Chronicle records the actor as the cause of an append, on behalf of the user. Without the `on_behalf_of` option, a request that carries an assertion is rejected rather than ignored.
 
 ## Discovery routes
 

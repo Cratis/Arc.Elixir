@@ -30,12 +30,12 @@ Define `validate/2` for anything declarations cannot say. It runs after the decl
 ```elixir
 # From: Samples/phoenix/lib/library/authors/registration/register_author.ex
   def validate(%__MODULE__{name: name}, _ctx) when name in ["admin", "root"],
-    do: {:error, Arc.Validation.error("That name is reserved.", [:name])}
+    do: {:error, Cratis.Arc.Validation.error("That name is reserved.", [:name])}
 
   def validate(_command, _ctx), do: :ok
 ```
 
-`Arc.Validation.error(message, members, opts)` builds a result; `members` are field atoms. Options are `severity:`, `state:`, `reason:` and `reason_detail:`. `Arc.Validation.warning/3` builds a warning.
+`Cratis.Arc.Validation.error(message, members, opts)` builds a result; `members` are field atoms. Options are `severity:`, `state:`, `reason:` and `reason_detail:`. `Cratis.Arc.Validation.warning/3` builds a warning.
 
 ## Results, reasons and severities
 

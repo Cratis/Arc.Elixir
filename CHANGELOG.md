@@ -9,8 +9,16 @@
 
 - **Compile-time analyzer.** `compilers: [:arc_analyzer] ++ Mix.compilers()` (or `mix igniter.install cratis_arc`) checks your code against Arc rules on every compile and reports Mix diagnostics. Rules `ARCE0001` to `ARCE0005`, configurable per rule with `config :cratis_arc, :analyzer`. See [Code analysis](Documentation/code-analysis/index.md).
 
-- **Explicit command names.** `command "register-author"` after `use Arc.Command` sets the last segment of the command's route, so renaming or moving the module no longer changes the API. It is optional: without it the route still follows the module name. The name must be kebab-case (checked at compile time), the descriptor exposes it as `route_name`, and `ARCE0005` routes by it. See [Routes come from module names](Documentation/concepts.md#routes-come-from-module-names).
+- **Explicit command names.** `use Cratis.Arc.Command, id: "register-author"` sets the last segment of the command's route, so renaming or moving the module no longer changes the API. It is optional: without it the route still follows the module name. The name must be kebab-case (checked at compile time), the descriptor exposes it as `route_name`, and `ARCE0005` routes by it. See [Routes come from module names](Documentation/concepts.md#routes-come-from-module-names).
+
+- **Event model explorer.** `/.cratis/event-model`, the same address and routes as the C# Arc, draws your commands, events, read models and reactions as an event model, with the Screenplay source beside it. Add `compilers: Mix.compilers() ++ [:arc_event_model]` and `arc: [application: MyApp.Arc]`: the model is generated while you compile and embedded in your application's `priv`, and the explorer ships inside the package. It is served in development by default (`event_model:`), and `introspection` decides who may read it. See [Event model](Documentation/event-model.md).
+
+### Changed
+
+- **Every Arc module is under `Cratis.Arc`.** `Arc.Command` is now `Cratis.Arc.Command`, `Arc.ReadModel` is `Cratis.Arc.ReadModel`, `Arc.Test` is `Cratis.Arc.Test`, `Arc.MongoDB` is `Cratis.Arc.MongoDB`, and so on, including `Arc.execute/3`, `Arc.query/5` and `Arc.context/2`. Source files follow, under `lib/cratis/arc`.
+- **A command declares its name as an option, like Chronicle.** `use Cratis.Arc.Command, id: "register-author"` replaces the `command "register-author"` declaration, in line with `use Chronicle.Events.EventType, id: "..."`.
 
 ### Upgrading
 
+- **Rename the modules and the command declaration.** Replace `Arc.` with `Cratis.Arc.` in `use`, `alias` and calls, and move `command "name"` into `use Cratis.Arc.Command, id: "name"`. Mix tasks, the `:arc_*` compilers, `config :cratis_arc` and the `arc:` project option keep their names.
 - **New rules can produce new warnings.** Every release that adds a rule can make an existing build report findings it did not before, and `--warnings-as-errors` then fails it. Rules that find a likely bug (`ARCE0002`, `ARCE0005`) default to `:error`. Set a rule to `:warning` or `:off` under `config :cratis_arc, :analyzer, rules: [...]` while you fix the findings.

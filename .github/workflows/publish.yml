@@ -154,6 +154,20 @@ jobs:
         working-directory: ./Source/arc
         run: mix deps.get
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Source/event_model_viewer/package-lock.json
+
+      - name: Build the event model explorer into the package
+        working-directory: ./Source/event_model_viewer
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm run build
+
       - name: Copy README and LICENSE for the Hex package
         run: |
           cp README.md Source/arc/README.md

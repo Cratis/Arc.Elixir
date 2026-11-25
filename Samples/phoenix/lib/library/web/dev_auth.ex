@@ -29,7 +29,7 @@ defmodule Library.Web.DevAuth do
       {name, roles} ->
         conn
         |> put_session("user", %{id: name, name: name, roles: roles})
-        |> assign(:arc_principal, Arc.Principal.new(name, name, roles: roles))
+        |> assign(:arc_principal, Cratis.Arc.Principal.new(name, name, roles: roles))
     end
   end
 

@@ -16,9 +16,9 @@ defmodule Library.Web.Spa do
     root = Application.app_dir(:library, "priv/spa")
 
     if File.dir?(root) do
-      Arc.Plug.SinglePage.call(
+      Cratis.Arc.Plug.SinglePage.call(
         conn,
-        Arc.Plug.SinglePage.init(
+        Cratis.Arc.Plug.SinglePage.init(
           root: root,
           api_prefixes: ["/api/", "/.cratis/", "/live", "/assets", "/health"]
         )

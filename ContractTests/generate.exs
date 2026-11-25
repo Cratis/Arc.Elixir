@@ -7,7 +7,7 @@
 output = Path.expand("../../ContractTests/TypeScript/generated", File.cwd!())
 File.rm_rf!(output)
 
-case Arc.ProxyGenerator.generate(ArcFixtures.App, output: output) do
+case Cratis.Arc.ProxyGenerator.generate(ArcFixtures.App, output: output) do
   {:ok, result} -> IO.puts("Generated #{length(result.written)} files into #{output}")
   {:error, messages} -> Mix.raise(Enum.join(messages, "\n"))
 end
