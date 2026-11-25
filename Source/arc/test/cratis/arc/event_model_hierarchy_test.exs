@@ -192,6 +192,16 @@ defmodule Cratis.Arc.EventModelHierarchyTest do
       _ = documents
     end
 
+    test "leave a link out when the producer is not in the document", %{documents: documents} do
+      reading = Enum.find(documents, &(&1.id == "app.M.Orders.Reading"))
+      [module] = hd(reading.model["eventModel"]["collections"])["modules"]
+      [feature] = module["features"]
+      [list] = feature["slices"]
+
+      assert [%{"name" => "Added"} = event] = list["events"]
+      refute Map.has_key?(event, "sourceEventId")
+    end
+
     test "write nested features in the Screenplay source", %{documents: [root | _]} do
       assert root.source =~ "  feature Orders\n"
       assert root.source =~ "    feature Placing\n      slice StateChange Add\n"

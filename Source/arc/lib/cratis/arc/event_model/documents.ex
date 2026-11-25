@@ -103,7 +103,7 @@ defmodule Cratis.Arc.EventModel.Documents do
   defp module_name(%{module: module}, _app_name), do: module
 
   defp document(id, title, namespace, kind, parent, name, modules) do
-    model = event_model(id, name, modules)
+    model = event_model(id, name, within_scope(modules))
 
     %{
       id: id,
@@ -114,6 +114,34 @@ defmodule Cratis.Arc.EventModel.Documents do
       model: %{"eventModel" => model, "errors" => [], "warnings" => [], "success" => true},
       source: Screenplay.emit(modules)
     }
+  end
+
+  # A document draws only its own slices, so an event whose producer is outside it points nowhere:
+  # it keeps its name and schema and loses the link.
+  defp within_scope(modules) do
+    keys = for {_module, nodes} <- modules, key <- keys_of(nodes), into: MapSet.new(), do: key
+
+    cut = fn event ->
+      if is_nil(event.owner) or MapSet.member?(keys, event.owner),
+        do: event,
+        else: %{event | owner: nil}
+    end
+
+    for {module, nodes} <- modules, do: {module, scope_nodes(nodes, cut)}
+  end
+
+  defp keys_of(nodes),
+    do: Enum.flat_map(nodes, fn n -> Enum.map(n.slices, & &1.key) ++ keys_of(n.children) end)
+
+  defp scope_nodes(nodes, cut) do
+    for node <- nodes do
+      slices =
+        for slice <- node.slices do
+          %{slice | events: Enum.map(slice.events, cut), external: Enum.map(slice.external, cut)}
+        end
+
+      %{node | slices: slices, children: scope_nodes(node.children, cut)}
+    end
   end
 
   # -- the board ----------------------------------------------------------------------------------
@@ -212,6 +240,10 @@ defmodule Cratis.Arc.EventModel.Documents do
   defp externals_json(_seed, _slice), do: []
 
   # An automation starts from the first event it handles.
+  defp put_trigger(json, %{type: 2, external: [%{owner: nil} | _]}) do
+    Map.put(json, "automationTrigger", %{"type" => 3, "description" => ""})
+  end
+
   defp put_trigger(json, %{type: 2, external: [event | _]}) do
     Map.put(json, "automationTrigger", %{
       "type" => 1,
@@ -229,10 +261,13 @@ defmodule Cratis.Arc.EventModel.Documents do
       "id" => guid(seed ++ ["consumed", event.name]),
       "name" => event.name,
       "schema" => event.schema,
-      "sourceEventId" => event_guid(event),
       "tags" => event.tags
     }
+    |> link(event)
   end
+
+  defp link(json, %{owner: nil}), do: json
+  defp link(json, event), do: Map.put(json, "sourceEventId", event_guid(event))
 
   defp put_command(json, _seed, []), do: json
 
@@ -288,15 +323,15 @@ defmodule Cratis.Arc.EventModel.Documents do
       "tags" => event.tags
     }
 
-    if event.owner == seed, do: base, else: Map.put(base, "sourceEventId", event_guid(event))
+    if event.owner == seed, do: base, else: link(base, event)
   end
 
   defp external_json(seed, event) do
     %{
       "id" => guid(seed ++ ["external", event.name]),
-      "name" => event.name,
-      "sourceEventId" => event_guid(event)
+      "name" => event.name
     }
+    |> link(event)
   end
 
   defp query_json(seed, query) do
