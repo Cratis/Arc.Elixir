@@ -9,24 +9,24 @@ Arc for Elixir has one idea: you declare what your application does, and Arc run
 
 There are two kinds of artifact:
 
-- A **command** (`use Arc.Command`) is a struct that describes a request and a `handle/2` that decides.
-- A **read model** (`use Arc.ReadModel`) is a module of queries over one model struct.
+- A **command** (`use Cratis.Arc.Command`) is a struct that describes a request and a `handle/2` that decides.
+- A **read model** (`use Cratis.Arc.ReadModel`) is a module of queries over one model struct.
 
 Both are ordinary modules. `use` adds a `__arc__/0` function that returns a descriptor built at compile time: the fields, rules, authorization and queries you declared. Arc never inspects your source or uses reflection at runtime.
 
 ## Discovery and the application
 
-`use Arc.Application, otp_app: :my_app` defines the runtime. When it starts (or when something first needs it), Arc scans the modules of `:my_app`, keeps the ones that define `__arc__/0`, and builds the route table. A duplicate route is a startup error that names both artifacts, not a surprise at request time.
+`use Cratis.Arc.Application, otp_app: :my_app` defines the runtime. When it starts (or when something first needs it), Arc scans the modules of `:my_app`, keeps the ones that define `__arc__/0`, and builds the route table. A duplicate route is a startup error that names both artifacts, not a surprise at request time.
 
 The application is also a supervisor: it owns the processes behind [observable queries](queries.md#observable-queries). There is no global configuration; everything is scoped to the application module, so tests and several Arc applications in one VM stay isolated. See [Configuration](configuration.md).
 
 ## The context replaces dependency injection
 
-Arc has no container. A handler calls `Repo`, a context module or `Chronicle` directly, and receives request-scoped facts in an `%Arc.Context{}`:
+Arc has no container. A handler calls `Repo`, a context module or `Chronicle` directly, and receives request-scoped facts in an `%Cratis.Arc.Context{}`:
 
 | Field | Meaning |
 | --- | --- |
-| `principal` | The caller, an `Arc.Principal` |
+| `principal` | The caller, a `Cratis.Arc.Principal` |
 | `tenant` | The resolved tenant header value, or `nil` |
 | `correlation_id` | Echoed on the response and attached to appended events |
 | `provided` | Values returned by the command's `provide/2` |
@@ -37,7 +37,7 @@ While an artifact runs, `arc_correlation_id` and `arc_tenant` are set as `Logger
 
 ## The pipeline
 
-Every command and query goes through the same steps, whether it arrives over HTTP, from LiveView, from a test, or from `Arc.execute/3`.
+Every command and query goes through the same steps, whether it arrives over HTTP, from LiveView, from a test, or from `Cratis.Arc.execute/3`.
 
 ```mermaid
 flowchart LR
@@ -64,18 +64,17 @@ With the default `segments_to_skip: 1` and `route_prefix: "api"`:
 | `…Registration.RegisterAuthor`, validate only | `POST /api/authors/registration/register-author/validate` |
 | query `all_authors` in `MyApp.Authors.Listing.Authors` | `GET /api/authors/listing/all-authors` |
 
-A command can declare its own name with `command/1`. It becomes the last route segment, so renaming or moving the module no longer changes the API. Treat the module path as a namespace and the declaration as the name:
+A command can declare its own `id:`, as Chronicle event types and reactors do. It becomes the last route segment, so renaming or moving the module no longer changes the API. Treat the module path as a namespace and the id as the name:
 
 ```elixir
 defmodule MyApp.Authors.RegisteringAuthors do
-  use Arc.Command
-  command "register-author"
+  use Cratis.Arc.Command, id: "register-author"
   ...
 end
 # POST /api/authors/registering-authors/register-author
 ```
 
-The declaration is optional; without it nothing changes. The name must be kebab-case (`ArgumentError` at compile time otherwise). It sets the route and the descriptor's `route_name`; the generated TypeScript class still takes its name from the module.
+The `id:` is optional; without it the route follows the module name. It must be kebab-case (`ArgumentError` at compile time otherwise). It sets the route and the descriptor's `route_name`; the generated TypeScript class still takes its name from the module.
 
 The first segment is the application name and is skipped. The namespace after it also becomes the folder of the generated TypeScript and the slice location (module, feature, slice) used by the frontend.
 

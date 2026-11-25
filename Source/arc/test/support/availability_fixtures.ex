@@ -3,7 +3,7 @@
 
 defmodule ArcAvail.Fleet.Vessels.Availability do
   @moduledoc false
-  use Arc.Availability.Definition
+  use Cratis.Arc.Availability.Definition
 
   audience("Plus", "Customers on Plus")
   audience("Admin", "Operators")
@@ -18,7 +18,7 @@ end
 
 defmodule ArcAvail.VesselValue do
   @moduledoc false
-  @behaviour Arc.Availability.Definition
+  @behaviour Cratis.Arc.Availability.Definition
 
   @impl true
   def value(_ambient) do
@@ -35,7 +35,7 @@ end
 
 defmodule ArcAvail.HasReported do
   @moduledoc false
-  @behaviour Arc.Availability.Condition
+  @behaviour Cratis.Arc.Availability.Condition
 
   @impl true
   def evaluate(read) do
@@ -49,7 +49,7 @@ end
 
 defmodule ArcAvail.Fleet.Open.Ping do
   @moduledoc false
-  use Arc.Command
+  use Cratis.Arc.Command
   allow_anonymous()
 
   schema do
@@ -61,7 +61,7 @@ end
 
 defmodule ArcAvail.Fleet.Gated.Dock do
   @moduledoc false
-  use Arc.Command
+  use Cratis.Arc.Command
   allow_anonymous()
   available(not: "Preview")
 
@@ -74,7 +74,7 @@ end
 
 defmodule ArcAvail.Fleet.Plain.Admin do
   @moduledoc false
-  use Arc.Command
+  use Cratis.Arc.Command
   authorize roles: ["boss"]
   available(for: "Admin", when: ArcAvail.HasReported)
 
@@ -87,7 +87,7 @@ end
 
 defmodule ArcAvail.Fleet.Plain.Vessels do
   @moduledoc false
-  use Arc.ReadModel, model: ArcAvail.Vessel
+  use Cratis.Arc.ReadModel, model: ArcAvail.Vessel
   allow_anonymous()
 
   @query many: true
@@ -95,7 +95,7 @@ defmodule ArcAvail.Fleet.Plain.Vessels do
 
   @query many: true,
          available: [
-           when: Arc.Availability.Condition.equal("arguments.vesselId", "allowed")
+           when: Cratis.Arc.Availability.Condition.equal("arguments.vesselId", "allowed")
          ],
          params: [vessel_id: {:string, optional: true}]
   def one(_args, _ctx), do: {:ok, []}
@@ -107,7 +107,7 @@ defmodule ArcAvail.Vessel do
 end
 
 defmodule ArcAvail.App do
-  use Arc.Application,
+  use Cratis.Arc.Application,
     otp_app: :cratis_arc,
     artifacts: [
       ArcAvail.Fleet.Open.Ping,
@@ -117,7 +117,7 @@ defmodule ArcAvail.App do
     ],
     availability: [
       definition: ArcAvail.Fleet.Vessels.Availability,
-      audience_source: Arc.Availability.Memory,
-      suspension_source: Arc.Availability.Memory
+      audience_source: Cratis.Arc.Availability.Memory,
+      suspension_source: Cratis.Arc.Availability.Memory
     ]
 end

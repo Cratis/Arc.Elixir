@@ -14,17 +14,17 @@ defmodule Mix.Tasks.Compile.ArcAnalyzer do
         ]
       end
 
-  It registers `Arc.Analyzer` as a compiler tracer, lets the Elixir compiler run, and then runs
+  It registers `Cratis.Arc.Analyzer` as a compiler tracer, lets the Elixir compiler run, and then runs
   the rules over what the tracer saw plus the manifest of earlier builds. Findings are reported
   as Mix diagnostics, so editors that run `mix compile` show them. `--warnings-as-errors` turns
   warnings into a failed build.
 
-  See `Arc.Analyzer` for how it works and `Arc.Analyzer.Config` for the options.
+  See `Cratis.Arc.Analyzer` for how it works and `Cratis.Arc.Analyzer.Config` for the options.
   """
 
   use Mix.Task.Compiler
 
-  alias Arc.Analyzer.{Config, Facts, Runner}
+  alias Cratis.Arc.Analyzer.{Config, Facts, Runner}
   alias Mix.Task.Compiler.Diagnostic
 
   @recursive true
@@ -55,8 +55,8 @@ defmodule Mix.Tasks.Compile.ArcAnalyzer do
   end
 
   defp register_tracer do
-    tracers = Code.get_compiler_option(:tracers) |> List.delete(Arc.Analyzer)
-    Code.put_compiler_option(:tracers, [Arc.Analyzer | tracers])
+    tracers = Code.get_compiler_option(:tracers) |> List.delete(Cratis.Arc.Analyzer)
+    Code.put_compiler_option(:tracers, [Cratis.Arc.Analyzer | tracers])
   end
 
   defp after_elixir({status, diagnostics}, config, warnings_as_errors?) do
@@ -82,7 +82,7 @@ defmodule Mix.Tasks.Compile.ArcAnalyzer do
   defp unregister_tracer do
     Code.put_compiler_option(
       :tracers,
-      List.delete(Code.get_compiler_option(:tracers), Arc.Analyzer)
+      List.delete(Code.get_compiler_option(:tracers), Cratis.Arc.Analyzer)
     )
   end
 

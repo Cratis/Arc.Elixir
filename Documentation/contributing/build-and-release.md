@@ -104,5 +104,5 @@ When `Documentation/**` changes on `main`, `documentation.yml` asks the Cratis d
 - *Formatting*: run `mix format`. If a declaration macro such as `field` is rewritten with parentheses, check `import_deps: [:cratis_arc]` in `.formatter.exs`.
 - *Warnings*: the build compiles with `--warnings-as-errors`; fix the warning, do not suppress it.
 - *Proxy contract, step 1*: something nondeterministic entered the generator output, for example an unordered map. Sort it.
-- *Proxy contract, step 2*: the generated TypeScript no longer compiles. Read the first error; it usually names a template line in `Arc.ProxyGenerator.Render`.
+- *Proxy contract, step 2*: the generated TypeScript no longer compiles. Read the first error; it usually names a template line in `Cratis.Arc.ProxyGenerator.Render`.
 - *Policy*: read the failure; it names the rule and the line.

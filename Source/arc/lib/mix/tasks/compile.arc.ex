@@ -30,7 +30,7 @@ defmodule Mix.Tasks.Compile.Arc do
          output when not is_nil(output) <- project[:output] do
       Mix.Task.run("loadpaths")
 
-      case Arc.ProxyGenerator.generate(application,
+      case Cratis.Arc.ProxyGenerator.generate(application,
              output: output,
              layout: Keyword.get(project, :layout, :namespace),
              remove_stale: Keyword.get(project, :remove_stale, true)

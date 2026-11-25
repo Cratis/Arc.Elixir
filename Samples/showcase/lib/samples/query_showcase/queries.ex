@@ -6,7 +6,10 @@ defmodule Samples.QueryShowcase.Queries do
   The four kinds of query: observable and regular, each returning one item or a collection.
   """
 
-  use Arc.ReadModel, model: Samples.QueryShowcase.ShowcaseItem, types: [updated_at: :datetime]
+  use Cratis.Arc.ReadModel,
+    model: Samples.QueryShowcase.ShowcaseItem,
+    types: [updated_at: :datetime]
+
   allow_anonymous()
 
   alias Samples.{QueryShowcase.ShowcaseItem, Store}

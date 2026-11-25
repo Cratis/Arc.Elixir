@@ -4,7 +4,7 @@
 defmodule Samples.ChangeStream.Queries do
   @moduledoc "Queries over the change stream items."
 
-  use Arc.ReadModel, model: Samples.ChangeStream.ChangeStreamItem
+  use Cratis.Arc.ReadModel, model: Samples.ChangeStream.ChangeStreamItem
   allow_anonymous()
 
   @doc "Observes the full collection, pushing every change to subscribers."

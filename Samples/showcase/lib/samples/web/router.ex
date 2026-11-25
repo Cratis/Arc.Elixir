@@ -11,7 +11,7 @@ defmodule Samples.Router do
 
   plug(Plug.Logger, log: :debug)
   plug(Samples.Web.CookieIdentity)
-  plug(Arc.Plug, application: Samples.Arc)
+  plug(Cratis.Arc.Plug, application: Samples.Arc)
   plug(:match)
   plug(:dispatch)
 
@@ -22,8 +22,13 @@ defmodule Samples.Router do
     root = Application.app_dir(:showcase, "priv/spa")
 
     if File.dir?(root) do
-      opts = Arc.Plug.SinglePage.init(root: root, api_prefixes: ["/api/", "/.cratis/", "/health"])
-      conn |> Arc.Plug.SinglePage.call(opts) |> finish()
+      opts =
+        Cratis.Arc.Plug.SinglePage.init(
+          root: root,
+          api_prefixes: ["/api/", "/.cratis/", "/health"]
+        )
+
+      conn |> Cratis.Arc.Plug.SinglePage.call(opts) |> finish()
     else
       send_resp(conn, 404, "Run the React app: cd frontend && npm install && npm run dev")
     end

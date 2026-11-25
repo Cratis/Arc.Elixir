@@ -9,7 +9,7 @@ defmodule Samples.LiveFeed.PostToFeed do
   Server-Sent Events hub, through the `Samples.LiveFeed.Queries` read model.
   """
 
-  use Arc.Command
+  use Cratis.Arc.Command
   allow_anonymous()
   response Samples.LiveFeed.LiveFeedMessage
 

@@ -4,7 +4,7 @@
 defmodule Samples.CrossCuttingAuthorization.RunSecuredCommand do
   @moduledoc "A command in the protected namespace: the filter decides who may run it."
 
-  use Arc.Command
+  use Cratis.Arc.Command
   response :string
 
   schema do

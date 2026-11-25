@@ -4,7 +4,7 @@
 defmodule Library.Authors.Registration.RenameAuthor do
   @moduledoc "Renames an author. Only editors may."
 
-  use Arc.Command
+  use Cratis.Arc.Command
 
   authorize roles: ["editor"]
 

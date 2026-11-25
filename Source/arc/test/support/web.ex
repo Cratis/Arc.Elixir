@@ -3,7 +3,7 @@
 
 defmodule ArcFixtures.Web.AuthorsLive do
   use Phoenix.LiveView
-  use Arc.LiveView, application: ArcFixtures.App
+  use Cratis.Arc.LiveView, application: ArcFixtures.App
 
   alias ArcFixtures.Authors.Listing.Authors
   alias ArcFixtures.Authors.Registration.{RegisterAuthor, RenameAuthor}
@@ -94,7 +94,7 @@ defmodule ArcFixtures.Web.Endpoint do
   socket("/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]])
 
   plug(Plug.Session, @session_options)
-  plug(Arc.Plug, application: ArcFixtures.App)
+  plug(Cratis.Arc.Plug, application: ArcFixtures.App)
   plug(ArcFixtures.Web.Router)
 end
 

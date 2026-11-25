@@ -23,13 +23,13 @@ Other Arc implementations use attributes or annotations plus a dependency inject
 
 ## Decision
 
-- **Artifacts are modules.** `use Arc.Command` and `use Arc.ReadModel` define the artifact. A `schema do ... end` block declares fields (primitives, enums, nested structs, lists, maps, and `Arc.Concept` value types) and generates the struct and typed metadata.
+- **Artifacts are modules.** `use Cratis.Arc.Command` and `use Cratis.Arc.ReadModel` define the artifact. A `schema do ... end` block declares fields (primitives, enums, nested structs, lists, maps, and `Arc.Concept` value types) and generates the struct and typed metadata.
 - **Descriptors are generated at compile time** as `__arc__/0` on each artifact. Discovery filters the application's module list; there is no runtime reflection over source.
-- **No dependency injection.** Handlers call `Repo` and context modules directly. Request-scoped facts travel in an explicit `%Arc.Context{}` argument: principal, tenant, correlation and causation identifiers, metadata, and a deadline. The same values are set as `Logger` metadata.
+- **No dependency injection.** Handlers call `Repo` and context modules directly. Request-scoped facts travel in an explicit `%Cratis.Arc.Context{}` argument: principal, tenant, correlation and causation identifiers, metadata, and a deadline. The same values are set as `Logger` metadata.
 - **Results are tagged tuples.** A handler returns `:ok`, `{:ok, response}` or `{:error, validation}`. A command either records what happened or is rejected; it never succeeds as a silent no-op.
 - **Pipeline order** is authenticate, authorize, validate, `provide`, `handle`, response handlers. Filters, execution scopes and policies are behaviours. Telemetry is emitted as `[:arc, :command | :query, ...]` events.
 - **Queries** are declared with `query name, args do ... end` and `observe name, opts do ... end`, which define functions taking the context and the arguments.
-- **An application module owns the runtime.** `use Arc.Application, otp_app: :my_app` defines a supervised unit that scopes discovery, configuration and observable-query processes. There is no global configuration.
+- **An application module owns the runtime.** `use Cratis.Arc.Application, otp_app: :my_app` defines a supervised unit that scopes discovery, configuration and observable-query processes. There is no global configuration.
 - **Wire naming.** Struct fields are snake_case; the wire and the generated TypeScript use camelCase.
 - **Validation** is Arc's own rule set, extractable for the client. Ecto changesets are an optional bridge in `arc_ecto`.
 

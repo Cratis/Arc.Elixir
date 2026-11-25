@@ -4,7 +4,7 @@
 defmodule Samples.ChangeStream.RemoveChangeStreamItem do
   @moduledoc "Removes an item."
 
-  use Arc.Command
+  use Cratis.Arc.Command
   allow_anonymous()
 
   schema do

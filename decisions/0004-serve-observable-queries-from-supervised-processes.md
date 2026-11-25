@@ -24,7 +24,7 @@ The HTTP contract defines observable queries over an HTTP snapshot, direct SSE, 
 
 ## Decision
 
-- Each subscription is one process under a dynamic supervisor owned by the `Arc.Application`. It monitors the transport process and ends when it ends. Subscription processes use `restart: :temporary`, so a failing subscription cannot restart and fail in a loop.
+- Each subscription is one process under a dynamic supervisor owned by the `Cratis.Arc.Application`. It monitors the transport process and ends when it ends. Subscription processes use `restart: :temporary`, so a failing subscription cannot restart and fail in a loop.
 - `observe` queries declare notification topics. A notifier behaviour triggers a re-run. The default notifier uses `:pg`; `arc_phoenix` supplies `Phoenix.PubSub`; `arc_ecto` may add database notification.
 - Arc computes `changeSet` deltas by diffing re-run results by the read model key.
 - Transports follow the HTTP contract exactly: WebSocket through `WebSock`, SSE through chunked Plug responses, and the hub messages, revisions and ownership rules as specified. Each subscription is authorized independently by the ordinary pipeline.

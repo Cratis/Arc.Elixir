@@ -3,9 +3,9 @@ title: Result envelopes
 description: The exact command and query result shapes Arc for Elixir returns to the frontend - the contract the React packages and every Arc client depend on.
 ---
 
-Every command and query answers with a result envelope. The frontend packages parse these shapes, so they are the contract between the backend and the client. Arc for Elixir keeps them identical to the other Arc implementations; the `Arc.EnvelopeTest` specs pin each field name and type, so a change is always deliberate.
+Every command and query answers with a result envelope. The frontend packages parse these shapes, so they are the contract between the backend and the client. Arc for Elixir keeps them identical to the other Arc implementations; the `Cratis.Arc.EnvelopeTest` specs pin each field name and type, so a change is always deliberate.
 
-The Elixir structs are `Arc.CommandResult` and `Arc.QueryResult`. `to_wire/1` on each produces the JSON body, and `status/1` the HTTP status. Field names on the wire are `camelCase`.
+The Elixir structs are `Cratis.Arc.CommandResult` and `Cratis.Arc.QueryResult`. `to_wire/1` on each produces the JSON body, and `status/1` the HTTP status. Field names on the wire are `camelCase`.
 
 ## Command result
 

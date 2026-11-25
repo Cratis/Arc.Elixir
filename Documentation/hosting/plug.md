@@ -1,9 +1,9 @@
 ---
 title: Hosting on Plug
-description: Mount Arc.Plug in any Plug pipeline to serve the Arc HTTP contract, with every route, status, header and transport it provides.
+description: Mount Cratis.Arc.Plug in any Plug pipeline to serve the Arc HTTP contract, with every route, status, header and transport it provides.
 ---
 
-`Arc.Plug` serves the [Arc HTTP contract](/arc/http-contract/) from any Plug pipeline. That is what lets the existing frontend packages, and any HTTP client, talk to an Elixir backend.
+`Cratis.Arc.Plug` serves the [Arc HTTP contract](/arc/http-contract/) from any Plug pipeline. That is what lets the existing frontend packages, and any HTTP client, talk to an Elixir backend.
 
 ```elixir
 # From: Samples/plug/lib/counters/router.ex
@@ -14,7 +14,7 @@ defmodule Counters.Router do
 
   use Plug.Router
 
-  plug Arc.Plug, application: Counters.Arc
+  plug Cratis.Arc.Plug, application: Counters.Arc
   plug :match
   plug :dispatch
 

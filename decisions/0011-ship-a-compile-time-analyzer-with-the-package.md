@@ -8,7 +8,7 @@ reversibility: costly
 decided: 2026-11-12
 decider: Arc.Elixir repository owner
 applies-to:
-  - Source/arc/lib/arc/analyzer*
+  - Source/arc/lib/cratis/arc/analyzer*
   - Source/arc/lib/mix/tasks/**
   - Documentation/code-analysis/**
 ---
@@ -18,11 +18,11 @@ applies-to:
 
 ## Context
 
-Arc on .NET ships Roslyn analyzers (`ARC0001` and on) that catch misuse of Arc while compiling. Arc for Elixir had nothing equivalent: a command module that forgot `use Arc.Command`, or an observable query with nothing to watch, failed only at runtime. Chronicle.Elixir is building the same capability, and the two should look and behave alike so a consumer learns it once.
+Arc on .NET ships Roslyn analyzers (`ARC0001` and on) that catch misuse of Arc while compiling. Arc for Elixir had nothing equivalent: a command module that forgot `use Cratis.Arc.Command`, or an observable query with nothing to watch, failed only at runtime. Chronicle.Elixir is building the same capability, and the two should look and behave alike so a consumer learns it once.
 
 ## Decision
 
-- **A Mix compiler plus a compiler tracer, as Boundary does it.** `Mix.Tasks.Compile.ArcAnalyzer` registers `Arc.Analyzer` as a tracer, lets the Elixir compiler run, and then runs the rules over the facts the tracer collected. Findings are `Mix.Task.Compiler.Diagnostic`s, so CLI, CI and editors all show them.
+- **A Mix compiler plus a compiler tracer, as Boundary does it.** `Mix.Tasks.Compile.ArcAnalyzer` registers `Cratis.Arc.Analyzer` as a tracer, lets the Elixir compiler run, and then runs the rules over the facts the tracer collected. Findings are `Mix.Task.Compiler.Diagnostic`s, so CLI, CI and editors all show them.
 - **Facts come from module attributes, not debug info.** Arc's macros leave their declarations in attributes, which are readable at the `:on_module` event, so the analyzer works with `debug_info: false`. Facts are kept in a manifest in `_build` so incremental builds report every finding.
 - **The same shape as Chronicle.Elixir.** `Rule` has `id/0`, `description/0`, `default_severity/0` and optional `check_call/2`, `check_module/2` and `check_project/1`; rules return `Finding`s and the runner stamps the ID, the configured severity and the documentation link. Configuration is `config :cratis_arc, :analyzer` with `enabled` and `rules`; suppression is `@arc_analyzer ignore: [...]`; IDs are `ARCE####` (the Chronicle ones are `CHRE####`), so they never collide with the .NET IDs.
 - **The compiler is `:arc_analyzer`, not `:arc`.** `:arc` is the proxy generator and runs after the Elixir compiler; the analyzer must run before it. Both can be used together.

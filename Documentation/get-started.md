@@ -98,7 +98,7 @@ Define the application module and add it to the supervision tree after the Chron
     defmodule Library.Arc do
       @moduledoc "The Arc application: discovers the commands and read models under `Library`."
 
-      use Arc.Application, otp_app: :library
+      use Cratis.Arc.Application, otp_app: :library
     end
 ```
 
@@ -106,10 +106,10 @@ Arc scans `:library` for modules that declare commands or read models. There is 
 
 ## Serve it
 
-Add `Arc.Plug` to the endpoint, before the router. Requests that are not Arc routes pass through.
+Add `Cratis.Arc.Plug` to the endpoint, before the router. Requests that are not Arc routes pass through.
 
 ```elixir
-      plug Arc.Plug, application: Library.Arc
+      plug Cratis.Arc.Plug, application: Library.Arc
 ```
 
 Now run the app and post a command. Routes come from module names: with `segments_to_skip: 1`, `Library.Authors.Registration.RegisterAuthor` is `POST /api/authors/registration/register-author`.
@@ -158,23 +158,23 @@ LiveView calls the same modules in process. The page keeps the list current and 
 
 ## Test it
 
-`Arc.Test` runs the real pipeline against Chronicle's in-memory kernel, so you test behavior without a running kernel.
+`Cratis.Arc.Test` runs the real pipeline against Chronicle's in-memory kernel, so you test behavior without a running kernel.
 
 ```elixir
 # From: Samples/phoenix/test/library/authors_test.exs
       test "registering an author records AuthorRegistered on the author's event source", %{arc: arc} do
-        id = Arc.new_id()
+        id = Cratis.Arc.new_id()
 
-        result = Arc.Test.execute(arc, {RegisterAuthor, %{"id" => id, "name" => "Ada Lovelace"}})
+        result = Cratis.Arc.Test.execute(arc, {RegisterAuthor, %{"id" => id, "name" => "Ada Lovelace"}})
 
-        Arc.Test.assert_success(result)
-        Arc.Test.assert_appended(arc, %AuthorRegistered{name: "Ada Lovelace"}, event_source_id: id)
+        Cratis.Arc.Test.assert_success(result)
+        Cratis.Arc.Test.assert_appended(arc, %AuthorRegistered{name: "Ada Lovelace"}, event_source_id: id)
       end
 ```
 
 ## Recap
 
-You declared a command and a query as modules, started `Library.Arc`, mounted `Arc.Plug`, and got an HTTP API, a LiveView page and tests from the same declarations. Nothing between the request and the event store is hand-written.
+You declared a command and a query as modules, started `Library.Arc`, mounted `Cratis.Arc.Plug`, and got an HTTP API, a LiveView page and tests from the same declarations. Nothing between the request and the event store is hand-written.
 
 ## Next steps
 

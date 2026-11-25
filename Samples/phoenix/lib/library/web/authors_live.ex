@@ -8,7 +8,7 @@ defmodule Library.Web.AuthorsLive do
   """
 
   use Phoenix.LiveView
-  use Arc.LiveView, application: Library.Arc
+  use Cratis.Arc.LiveView, application: Library.Arc
 
   alias Library.Authors.Listing.Authors
   alias Library.Authors.Registration.{RegisterAuthor, RenameAuthor}
@@ -47,7 +47,8 @@ defmodule Library.Web.AuthorsLive do
 
   defp describe({:error, _result}), do: "The rename was rejected."
 
-  defp new_form(socket), do: assign_form(socket, :form, RegisterAuthor, %{"id" => Arc.new_id()})
+  defp new_form(socket),
+    do: assign_form(socket, :form, RegisterAuthor, %{"id" => Cratis.Arc.new_id()})
 
   def render(assigns) do
     ~H"""

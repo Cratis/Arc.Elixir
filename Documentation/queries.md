@@ -7,7 +7,7 @@ A query reads. In Arc it is a function on a read model module, with typed parame
 
 ## A read model module
 
-`use Arc.ReadModel, model: …` names the struct the queries return, normally a [Chronicle read model](/chronicle/clients/elixir/). Annotate functions with `@query` or `@observe`. Each takes `(args, ctx)` and returns `{:ok, value}` or `{:error, results}`.
+`use Cratis.Arc.ReadModel, model: …` names the struct the queries return, normally a [Chronicle read model](/chronicle/clients/elixir/). Annotate functions with `@query` or `@observe`. Each takes `(args, ctx)` and returns `{:ok, value}` or `{:error, results}`.
 
 ```elixir
 # From: Samples/phoenix/lib/library/authors/listing/authors.ex
@@ -15,7 +15,7 @@ defmodule Library.Authors.Listing.Authors do
   @moduledoc "Queries over authors."
 
   # `types:` tells the proxy generator the id is a UUID; the struct default is only a string.
-  use Arc.ReadModel, model: Library.Authors.Author, types: [id: :uuid]
+  use Cratis.Arc.ReadModel, model: Library.Authors.Author, types: [id: :uuid]
 
   alias Library.Authors.Author
 
@@ -44,9 +44,9 @@ Pass `ctx.chronicle` to Chronicle calls so the query uses the client Arc was con
 | `authorize:` / `allow_anonymous: true` | Override the module-level `authorize` |
 | `http_method: :get \| :query` | Prefer one method in the generated client |
 | `watch: [Model]` | (`@observe`) re-run when Chronicle changes these read models |
-| `topics: [term]` | (`@observe`) re-run when `Arc.Notifier.notify/2` is called with the topic |
+| `topics: [term]` | (`@observe`) re-run when `Cratis.Arc.Notifier.notify/2` is called with the topic |
 
-`@doc` becomes the query's summary. `use Arc.ReadModel, types: [id: :uuid]` overrides inferred field types for the generated TypeScript: Arc infers a type from each struct default, and `""` or `nil` reads as a string.
+`@doc` becomes the query's summary. `use Cratis.Arc.ReadModel, types: [id: :uuid]` overrides inferred field types for the generated TypeScript: Arc infers a type from each struct default, and `""` or `nil` reads as a string.
 
 Arguments arrive converted: `%{id: "…"}` has been cast to the declared type, and a missing required argument or a value of the wrong type is rejected as `malformedRequest` before your function runs.
 
@@ -64,10 +64,10 @@ Those four parameters are reserved and matched case-insensitively; every other q
 { "arguments": {}, "paging": { "page": 0, "pageSize": 10 }, "sorting": { "field": "name", "direction": "desc" } }
 ```
 
-For a large collection, page in the database instead and return an `Arc.Page`. Arc then reports its paging and does not touch the items.
+For a large collection, page in the database instead and return a `Cratis.Arc.Page`. Arc then reports its paging and does not touch the items.
 
 ```elixir
-{:ok, %Arc.Page{items: items, total: total, page: page, size: size}}
+{:ok, %Cratis.Arc.Page{items: items, total: total, page: page, size: size}}
 ```
 
 ## Observable queries
@@ -119,21 +119,21 @@ A subscription's `transferMode` shapes what it receives: `full` sends a snapshot
 def live_authors(_args, _ctx), do: {:ok, MyApp.Authors.list()}
 
 # somewhere that changes authors
-Arc.Notifier.notify(MyApp.Arc, "authors")
+Cratis.Arc.Notifier.notify(MyApp.Arc, "authors")
 ```
 
-`Arc.Notifier` reaches subscriptions on the same node. To reach every node, broadcast with `Phoenix.PubSub` and call `notify/2` in the receiver on each node.
+`Cratis.Arc.Notifier` reaches subscriptions on the same node. To reach every node, broadcast with `Phoenix.PubSub` and call `notify/2` in the receiver on each node.
 
 Re-runs are debounced by 25 ms, so a burst of changes produces one result.
 
 ## Run a query from code
 
 ```elixir
-result = Arc.query(MyApp.Arc, Library.Authors.Listing.Authors, :all_authors, %{}, page: 0, page_size: 10)
+result = Cratis.Arc.query(MyApp.Arc, Library.Authors.Listing.Authors, :all_authors, %{}, page: 0, page_size: 10)
 result.data
 ```
 
-The result is an `Arc.QueryResult`; `Arc.QueryResult.to_wire/1` is the HTTP envelope, documented field by field in [Result envelopes](results.md).
+The result is a `Cratis.Arc.QueryResult`; `Cratis.Arc.QueryResult.to_wire/1` is the HTTP envelope, documented field by field in [Result envelopes](results.md).
 
 ## Next steps
 

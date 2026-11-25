@@ -17,7 +17,7 @@ You write a command or a query as a plain module. Arc binds, validates, authoriz
 defmodule Library.Authors.Registration.RegisterAuthor do
   @moduledoc "Registers a new author."
 
-  use Arc.Command
+  use Cratis.Arc.Command
 
   schema do
     field :id, Library.Authors.AuthorId, key: true, required: true
@@ -29,7 +29,7 @@ defmodule Library.Authors.Registration.RegisterAuthor do
 end
 ```
 
-- **`use Arc.Command` / `use Arc.ReadModel`** — declare commands and queries; fields, rules and authorization are declarations, `handle/2` is the logic
+- **`use Cratis.Arc.Command` / `use Cratis.Arc.ReadModel`** — declare commands and queries; fields, rules and authorization are declarations, `handle/2` is the logic
 - **The Arc HTTP contract on Plug** — `@cratis/arc`, `@cratis/arc.react` and Cratis Components work against it unchanged
 - **Phoenix and LiveView** — the same commands and queries, in process, with forms that show pipeline errors on the right field
 - **Observable queries** — re-run when Chronicle (or MongoDB) changes a read model, pushed over the multiplexed WebSocket or Server-Sent Events hub, in full or delta mode
@@ -40,7 +40,7 @@ end
 - **Identity** — `/.cratis/me`, typed identity details, development users for Lens, signed forwarded identity and on-behalf-of, as Arc on .NET
 - **The exact result envelopes** — `CommandResult` and `QueryResult` match the Arc contract field for field, pinned by specs
 - **Chronicle underneath** — returned events are appended with the caller's identity and correlation; constraint rejections reach the client as validation results
-- **`Arc.Test`** — the real pipeline against Chronicle's in-memory kernel
+- **`Cratis.Arc.Test`** — the real pipeline against Chronicle's in-memory kernel
 
 Arc for Elixir works with Chronicle only. It is part of the Cratis family of Arc implementations for [.NET](https://github.com/Cratis/Arc), [Kotlin and Java](https://github.com/Cratis/Arc.Kotlin), [Go](https://github.com/Cratis/Arc.Go) and [TypeScript](https://github.com/Cratis/Arc.TypeScript), and follows the same [HTTP contract](https://github.com/Cratis/Arc/blob/main/Documentation/http-contract.md).
 
@@ -66,7 +66,7 @@ compilers: [:arc_analyzer] ++ Mix.compilers()
 
 | ID | Rule | Default |
 | --- | --- | --- |
-| [`ARCE0001`](Documentation/code-analysis/ARCE0001.md) | A module declares a schema and `handle/2` but does not `use Arc.Command` | warning |
+| [`ARCE0001`](Documentation/code-analysis/ARCE0001.md) | A module declares a schema and `handle/2` but does not `use Cratis.Arc.Command` | warning |
 | [`ARCE0002`](Documentation/code-analysis/ARCE0002.md) | A command or query is both anonymous and restricted | error |
 | [`ARCE0003`](Documentation/code-analysis/ARCE0003.md) | An `@observe` query has neither `:watch` nor `:topics` | warning |
 | [`ARCE0004`](Documentation/code-analysis/ARCE0004.md) | A command appends to Chronicle itself | warning |

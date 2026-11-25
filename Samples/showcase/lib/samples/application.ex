@@ -9,7 +9,7 @@ defmodule Samples.Application do
   @impl true
   def start(_type, _args) do
     children =
-      [Samples.Store, Samples.Arc, {Arc.MongoDB, application: Samples.Arc}] ++
+      [Samples.Store, Samples.Arc, {Cratis.Arc.MongoDB, application: Samples.Arc}] ++
         tickers() ++ server()
 
     Supervisor.start_link(children, strategy: :one_for_one, name: Samples.Supervisor)

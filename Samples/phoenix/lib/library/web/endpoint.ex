@@ -31,7 +31,7 @@ defmodule Library.Web.Endpoint do
 
   # The Arc HTTP contract: commands, queries, observable queries and /.cratis/*.
   # Non-Arc requests pass through to the rest of the pipeline.
-  plug Arc.Plug, application: Library.Arc
+  plug Cratis.Arc.Plug, application: Library.Arc
 
   # The built React SPA (../frontend/dist), when it exists. Never swallows the API or LiveView.
   plug Library.Web.Spa

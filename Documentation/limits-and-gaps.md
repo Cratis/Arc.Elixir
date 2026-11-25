@@ -17,7 +17,7 @@ Arc for Elixir is a source preview. This page states what it does not do, so you
 | --- | --- |
 | Command and query pipeline, validation, authorization, appends, constraint mapping | The `Source/arc` and sample specs, against Chronicle's in-memory kernel |
 | HTTP routes, statuses, correlation, paging, sorting, the `QUERY` method, introspection | The Plug specs |
-| The result envelopes, field for field | `Arc.EnvelopeTest` pins the exact key sets and types of both |
+| The result envelopes, field for field | `Cratis.Arc.EnvelopeTest` pins the exact key sets and types of both |
 | Identity: `/.cratis/me`, the details schema, development users and tenants, trusted client principal headers | The identity specs, and the real `IdentityProvider` in the contract run |
 | Generated TypeScript: deterministic, strict compilation, runtime behavior with the real client | `ContractTests/run.sh`, including commands, validation, authorization, queries, paging, sorting, `QUERY`, the WebSocket hub and Server-Sent Events |
 | LiveView forms, observable assigns, authorization on every call | The LiveView specs |
@@ -29,8 +29,8 @@ Not verified: behavior against a running Chronicle kernel in this repository's C
 - **Change sets.** Delta and unspecified transfer modes compute the change set on the hub, per subscription, by comparing with the previous emission, so a restart of a subscription starts with a snapshot again. Items are matched on an `id` member (any case); without one, the change set lists additions and removals only and never a replacement. A query that is ordered or paged always sends the snapshot too, because a position matters there.
 - **SSE hub control requests are per request.** A subscription runs with the context of the control `POST` that created it, so the tenant of a subscription is the tenant header or cookie of that request, not of the stream. The caller of a control request must be the caller that opened the stream (same principal id), else the answer is 404.
 - **Introspection depth.** The catalogs report name, namespace, route, type, documentation summary and a payload or arguments schema. They do not report authorization or per-property validation metadata.
-- **Tenancy.** One configured resolver (header, query string, claim, subdomain, fixed or a module, see `Arc.Tenancy`) selects the tenant; there is no chain of resolvers, and Arc does not require or enforce a tenant or check membership. A named tenant also selects the Chronicle namespace. `/.cratis/tenants` only lists what your providers return.
-- **MongoDB.** `cratis_arc_mongodb` is not a port of the MongoDB C# driver conventions: documents are structs converted by `Arc.MongoDB.Codec`, there are no `IMongoCollection` injection, no serializers for `Guid` representations other than the standard one and no `MONGODB-OIDC` access tokens (the Elixir driver has none). See [MongoDB](mongodb.md).
+- **Tenancy.** One configured resolver (header, query string, claim, subdomain, fixed or a module, see `Cratis.Arc.Tenancy`) selects the tenant; there is no chain of resolvers, and Arc does not require or enforce a tenant or check membership. A named tenant also selects the Chronicle namespace. `/.cratis/tenants` only lists what your providers return.
+- **MongoDB.** `cratis_arc_mongodb` is not a port of the MongoDB C# driver conventions: documents are structs converted by `Cratis.Arc.MongoDB.Codec`, there are no `IMongoCollection` injection, no serializers for `Guid` representations other than the standard one and no `MONGODB-OIDC` access tokens (the Elixir driver has none). See [MongoDB](mongodb.md).
 - **Identity cookie.** `/.cratis/me` never sets or reads a `.cratis-identity` cookie.
 - **Replay memory.** The signed forwarded-identity and on-behalf-of replay caches live in a process per application and per node. A replay is refused on the node that saw the original only, and verification fails closed if the application is not started.
 - **Admission control.** The only request limit is `max_body_bytes`. There are no connection or subscription caps.
@@ -41,9 +41,9 @@ Not verified: behavior against a running Chronicle kernel in this repository's C
 - Nested lists (`{:list, {:list, t}}`), enums (`{:enum, [atoms]}`) and derived types (`{:one_of, [modules]}`) are generated for read models; the generated `@field` of a nested list is declared once with `enumerable` true, so the hydration of the inner list is the client's. They are not inferred from struct defaults: declare them with `types:` or `__arc_types__/0`.
 - Availability: no environment switch that grants every audience, no per-level audience records (a source returns the names the caller holds), no condition that reads another provided value, and no MCP filter (Arc for Elixir has no MCP). See [Availability](availability.md).
 - A command has one `key` field.
-- Sorting uses top-level fields of the model struct, in memory. Page in the database and return an `Arc.Page` for large collections.
-- `Arc.Notifier` reaches subscriptions on one node. Fan out across nodes yourself with `Phoenix.PubSub`.
-- `Arc.LiveView` has no stream helper; observable assigns replace whole lists.
+- Sorting uses top-level fields of the model struct, in memory. Page in the database and return a `Cratis.Arc.Page` for large collections.
+- `Cratis.Arc.Notifier` reaches subscriptions on one node. Fan out across nodes yourself with `Phoenix.PubSub`.
+- `Cratis.Arc.LiveView` has no stream helper; observable assigns replace whole lists.
 - The [analyzer](code-analysis/index.md) reads Arc's declarations and the calls the compiler reports, not the logic inside `handle/2`. It cannot tell what a function returns, so it has no rule about result shapes, and it sees a Chronicle call only when it is written as a call to a `Chronicle` module.
 
 ## Chronicle behavior to know

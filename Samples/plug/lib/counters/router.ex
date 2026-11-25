@@ -8,7 +8,7 @@ defmodule Counters.Router do
 
   use Plug.Router
 
-  plug Arc.Plug, application: Counters.Arc
+  plug Cratis.Arc.Plug, application: Counters.Arc
   plug :match
   plug :dispatch
 

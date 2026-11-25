@@ -70,7 +70,7 @@ Every slice does one of four jobs, as in an event model:
 | Kind | Does | In Elixir |
 | --- | --- | --- |
 | **State change** | Changes state | A command with `handle/2` |
-| **State view** | Serves state | An `Arc.ReadModel` with queries, observable when the data changes |
+| **State view** | Serves state | A `Cratis.Arc.ReadModel` with queries, observable when the data changes |
 | **Automation** | Reacts and does side effects | A Chronicle reactor or a `Watch` source |
 | **Translation** | Adapts one slice's output into another's command | A reactor that executes a command |
 

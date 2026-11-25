@@ -3,7 +3,7 @@
 
 url = System.get_env("MONGODB_URL", "mongodb://localhost:27017/?directConnection=true")
 
-unless Arc.MongoDB.Test.available?(url) do
+unless Cratis.Arc.MongoDB.Test.available?(url) do
   IO.puts("No MongoDB answers at #{url}: the :mongodb tests are skipped.")
   ExUnit.configure(exclude: [:mongodb])
 end

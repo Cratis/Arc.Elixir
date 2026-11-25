@@ -4,7 +4,7 @@
 defmodule Library.Authors.Registration.RegisterAuthor do
   @moduledoc "Registers a new author."
 
-  use Arc.Command
+  use Cratis.Arc.Command
 
   schema do
     field :id, Library.Authors.AuthorId, key: true, required: true
@@ -13,7 +13,7 @@ defmodule Library.Authors.Registration.RegisterAuthor do
 
   # A cross-field rule beyond the declarative ones above.
   def validate(%__MODULE__{name: name}, _ctx) when name in ["admin", "root"],
-    do: {:error, Arc.Validation.error("That name is reserved.", [:name])}
+    do: {:error, Cratis.Arc.Validation.error("That name is reserved.", [:name])}
 
   def validate(_command, _ctx), do: :ok
 

@@ -5,7 +5,7 @@ description: Declare which parts of an application exist for which audiences, su
 
 Availability decides whether a part of the application exists for the caller in front of you. A part is a command or a query; parts are grouped in modules, features and slices. It is the same model as Arc for .NET and Screenplay: audiences, blocks, gates and suspension, written in the same words.
 
-It is one gate and it runs **first**: before binding, `Arc.Filter`, authorization and validation. There is no second gating mechanism.
+It is one gate and it runs **first**: before binding, `Cratis.Arc.Filter`, authorization and validation. There is no second gating mechanism.
 
 | Decision | Result |
 | --- | --- |
@@ -32,7 +32,7 @@ config :my_app, MyApp.Arc,
 
 ```elixir
 defmodule MyApp.Availability do
-  use Arc.Availability.Definition
+  use Cratis.Arc.Availability.Definition
 
   audience "Plus", "Customers on the Plus package"
   audience "Admin", "Operators"
@@ -53,7 +53,7 @@ A command, a read model, or one query declares its gate with the words of the la
 
 ```elixir
 defmodule MyApp.Fleet.Vessels.DockVessel do
-  use Arc.Command
+  use Cratis.Arc.Command
   available for: ["Plus", "Admin"], not: "Preview", with: "Reported"
   available when: MyApp.HasPaidInvoice
 end
@@ -62,30 +62,30 @@ end
 * `for:` an audience, or a list of which one is enough
 * `not:` an audience, or a list of which none may be held
 * `with:` a named block
-* `when:` a condition: restricted data from `Arc.Availability.Condition`, shared with other languages, or a module implementing that behaviour for anything else
+* `when:` a condition: restricted data from `Cratis.Arc.Availability.Condition`, shared with other languages, or a module implementing that behaviour for anything else
 
 ```elixir
-available when: Arc.Availability.Condition.equal("vessel.package", "Plus")
-available when: Arc.Availability.Condition.equal("arguments.vesselId", "v-17")
+available when: Cratis.Arc.Availability.Condition.equal("vessel.package", "Plus")
+available when: Cratis.Arc.Availability.Condition.equal("arguments.vesselId", "v-17")
 ```
 
-On a read model `available` gates every query of the module; `@query available: [...]` gates one query. Module, feature and slice come from `Arc.Descriptor.slice_location/2`, the same as in generated proxies.
+On a read model `available` gates every query of the module; `@query available: [...]` gates one query. Module, feature and slice come from `Cratis.Arc.Descriptor.slice_location/2`, the same as in generated proxies.
 
 A condition reads `tenant`, `identity.user`, `arguments.<name>` (what the part is about, by its wire name, camelCase) and `<name>.<path>` of a provided value. The tenant and the identity always come from the server; arguments never replace them.
 
 ## Three values
 
-An expression is available, unavailable or unknown. Only available opens a gate. An absent value is unknown, for every operator, including not-equal; so is an audience that could not be decided. A value is read at most once per request. `Arc.Availability.Engine` is a port of the .NET engine and passes the shared conformance cases.
+An expression is available, unavailable or unknown. Only available opens a gate. An absent value is unknown, for every operator, including not-equal; so is an audience that could not be decided. A value is read at most once per request. `Cratis.Arc.Availability.Engine` is a port of the .NET engine and passes the shared conformance cases.
 
 ## Audiences: granted and withdrawn
 
-Implement `Arc.Availability.AudienceSource` over your storage: `grants(subject)` returns the names of the audiences the tenant and user hold. A grant for an audience the definition does not declare never matches. `Arc.Availability.Memory` is a complete source for specifications and samples (`grant/2`, `withdraw/2`).
+Implement `Cratis.Arc.Availability.AudienceSource` over your storage: `grants(subject)` returns the names of the audiences the tenant and user hold. A grant for an audience the definition does not declare never matches. `Cratis.Arc.Availability.Memory` is a complete source for specifications and samples (`grant/2`, `withdraw/2`).
 
 ## Parts: suspended and resumed
 
-Implement `Arc.Availability.SuspensionSource`: `suspended/0` returns paths. A path is a module (`"Fleet"`), a feature (`"Fleet/Vessels"`), a slice (`"Fleet/Vessels/Dock"`), or the full name of a part (a command's module, a query as `Module.QueryName`; the module name suspends all its queries). A suspension is decided before any gate. `Memory.suspend/1` and `Memory.resume/1` do it in memory.
+Implement `Cratis.Arc.Availability.SuspensionSource`: `suspended/0` returns paths. A path is a module (`"Fleet"`), a feature (`"Fleet/Vessels"`), a slice (`"Fleet/Vessels/Dock"`), or the full name of a part (a command's module, a query as `Module.QueryName`; the module name suspends all its queries). A suspension is decided before any gate. `Memory.suspend/1` and `Memory.resume/1` do it in memory.
 
-When a source changes, call `Arc.Availability.changed/1`. Open sessions decide again, on every node when `:pubsub` (a `Phoenix.PubSub`) is configured.
+When a source changes, call `Cratis.Arc.Availability.changed/1`. Open sessions decide again, on every node when `:pubsub` (a `Phoenix.PubSub`) is configured.
 
 ## The client: `/.cratis/availability`
 
@@ -100,13 +100,13 @@ It emits the current answer, and again whenever audiences or suspensions change.
 ## LiveView
 
 ```heex
-<Arc.LiveView.Availability.available socket={@socket} version={@arc_availability} command={MyApp.Fleet.Vessels.DockVessel}>
+<Cratis.Arc.LiveView.Availability.available socket={@socket} version={@arc_availability} command={MyApp.Fleet.Vessels.DockVessel}>
   <button phx-click="dock">Dock</button>
-</Arc.LiveView.Availability.available>
+</Cratis.Arc.LiveView.Availability.available>
 ```
 
-The component asks the same gate (`Arc.LiveView.available?/3`). Hiding is presentation; the server still refuses.
+The component asks the same gate (`Cratis.Arc.LiveView.available?/3`). Hiding is presentation; the server still refuses.
 
 ## The manifest
 
-`Arc.Availability.Manifest.build/1` (and `to_json/1`) writes the `cratis-availability-manifest` file, version 1, that every Arc implementation shares; `decode/1` reads one, `decide/3` decides a part of it. The shared vectors of Cratis/Arc run in `test/arc/availability_conformance_test.exs` against pinned copies in `test/support/availability`.
+`Cratis.Arc.Availability.Manifest.build/1` (and `to_json/1`) writes the `cratis-availability-manifest` file, version 1, that every Arc implementation shares; `decode/1` reads one, `decide/3` decides a part of it. The shared vectors of Cratis/Arc run in `test/cratis/arc/availability_conformance_test.exs` against pinned copies in `test/support/availability`.

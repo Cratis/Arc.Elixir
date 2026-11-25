@@ -8,7 +8,7 @@ defmodule Samples.AuthenticationQueries.Queries do
   The module requires an authenticated caller; `anonymous` declares otherwise for itself.
   """
 
-  use Arc.ReadModel, model: Samples.AuthenticationQueries.AuthenticationQueryItem
+  use Cratis.Arc.ReadModel, model: Samples.AuthenticationQueries.AuthenticationQueryItem
   authorize :authenticated
 
   alias Samples.AuthenticationQueries.AuthenticationQueryItem

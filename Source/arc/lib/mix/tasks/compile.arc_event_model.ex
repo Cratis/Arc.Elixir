@@ -14,7 +14,7 @@ defmodule Mix.Tasks.Compile.ArcEventModel do
         ]
       end
 
-  Without `arc: [application: ...]` the compiler does nothing. See `Arc.EventModel`.
+  Without `arc: [application: ...]` the compiler does nothing. See `Cratis.Arc.EventModel`.
   """
 
   use Mix.Task.Compiler
@@ -35,7 +35,7 @@ defmodule Mix.Tasks.Compile.ArcEventModel do
 
         try do
           {:ok, %{written: written}} =
-            Arc.EventModel.generate(application, Keyword.take(project, [:output]))
+            Cratis.Arc.EventModel.generate(application, Keyword.take(project, [:output]))
 
           if written == [], do: {:noop, []}, else: {:ok, []}
         rescue

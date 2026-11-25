@@ -46,7 +46,7 @@ Each finding names the rule ID, the file and line, what is wrong, and a link to 
 
 | ID | Rule | Kind | Default severity |
 | --- | --- | --- | --- |
-| [ARCE0001](ARCE0001.md) | A module declares a schema and `handle/2` but does not `use Arc.Command` | module | warning |
+| [ARCE0001](ARCE0001.md) | A module declares a schema and `handle/2` but does not `use Cratis.Arc.Command` | module | warning |
 | [ARCE0002](ARCE0002.md) | A command or query is both anonymous and restricted | module | error |
 | [ARCE0003](ARCE0003.md) | An `@observe` query has neither `:watch` nor `:topics` | module | warning |
 | [ARCE0004](ARCE0004.md) | A command appends to Chronicle itself | call | warning |
@@ -75,7 +75,7 @@ config :cratis_arc, :analyzer,
 | --- | --- | --- |
 | `enabled` | `true` | `false` switches the whole analyzer off. The compiler then does nothing |
 | `rules` | `[]` | `{id, severity}` pairs. Severity is `:error`, `:warning`, `:info` or `:off` |
-| `segments_to_skip` | `1` | Use the same value as `use Arc.Application`, so [ARCE0005](ARCE0005.md) computes the routes you serve |
+| `segments_to_skip` | `1` | Use the same value as `use Cratis.Arc.Application`, so [ARCE0005](ARCE0005.md) computes the routes you serve |
 
 A rule that is not listed keeps its default. An unknown rule ID or a severity that does not exist is reported as a warning, so a typo does not silently turn a rule off.
 
@@ -94,7 +94,7 @@ When a rule is wrong for one module, say so in the module:
 
 ```elixir
 defmodule MyApp.Legacy.Register do
-  use Arc.Schema
+  use Cratis.Arc.Schema
 
   @arc_analyzer ignore: ["ARCE0001"]
 

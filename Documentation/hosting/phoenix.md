@@ -3,7 +3,7 @@ title: Hosting on Phoenix
 description: Wire Arc into a Phoenix endpoint, reuse phx.gen.auth, serve a React app from the same origin, and keep cookie-based sessions safe.
 ---
 
-Phoenix needs no adapter. `Arc.Plug` goes in the endpoint, before the router, and the rest is your application.
+Phoenix needs no adapter. `Cratis.Arc.Plug` goes in the endpoint, before the router, and the rest is your application.
 
 ```elixir
 # From: Samples/phoenix/lib/library/web/endpoint.ex
@@ -15,27 +15,27 @@ Phoenix needs no adapter. `Arc.Plug` goes in the endpoint, before the router, an
 
       # The Arc HTTP contract: commands, queries, observable queries and /.cratis/*.
       # Non-Arc requests pass through to the rest of the pipeline.
-      plug Arc.Plug, application: Library.Arc
+      plug Cratis.Arc.Plug, application: Library.Arc
 ```
 
 Put it in the endpoint rather than a router scope because Arc owns paths such as `/api/…` and `/.cratis/…`, and a Phoenix router has no use for them.
 
 ## Authentication
 
-Place `Arc.Plug` after whatever authenticates the request. With `phx.gen.auth`, Arc understands `conn.assigns.current_scope`. For anything else, see [Authorization and identity](../authorization-and-identity.md#tell-arc-who-is-calling).
+Place `Cratis.Arc.Plug` after whatever authenticates the request. With `phx.gen.auth`, Arc understands `conn.assigns.current_scope`. For anything else, see [Authorization and identity](../authorization-and-identity.md#tell-arc-who-is-calling).
 
 ## A React app on the same origin
 
-Serving the built frontend from Phoenix means one origin: no CORS, and cookies work. `Arc.Plug.SinglePage` serves static files and returns `index.html` for any other `GET` that accepts HTML, so client-side routes survive a refresh. It never answers API paths.
+Serving the built frontend from Phoenix means one origin: no CORS, and cookies work. `Cratis.Arc.Plug.SinglePage` serves static files and returns `index.html` for any other `GET` that accepts HTML, so client-side routes survive a refresh. It never answers API paths.
 
 ```elixir
 # From: Samples/phoenix/lib/library/web/spa.ex
     root = Application.app_dir(:library, "priv/spa")
 
     if File.dir?(root) do
-      Arc.Plug.SinglePage.call(
+      Cratis.Arc.Plug.SinglePage.call(
         conn,
-        Arc.Plug.SinglePage.init(
+        Cratis.Arc.Plug.SinglePage.init(
           root: root,
           api_prefixes: ["/api/", "/.cratis/", "/live", "/assets", "/health"]
         )
@@ -66,9 +66,9 @@ Chronicle's own macros (`unique`, `from`) are not exported by `cratis_chronicle`
 
 ## CSRF and cookie sessions
 
-Arc does not verify CSRF tokens, and because `Arc.Plug` runs before the router, Phoenix's `:protect_from_forgery` does not cover Arc routes. This matters only if browsers authenticate to Arc with an ambient credential such as a session cookie, because then a hostile page can make the browser send an authenticated command.
+Arc does not verify CSRF tokens, and because `Cratis.Arc.Plug` runs before the router, Phoenix's `:protect_from_forgery` does not cover Arc routes. This matters only if browsers authenticate to Arc with an ambient credential such as a session cookie, because then a hostile page can make the browser send an authenticated command.
 
-If you authenticate with a cookie, require a header that a cross-site form cannot set, and reject requests without it. A small plug in front of `Arc.Plug` is enough:
+If you authenticate with a cookie, require a header that a cross-site form cannot set, and reject requests without it. A small plug in front of `Cratis.Arc.Plug` is enough:
 
 ```elixir
 defmodule MyAppWeb.RequireClientHeader do

@@ -4,7 +4,7 @@
 defmodule Samples.ChangeStream.AddChangeStreamItem do
   @moduledoc "Adds an item."
 
-  use Arc.Command
+  use Cratis.Arc.Command
   allow_anonymous()
 
   schema do

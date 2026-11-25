@@ -4,7 +4,7 @@
 defmodule Samples.MongoWatcher.AddWatcherNote do
   @moduledoc "Adds a note to the tenant's notes collection."
 
-  use Arc.Command
+  use Cratis.Arc.Command
   allow_anonymous()
 
   schema do
@@ -14,8 +14,8 @@ defmodule Samples.MongoWatcher.AddWatcherNote do
   alias Samples.MongoWatcher.WatcherNote
 
   def handle(%__MODULE__{text: text}, ctx) do
-    note = %WatcherNote{id: Arc.new_id(), text: text, created_at: DateTime.utc_now()}
-    {:ok, _} = Arc.MongoDB.insert({ctx, WatcherNote}, note)
+    note = %WatcherNote{id: Cratis.Arc.new_id(), text: text, created_at: DateTime.utc_now()}
+    {:ok, _} = Cratis.Arc.MongoDB.insert({ctx, WatcherNote}, note)
     {:ok, nil}
   end
 end

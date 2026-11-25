@@ -48,7 +48,7 @@ defmodule Samples.Store do
   @doc "Changes a key and notifies the observable queries subscribed to `topic`."
   def update(key, topic, fun) do
     Agent.update(__MODULE__, &Map.update!(&1, key, fun))
-    Arc.Notifier.notify(App, topic)
+    Cratis.Arc.Notifier.notify(App, topic)
   end
 
   @doc "Puts the initial state back, for tests."

@@ -11,21 +11,21 @@ defmodule Samples.MongoWatcherTest do
 
   setup do
     raw = Application.get_env(:showcase, Samples.Arc)
-    database = Arc.MongoDB.Test.unique_database("samples_test")
+    database = Cratis.Arc.MongoDB.Test.unique_database("samples_test")
     mongodb = Keyword.put(raw[:mongodb], :database, database)
     Application.put_env(:showcase, Samples.Arc, Keyword.put(raw, :mongodb, mongodb))
-    Arc.Application.refresh(Samples.Arc)
+    Cratis.Arc.Application.refresh(Samples.Arc)
 
     on_exit(fn ->
-      Arc.MongoDB.Test.drop_databases(Samples.Arc, database, ["acme", "globex"])
+      Cratis.Arc.MongoDB.Test.drop_databases(Samples.Arc, database, ["acme", "globex"])
       Application.put_env(:showcase, Samples.Arc, raw)
-      Arc.Application.refresh(Samples.Arc)
+      Cratis.Arc.Application.refresh(Samples.Arc)
     end)
 
     :ok
   end
 
-  defp execute(command, tenant), do: Arc.execute(Samples.Arc, command, tenant: tenant)
+  defp execute(command, tenant), do: Cratis.Arc.execute(Samples.Arc, command, tenant: tenant)
   defp names(result), do: Enum.map(result.data, & &1.name)
 
   test "items are stored per tenant" do
@@ -33,7 +33,7 @@ defmodule Samples.MongoWatcherTest do
     assert execute(%AddWatcherItem{name: "acme's"}, "acme").authorized?
 
     query = fn tenant ->
-      Arc.query(Samples.Arc, Items.Queries, :observe_all, %{}, tenant: tenant)
+      Cratis.Arc.query(Samples.Arc, Items.Queries, :observe_all, %{}, tenant: tenant)
     end
 
     assert ["default's"] = names(query.(nil))
@@ -45,7 +45,7 @@ defmodule Samples.MongoWatcherTest do
     for name <- ~w(c a b), do: execute(%AddWatcherItem{name: name}, "acme")
 
     result =
-      Arc.query(Samples.Arc, Items.Queries, :paged, %{},
+      Cratis.Arc.query(Samples.Arc, Items.Queries, :paged, %{},
         tenant: "acme",
         page: 1,
         page_size: 2,
@@ -60,14 +60,15 @@ defmodule Samples.MongoWatcherTest do
   test "a note is stored beside the items" do
     assert execute(%AddWatcherNote{text: "a note"}, "acme").authorized?
 
-    result = Arc.query(Samples.Arc, Notes.Queries, :observe_all, %{}, tenant: "acme")
+    result = Cratis.Arc.query(Samples.Arc, Notes.Queries, :observe_all, %{}, tenant: "acme")
     assert [%{text: "a note"}] = result.data
 
     assert {_database, "watcherNote"} =
-             Arc.MongoDB.locate(
-               {Arc.context(Samples.Arc, tenant: "acme"), Samples.MongoWatcher.WatcherNote}
+             Cratis.Arc.MongoDB.locate(
+               {Cratis.Arc.context(Samples.Arc, tenant: "acme"), Samples.MongoWatcher.WatcherNote}
              )
 
-    assert {_, "watcherItem"} = Arc.MongoDB.locate({Arc.context(Samples.Arc), WatcherItem})
+    assert {_, "watcherItem"} =
+             Cratis.Arc.MongoDB.locate({Cratis.Arc.context(Samples.Arc), WatcherItem})
   end
 end

@@ -19,10 +19,10 @@ def project do
 end
 ```
 
-Run the application and open `/.cratis/event-model/`. Arc serves it from `Arc.Plug`, so the application must mount it, and `Arc.Plug` has to see the request before anything that only accepts HTML:
+Run the application and open `/.cratis/event-model/`. Arc serves it from `Cratis.Arc.Plug`, so the application must mount it, and `Cratis.Arc.Plug` has to see the request before anything that only accepts HTML:
 
 ```elixir
-plug Arc.Plug, application: MyApp.Arc
+plug Cratis.Arc.Plug, application: MyApp.Arc
 ```
 
 The explorer is served in development. Elsewhere set `event_model: true` on the Arc application. It reveals the whole application model, so who may read it follows the `introspection` option of the application: `:authenticated` by default, `:anonymous`, or `false` to remove it.

@@ -34,10 +34,10 @@ Phoenix applications serve either a single-page application over HTTP or server-
 
 **LiveView (`arc_live_view`):** LiveView calls the pipelines in-process, with no HTTP hop and no generated TypeScript.
 
-- `on_mount {Arc.LiveView, :default}` builds the context from the session and socket and attaches the hook that applies query updates.
+- `on_mount {Cratis.Arc.LiveView, :default}` builds the context from the session and socket and attaches the hook that applies query updates.
 - `assign_query/4` reads once. `assign_observable/4` and `stream_query/4` subscribe and update assigns or streams.
 - `execute_command/3` runs the full pipeline and returns the contract's result.
-- `Arc.LiveView.Form.to_form(Command, params)` implements `Phoenix.HTML.FormData`, so the standard `<.form>` and `<.input>` components work. `phx-change` runs the validate path and maps results onto form errors by member.
+- `Cratis.Arc.LiveView.Form.to_form(Command, params)` implements `Phoenix.HTML.FormData`, so the standard `<.form>` and `<.input>` components work. `phx-change` runs the validate path and maps results onto form errors by member.
 - Authorization is re-evaluated on every command and subscription, not only at mount.
 
 ## Options considered

@@ -26,15 +26,15 @@ Commanded is the established Elixir CQRS and event-sourcing library. It is aggre
 
 **Adopt:**
 
-1. An application module (`use Arc.Application`), as Commanded uses `use Commanded.Application`, instead of global configuration.
-2. Dispatch from code with a `returning:` option: `Arc.dispatch(MyApp.Arc, command, returning: :response | :result | :events)`, where `:result` is the full envelope.
+1. An application module (`use Cratis.Arc.Application`), as Commanded uses `use Commanded.Application`, instead of global configuration.
+2. Dispatch from code with a `returning:` option: `Cratis.Arc.dispatch(MyApp.Arc, command, returning: :response | :result | :events)`, where `:result` is the full envelope.
 3. Tracing identifiers on the context: correlation and causation identifiers and a metadata map. `arc_chronicle` maps them onto Chronicle's causation chain.
 4. An opt-in read-your-writes option in `arc_chronicle`, `await: [ReadModel]`, off by default and documented as not transactional.
 5. Explicit command timeouts, carried as a deadline on the context.
 6. An error-policy vocabulary for background work Arc runs: retry, retry after a delay, skip, stop, with the restart-loop caution of decision 0004.
 7. Test helpers that wait for events, so tests never sleep.
 
-**Do not adopt:** aggregate processes (Chronicle's constraints and decision reads cover concurrency), process managers and event handlers (Chronicle.Elixir owns reactors), and a central router listing every command (discovery within an `Arc.Application` replaces it).
+**Do not adopt:** aggregate processes (Chronicle's constraints and decision reads cover concurrency), process managers and event handlers (Chronicle.Elixir owns reactors), and a central router listing every command (discovery within a `Cratis.Arc.Application` replaces it).
 
 An `arc_commanded` adapter is not planned. It is added only for a named consumer with a concrete requirement.
 

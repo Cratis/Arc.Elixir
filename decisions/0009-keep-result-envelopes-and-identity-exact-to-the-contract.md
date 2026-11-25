@@ -8,12 +8,12 @@ reversibility: costly
 decided: 2026-11-03
 decider: Arc.Elixir repository owner
 applies-to:
-  - Source/arc/lib/arc/result.ex
-  - Source/arc/lib/arc/identity*
-  - Source/arc/lib/arc/plug/introspection.ex
-  - Source/arc/lib/arc/authentication.ex
-  - Source/arc/test/arc/envelope_test.exs
-  - Source/arc/test/arc/identity_test.exs
+  - Source/arc/lib/cratis/arc/result.ex
+  - Source/arc/lib/cratis/arc/identity*
+  - Source/arc/lib/cratis/arc/plug/introspection.ex
+  - Source/arc/lib/cratis/arc/authentication.ex
+  - Source/arc/test/cratis/arc/envelope_test.exs
+  - Source/arc/test/cratis/arc/identity_test.exs
 ---
 
 <!-- Copyright (c) Cratis. All rights reserved. -->
@@ -25,14 +25,14 @@ applies-to:
 
 ## Decision
 
-- **The envelopes are frozen to the contract.** `Arc.CommandResult` and `Arc.QueryResult` produce exactly the fields, types and status ordering of the Arc HTTP contract. `Arc.EnvelopeTest` pins every key set (success, validation failure, authorization failure, exception, no data, paging) so a change is deliberate and reviewed. A failed result never carries `response` or `data`.
+- **The envelopes are frozen to the contract.** `Cratis.Arc.CommandResult` and `Cratis.Arc.QueryResult` produce exactly the fields, types and status ordering of the Arc HTTP contract. `Cratis.Arc.EnvelopeTest` pins every key set (success, validation failure, authorization failure, exception, no data, paging) so a change is deliberate and reviewed. A failed result never carries `response` or `data`.
 - **Identity is a capability, not an afterthought.**
-  - `Arc.Identity.Provider` supplies typed details and is discovered from the application; the `details:` type drives `/.cratis/identity-details/schema` and the generated TypeScript class for `useIdentity`.
+  - `Cratis.Arc.Identity.Provider` supplies typed details and is discovered from the application; the `details:` type drives `/.cratis/identity-details/schema` and the generated TypeScript class for `useIdentity`.
   - `GET /.cratis/me` answers 401 (not signed in) and 403 (provider refuses) with empty bodies, 200 with `{id, name, isAuthenticated, isAuthorized, roles, details}`, and every response is `no-store, private`.
-  - `Arc.Identity.resolve/2` is the single implementation behind both the endpoint and `Arc.LiveView.assign_identity/2`.
-  - `Arc.Identity.UsersProvider` and `TenantsProvider` feed `/.cratis/users` and `/.cratis/tenants` for tools such as Lens, concatenated without deduplication.
+  - `Cratis.Arc.Identity.resolve/2` is the single implementation behind both the endpoint and `Cratis.Arc.LiveView.assign_identity/2`.
+  - `Cratis.Arc.Identity.UsersProvider` and `TenantsProvider` feed `/.cratis/users` and `/.cratis/tenants` for tools such as Lens, concatenated without deduplication.
   - The five discovery routes share the `introspection` access setting; `/.cratis/me` does not.
-  - `Arc.Authentication.MicrosoftIdentityPlatform` reads the unsigned `x-ms-client-principal*` headers only when `trust_forwarded_identity_headers: true`; otherwise the request stays anonymous and a warning is logged once.
+  - `Cratis.Arc.Authentication.MicrosoftIdentityPlatform` reads the unsigned `x-ms-client-principal*` headers only when `trust_forwarded_identity_headers: true`; otherwise the request stays anonymous and a warning is logged once.
 - **Identity is presentation, not authorization.** Nothing in the details decides what a caller may do; `authorize` does.
 
 ## Options considered
@@ -51,7 +51,7 @@ Applies from the first release. Delta change sets remain out of scope (see the l
 
 ## Verification
 
-- **Done when:** `Arc.EnvelopeTest` and `Arc.IdentityTest` pass, and the contract run exercises the real `IdentityProvider` against an Arc server.
+- **Done when:** `Cratis.Arc.EnvelopeTest` and `Cratis.Arc.IdentityTest` pass, and the contract run exercises the real `IdentityProvider` against an Arc server.
 - **Verify by:** `mix test` in `Source/arc` and `ContractTests/run.sh`.
 
 ## Consequences

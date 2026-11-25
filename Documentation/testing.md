@@ -1,26 +1,26 @@
 ---
 title: Testing
-description: Test commands, queries, the HTTP host and LiveView against Chronicle's in-memory kernel with Arc.Test, using the real pipelines and no mocks.
+description: Test commands, queries, the HTTP host and LiveView against Chronicle's in-memory kernel with Cratis.Arc.Test, using the real pipelines and no mocks.
 ---
 
-Test what the application does, not how it is wired. `Arc.Test` runs the real pipeline, with real binding, validation, authorization and appends, against Chronicle's in-memory kernel. Nothing is mocked.
+Test what the application does, not how it is wired. `Cratis.Arc.Test` runs the real pipeline, with real binding, validation, authorization and appends, against Chronicle's in-memory kernel. Nothing is mocked.
 
 ## A command test
 
 ```elixir
 # From: Samples/phoenix/test/library/authors_test.exs
       test "a name that is too short is rejected before anything is recorded", %{arc: arc} do
-        result = Arc.Test.execute(arc, {RegisterAuthor, %{"id" => Arc.new_id(), "name" => "A"}})
+        result = Cratis.Arc.Test.execute(arc, {RegisterAuthor, %{"id" => Cratis.Arc.new_id(), "name" => "A"}})
 
-        Arc.Test.assert_invalid(result, :name)
-        Arc.Test.refute_appended(arc, AuthorRegistered)
+        Cratis.Arc.Test.assert_invalid(result, :name)
+        Cratis.Arc.Test.refute_appended(arc, AuthorRegistered)
       end
 ```
 
-`use Arc.Test.Case` starts a Chronicle test client for each test and puts an `Arc.Test.Scenario` in the context as `:arc`:
+`use Cratis.Arc.Test.Case` starts a Chronicle test client for each test and puts a `Cratis.Arc.Test.Scenario` in the context as `:arc`:
 
 ```elixir
-use Arc.Test.Case,
+use Cratis.Arc.Test.Case,
   application: Library.Arc,
   event_types: [Library.Authors.AuthorRegistered, Library.Authors.AuthorRenamed]
 ```
@@ -31,9 +31,9 @@ Every option of `Chronicle.Testing.start_supervised_client/1` is accepted (`even
 
 | Function | Use |
 | --- | --- |
-| `Arc.Test.execute/3` | Execute a command struct or `{module, wire_map}`; options as for `Arc.execute/3`, for example `principal:` |
-| `Arc.Test.query/5` | Execute a query |
-| `Arc.Test.principal/2` | An authenticated principal with roles |
+| `Cratis.Arc.Test.execute/3` | Execute a command struct or `{module, wire_map}`; options as for `Cratis.Arc.execute/3`, for example `principal:` |
+| `Cratis.Arc.Test.query/5` | Execute a query |
+| `Cratis.Arc.Test.principal/2` | An authenticated principal with roles |
 | `assert_success/1`, `assert_invalid/2`, `assert_forbidden/1` | Assert on a result |
 | `assert_appended/3`, `refute_appended/3` | Assert on Chronicle's events; accepts an event module, struct or function, and `event_source_id:` |
 | `wait_for_observers/1` | Wait for in-memory reducers and reactors |
@@ -43,7 +43,7 @@ Every option of `Chronicle.Testing.start_supervised_client/1` is accepted (`even
 The HTTP host and LiveView use the application's own configuration, so point it at the test client with `configure: true`. This is global, so these tests are not `async`.
 
 ```elixir
-use Arc.Test.Case,
+use Cratis.Arc.Test.Case,
   application: Library.Arc,
   configure: true,
   event_types: [Library.Authors.AuthorRegistered]

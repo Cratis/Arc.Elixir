@@ -4,7 +4,7 @@
 defmodule Library.Identity.IdentityDetails do
   @moduledoc "What the frontend knows about the signed-in user, beyond who they are."
 
-  use Arc.Schema
+  use Cratis.Arc.Schema
 
   schema do
     field :display_name, :string, required: true

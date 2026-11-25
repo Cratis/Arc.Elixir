@@ -4,13 +4,13 @@
 defmodule Samples.Identity.DevTenants do
   @moduledoc "The tenants a development tool offers to select. Not how a tenant is resolved."
 
-  @behaviour Arc.Identity.TenantsProvider
+  @behaviour Cratis.Arc.Identity.TenantsProvider
 
   @impl true
   def tenants do
     [
-      %Arc.Identity.Tenant{id: "acme", name: "ACME"},
-      %Arc.Identity.Tenant{id: "globex", name: "Globex"}
+      %Cratis.Arc.Identity.Tenant{id: "acme", name: "ACME"},
+      %Cratis.Arc.Identity.Tenant{id: "globex", name: "Globex"}
     ]
   end
 end

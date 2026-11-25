@@ -8,8 +8,8 @@ reversibility: costly
 decided: 2026-11-03
 decider: Arc.Elixir repository owner
 applies-to:
-  - Source/arc/lib/arc/identity/**
-  - Source/arc/lib/arc/authentication.ex
+  - Source/arc/lib/cratis/arc/identity/**
+  - Source/arc/lib/cratis/arc/authentication.ex
   - Documentation/authorization-and-identity.md
 ---
 
@@ -24,9 +24,9 @@ Arc on .NET verifies an HMAC-SHA256 forwarded-identity envelope and an RS256 on-
 
 ## Decision
 
-- `Arc.Authentication.MicrosoftIdentityPlatform` (renamed from `ClientPrincipal`) implements the unsigned path and the signed path with the same canonical bytes, freshness window, replay rules and key limits as Arc on .NET.
-- On-behalf-of validates the RS256 assertion with the same claim, lifetime, hash, method, path, tenant and service checks. The actor is carried on `Arc.Principal` and recorded in Chronicle as the cause, on behalf of the user.
-- Replay memory is process-local, kept by a process under `Arc.Application`, and fails closed when absent.
+- `Cratis.Arc.Authentication.MicrosoftIdentityPlatform` (renamed from `ClientPrincipal`) implements the unsigned path and the signed path with the same canonical bytes, freshness window, replay rules and key limits as Arc on .NET.
+- On-behalf-of validates the RS256 assertion with the same claim, lifetime, hash, method, path, tenant and service checks. The actor is carried on `Cratis.Arc.Principal` and recorded in Chronicle as the cause, on behalf of the user.
+- Replay memory is process-local, kept by a process under `Cratis.Arc.Application`, and fails closed when absent.
 - Both features are off by default.
 
 ## Options considered
