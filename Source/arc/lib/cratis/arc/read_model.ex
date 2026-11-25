@@ -27,6 +27,8 @@ defmodule Cratis.Arc.ReadModel do
 
   ## Options of `use Cratis.Arc.ReadModel`
 
+    * `:id` - the read model's own kebab-case name, like the `id:` of a command or an event type;
+      the structure and the event model show it instead of the module's last segment
     * `:model` - (required) the struct the queries return
     * `:types` - overrides for inferred field types in the generated proxy, for example
       `types: [id: :uuid]`. Arc infers a type from each struct default; a `nil` or `""` default is a string.
@@ -49,6 +51,12 @@ defmodule Cratis.Arc.ReadModel do
   defmacro __using__(opts) do
     model = Keyword.fetch!(opts, :model)
     types = Keyword.get(opts, :types, [])
+    id = Keyword.get(opts, :id)
+
+    unless is_nil(id) or (is_binary(id) and id =~ ~r/\A[a-z0-9]+(-[a-z0-9]+)*\z/) do
+      raise ArgumentError,
+            "read model id #{inspect(id)} must be kebab-case, e.g. \"all-authors\""
+    end
 
     quote do
       import Cratis.Arc.ReadModel, only: [authorize: 1, allow_anonymous: 0, available: 1]
@@ -57,6 +65,7 @@ defmodule Cratis.Arc.ReadModel do
       Module.register_attribute(__MODULE__, :query, [])
       Module.register_attribute(__MODULE__, :observe, [])
       @arc_model unquote(model)
+      @arc_read_model_id unquote(id)
       @arc_model_types unquote(types)
       @arc_authorization nil
       @on_definition {Cratis.Arc.ReadModel, :on_definition}
@@ -118,7 +127,9 @@ defmodule Cratis.Arc.ReadModel do
 
   @doc false
   defmacro __before_compile__(env) do
-    {namespace, name} = Cratis.Arc.Naming.module_parts(env.module)
+    {namespace, module_name} = Cratis.Arc.Naming.module_parts(env.module)
+    id = Module.get_attribute(env.module, :arc_read_model_id)
+    name = if id, do: Cratis.Arc.Naming.pascal(id), else: module_name
 
     module_auth =
       Module.get_attribute(env.module, :arc_authorization) |> Cratis.Arc.Authorization.normalize()
@@ -137,6 +148,7 @@ defmodule Cratis.Arc.ReadModel do
     descriptor = %Cratis.Arc.Descriptor{
       kind: :read_model,
       module: env.module,
+      id: id,
       name: name,
       namespace: namespace,
       doc: doc,

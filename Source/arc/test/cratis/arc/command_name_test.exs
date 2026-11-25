@@ -32,6 +32,13 @@ defmodule Cratis.Arc.CommandNameTest do
              ~r{/api/sample/rename-thing$}
   end
 
+  test "the id is the name of the command, in PascalCase, whatever the module is called" do
+    descriptor = Named.Sample.RenamingThings.__arc__()
+    assert descriptor.name == "RenameThing"
+    assert Cratis.Arc.Descriptor.display_name(descriptor, :kebab_case) == "rename-thing"
+    assert Cratis.Arc.Descriptor.display_name(descriptor, :as_declared) == "rename-thing"
+  end
+
   test "without an id the module name still decides the route" do
     descriptor = Named.Sample.Unnamed.__arc__()
     assert descriptor.route_name == nil

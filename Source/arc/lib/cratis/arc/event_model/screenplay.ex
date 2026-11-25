@@ -51,11 +51,16 @@ defmodule Cratis.Arc.EventModel.Screenplay do
     do: Enum.map(commands, &command(&1, events, depth))
 
   defp body(%{type: 1} = slice, depth) do
-    [read_model(slice.model, depth), Enum.map(slice.queries, &query(&1, slice.model, depth))]
+    model_name = read_model_name(slice)
+
+    [
+      read_model(slice.model, model_name, depth),
+      Enum.map(slice.queries, &query(&1, slice.model, model_name, depth))
+    ]
   end
 
-  defp body(%{type: 2, reactors: reactors, external: external}, depth),
-    do: Enum.map(reactors, &reaction(&1, external, depth))
+  defp body(%{type: 2, reactors: reactors, external: external} = slice, depth),
+    do: Enum.map(reactors, &reaction(&1, external, depth, Map.get(slice.reactor_names, &1)))
 
   # -- constructs ---------------------------------------------------------------------------------
 
@@ -93,15 +98,18 @@ defmodule Cratis.Arc.EventModel.Screenplay do
     ]
   end
 
-  defp read_model(nil, _depth), do: []
+  defp read_model_name(%{read_models: [%{id: id, name: name} | _]}) when is_binary(id), do: name
+  defp read_model_name(_), do: nil
 
-  defp read_model(model, depth) do
+  defp read_model(nil, _name, _depth), do: []
+
+  defp read_model(model, model_name, depth) do
     pad = indent(depth + 1)
 
     [
       indent(depth),
       "readmodel ",
-      ident(short(model)),
+      ident(model_name || short(model)),
       "\n",
       for field <- Cratis.Arc.Schema.model_fields(model) do
         [
@@ -116,9 +124,9 @@ defmodule Cratis.Arc.EventModel.Screenplay do
     ]
   end
 
-  defp query(query, model, depth) do
+  defp query(query, model, model_name, depth) do
     pad = indent(depth + 1)
-    returns = if model, do: ident(short(model)), else: "String"
+    returns = if model, do: ident(model_name || short(model)), else: "String"
 
     [
       indent(depth),
@@ -135,13 +143,13 @@ defmodule Cratis.Arc.EventModel.Screenplay do
     ]
   end
 
-  defp reaction(module, external, depth) do
+  defp reaction(module, external, depth, name) do
     pad = indent(depth + 1)
 
     [
       indent(depth),
       "reaction ",
-      ident(short(module)),
+      ident(name || short(module)),
       "\n",
       Enum.map(external, &[pad, "when ", ident(&1.name), "\n"])
     ]

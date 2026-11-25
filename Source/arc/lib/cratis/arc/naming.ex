@@ -52,8 +52,31 @@ defmodule Cratis.Arc.Naming do
   def pascal(name) when is_atom(name), do: name |> Atom.to_string() |> pascal()
 
   def pascal(name) when is_binary(name) do
-    name |> String.split("_", trim: true) |> Enum.map_join(&capitalize_first/1)
+    name |> String.split(["_", "-"], trim: true) |> Enum.map_join(&capitalize_first/1)
   end
+
+  @typedoc """
+  How the declared name (the `id:` of a command, event type, read model or reactor) is shown by the
+  structure and the event model: `:pascal_case` (default, `"register-author"` is `"RegisterAuthor"`),
+  `:kebab_case`, `:as_declared`, or a function taking the declared name.
+  """
+  @type display_style :: :pascal_case | :kebab_case | :as_declared | (String.t() -> String.t())
+
+  @doc """
+  The name to show for a declared `id`, in the configured style (`:display_names` of the Arc
+  application).
+
+      iex> Cratis.Arc.Naming.display("register-author", :pascal_case)
+      "RegisterAuthor"
+      iex> Cratis.Arc.Naming.display("register-author", :kebab_case)
+      "register-author"
+  """
+  @spec display(String.t(), display_style()) :: String.t()
+  def display(id, style \\ :pascal_case)
+  def display(id, :pascal_case), do: pascal(id)
+  def display(id, :kebab_case), do: kebab(id)
+  def display(id, :as_declared), do: id
+  def display(id, style) when is_function(style, 1), do: style.(id)
 
   @doc """
   Splits a module into its namespace segments and its name.

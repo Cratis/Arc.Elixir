@@ -15,6 +15,8 @@
 
 ### Changed
 
+- **Names come from ids.** The structure and the event model name a command, event type, reactor and read model by its declared id (`use Cratis.Arc.Command, id: "register-author"`, an event type's `id:`, a reactor's `id:`) shown as `RegisterAuthor`, so renaming a module never renames the model. `use Cratis.Arc.ReadModel` takes an optional `id:` too. Choose the style with `display_names:` on the Arc application: `:pascal_case` (default), `:kebab_case`, `:as_declared` or a function of the id.
+- **The event model connects slices.** A state view draws the events it consumes as events pointing at their source, an automation starts from the first event it handles, and ids of slice-level items no longer depend on the document, so the board links an event to the slice that owns it.
 - **Arc requires Chronicle for Elixir 4.0**, where every module is under `Cratis.Chronicle`. `Chronicle.Events.EventType` is now `Cratis.Chronicle.Events.EventType`, `Chronicle.all/2` is `Cratis.Chronicle.all/2`, and so on. The analyzer rule `ARCE0004` follows the new names.
 - **Every Arc module is under `Cratis.Arc`.** `Arc.Command` is now `Cratis.Arc.Command`, `Arc.ReadModel` is `Cratis.Arc.ReadModel`, `Arc.Test` is `Cratis.Arc.Test`, `Arc.MongoDB` is `Cratis.Arc.MongoDB`, and so on, including `Arc.execute/3`, `Arc.query/5` and `Arc.context/2`. Source files follow, under `lib/cratis/arc`.
 - **A command declares its name as an option, like Chronicle.** `use Cratis.Arc.Command, id: "register-author"` replaces the `command "register-author"` declaration, in line with `use Cratis.Chronicle.Events.EventType, id: "..."`.

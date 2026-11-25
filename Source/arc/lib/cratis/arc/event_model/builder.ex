@@ -58,6 +58,7 @@ defmodule Cratis.Arc.EventModel.Builder do
       |> Enum.flat_map(fn {key, group} ->
         List.wrap(slice(key, group, skip, state, event_types))
       end)
+      |> Enum.map(&name_artifacts(&1, skip))
       |> Enum.sort_by(fn s -> {s.module, s.feature, s.name} end)
 
     %{name: otp_app |> to_string() |> Macro.camelize(), slices: slices}
@@ -163,6 +164,37 @@ defmodule Cratis.Arc.EventModel.Builder do
     end
   end
 
+  # Names come from the declared ids (`use Cratis.Arc.Command, id: "..."`, an event type's `id:`, a
+  # reactor's `id:`), shown in the configured style, so renaming a module never renames the model.
+  defp name_artifacts(slice, skip) do
+    style = slice.config[:display_names] || :pascal_case
+
+    %{
+      slice
+      | commands: Enum.map(slice.commands, &%{&1 | name: Descriptor.display_name(&1, style)}),
+        read_models:
+          Enum.map(slice.read_models, &%{&1 | name: Descriptor.display_name(&1, style)}),
+        events: Enum.map(slice.events, &name_event(&1, style, skip)),
+        external: Enum.map(slice.external, &name_event(&1, style, skip))
+    }
+    |> Map.put(:reactor_names, Map.new(slice.reactors, &{&1, reactor_name(&1, style)}))
+    |> Map.put(:style, style)
+  end
+
+  defp name_event(%{event_type: id} = event, style, skip) do
+    {m, f, s} = key_of(:events, event.module, skip)
+    %{event | name: Cratis.Arc.Naming.display(id, style)} |> Map.put(:owner, [m, f, s])
+  end
+
+  defp reactor_name(module, style) do
+    case module.__chronicle_reactor__(:id) do
+      id when is_binary(id) -> Cratis.Arc.Naming.display(id, style)
+      _ -> module |> Module.split() |> List.last()
+    end
+  rescue
+    _ -> module |> Module.split() |> List.last()
+  end
+
   defp make(module, feature, name, type, extra, _skip, state) do
     Map.merge(
       %{
@@ -176,6 +208,7 @@ defmodule Cratis.Arc.EventModel.Builder do
         commands: [],
         read_models: [],
         reactors: [],
+        reactor_names: %{},
         model: nil,
         queries: [],
         events: [],

@@ -155,7 +155,13 @@ defmodule Cratis.Arc.Plug.Introspection do
   end
 
   defp structure(state, config),
-    do: Cratis.Arc.Structure.build(state.commands, state.read_models, config[:segments_to_skip])
+    do:
+      Cratis.Arc.Structure.build(
+        state.commands,
+        state.read_models,
+        config[:segments_to_skip],
+        config[:display_names] || :pascal_case
+      )
 
   # The development availability routes exist only while the application allows overrides.
   defp development(conn, app, _state, serve) do

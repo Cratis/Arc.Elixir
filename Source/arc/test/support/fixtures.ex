@@ -6,7 +6,7 @@ defmodule ArcFixtures.Authors.AuthorId do
 end
 
 defmodule ArcFixtures.Authors.AuthorRegistered do
-  use Cratis.Chronicle.Events.EventType, id: "arc-fixture-author-registered"
+  use Cratis.Chronicle.Events.EventType, id: "author-registered"
   defstruct name: ""
 end
 
