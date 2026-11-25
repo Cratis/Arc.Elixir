@@ -18,7 +18,30 @@ defmodule Cratis.Arc.EventModel.Screenplay do
   @spec emit([{String.t(), [map()]}]) :: String.t()
   def emit(modules) do
     modules
+    |> Enum.map(fn {name, features} -> {name, declare_models_once(features)} end)
     |> Enum.map_join("\n", &module/1)
+  end
+
+  # A read model is declared once; a later view over the same model only queries it.
+  defp declare_models_once(nodes) do
+    {nodes, _seen} = walk(nodes, MapSet.new())
+    nodes
+  end
+
+  defp walk(nodes, seen) do
+    Enum.map_reduce(nodes, seen, fn node, seen ->
+      {slices, seen} =
+        Enum.map_reduce(node.slices, seen, fn slice, seen ->
+          if slice.model != nil and MapSet.member?(seen, slice.model),
+            do: {Map.put(slice, :declares_model?, false), seen},
+            else:
+              {Map.put(slice, :declares_model?, true),
+               if(slice.model, do: MapSet.put(seen, slice.model), else: seen)}
+        end)
+
+      {children, seen} = walk(node.children, seen)
+      {%{node | slices: slices, children: children}, seen}
+    end)
   end
 
   defp module({name, features}) do
@@ -62,7 +85,10 @@ defmodule Cratis.Arc.EventModel.Screenplay do
     model_name = read_model_name(slice)
 
     [
-      read_model(slice.model, model_name, depth),
+      if(Map.get(slice, :declares_model?, true),
+        do: read_model(slice.model, model_name, depth),
+        else: []
+      ),
       Enum.map(slice.queries, &query(&1, slice.model, model_name, depth))
     ]
   end
@@ -94,7 +120,7 @@ defmodule Cratis.Arc.EventModel.Screenplay do
       for field <- command.fields do
         [
           pad,
-          Naming.camel(field.name),
+          property_name(field.name),
           " ",
           type(field.type),
           if(field.required? or field.key?, do: "", else: " optional"),
@@ -102,8 +128,19 @@ defmodule Cratis.Arc.EventModel.Screenplay do
           "\n"
         ]
       end,
-      Enum.map(events, &[pad, "produces ", ident(&1.name), "\n"])
+      Enum.map(
+        events,
+        &[pad, "produces ", ident(&1.name), identifier_clause(command.fields), "\n"]
+      )
     ]
+  end
+
+  # `produces E for id`: the command's identifier says which stream the event is appended to.
+  defp identifier_clause(fields) do
+    case Enum.find(fields, & &1.key?) do
+      nil -> ""
+      field -> " for " <> property_name(field.name)
+    end
   end
 
   defp read_model_name(%{read_models: [%{id: id, name: name} | _]}) when is_binary(id), do: name
@@ -122,7 +159,7 @@ defmodule Cratis.Arc.EventModel.Screenplay do
       for field <- Cratis.Arc.Schema.model_fields(model) do
         [
           pad,
-          Naming.camel(field.name),
+          property_name(field.name),
           " ",
           type(field.type),
           if(field.nullable?, do: " optional", else: ""),
@@ -183,7 +220,7 @@ defmodule Cratis.Arc.EventModel.Screenplay do
     for {name, schema} <- Enum.sort_by(properties, &elem(&1, 0)) do
       [
         indent(depth),
-        Naming.camel(name),
+        property_name(name),
         " ",
         schema_type(schema, Map.get(defaults, safe_atom(name))),
         "\n"
@@ -227,6 +264,9 @@ defmodule Cratis.Arc.EventModel.Screenplay do
   end
 
   defp type(_), do: "String"
+
+  # A name the Screenplay language accepts: `system?` is `system`.
+  defp property_name(name), do: name |> Naming.camel() |> String.replace(~r/[^A-Za-z0-9_]/, "")
 
   defp short(module), do: module |> Module.split() |> List.last()
   defp ident(name), do: name |> to_string() |> String.replace(~r/[^A-Za-z0-9_]/, "")
