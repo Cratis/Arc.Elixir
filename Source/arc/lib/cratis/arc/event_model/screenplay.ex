@@ -14,8 +14,8 @@ defmodule Cratis.Arc.EventModel.Screenplay do
 
   @slice_types %{0 => "StateChange", 1 => "StateView", 2 => "Automation"}
 
-  @doc "Screenplay text for `[{module, [{feature, [slice]}]}]`."
-  @spec emit([{String.t(), [{String.t(), [map()]}]}]) :: String.t()
+  @doc "Screenplay text for `[{module, [feature node]}]`; a node is `%{name, slices, children}`."
+  @spec emit([{String.t(), [map()]}]) :: String.t()
   def emit(modules) do
     modules
     |> Enum.map_join("\n", &module/1)
@@ -25,10 +25,18 @@ defmodule Cratis.Arc.EventModel.Screenplay do
     ["module ", ident(name), "\n", Enum.map(features, &feature/1)] |> IO.iodata_to_binary()
   end
 
-  defp feature({"", slices}), do: Enum.map(slices, &slice(&1, 1))
+  defp feature(node, depth \\ 1)
+  defp feature(%{name: "", slices: slices}, depth), do: Enum.map(slices, &slice(&1, depth))
 
-  defp feature({name, slices}) do
-    ["  feature ", ident(name), "\n", Enum.map(slices, &slice(&1, 2))]
+  defp feature(%{name: name, slices: slices, children: children}, depth) do
+    [
+      indent(depth),
+      "feature ",
+      ident(name),
+      "\n",
+      Enum.map(slices, &slice(&1, depth + 1)),
+      Enum.map(children, &feature(&1, depth + 1))
+    ]
   end
 
   defp slice(slice, depth) do

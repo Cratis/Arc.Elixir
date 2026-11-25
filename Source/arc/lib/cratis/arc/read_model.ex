@@ -29,6 +29,9 @@ defmodule Cratis.Arc.ReadModel do
 
     * `:id` - the read model's own kebab-case name, like the `id:` of a command or an event type;
       the structure and the event model show it instead of the module's last segment
+    * `:consumes` - the event types the model is built from when no reducer or projection of the
+      application declares them (a model read from the event log, say); the event model draws them
+      as what the view consumes
     * `:model` - (required) the struct the queries return
     * `:types` - overrides for inferred field types in the generated proxy, for example
       `types: [id: :uuid]`. Arc infers a type from each struct default; a `nil` or `""` default is a string.
@@ -52,6 +55,7 @@ defmodule Cratis.Arc.ReadModel do
     model = Keyword.fetch!(opts, :model)
     types = Keyword.get(opts, :types, [])
     id = Keyword.get(opts, :id)
+    consumes = Keyword.get(opts, :consumes, [])
 
     unless is_nil(id) or (is_binary(id) and id =~ ~r/\A[a-z0-9]+(-[a-z0-9]+)*\z/) do
       raise ArgumentError,
@@ -66,6 +70,7 @@ defmodule Cratis.Arc.ReadModel do
       Module.register_attribute(__MODULE__, :observe, [])
       @arc_model unquote(model)
       @arc_read_model_id unquote(id)
+      @arc_consumes unquote(consumes)
       @arc_model_types unquote(types)
       @arc_authorization nil
       @on_definition {Cratis.Arc.ReadModel, :on_definition}
@@ -153,6 +158,7 @@ defmodule Cratis.Arc.ReadModel do
       namespace: namespace,
       doc: doc,
       model: model,
+      consumes: Module.get_attribute(env.module, :arc_consumes) |> List.wrap(),
       model_types: Module.get_attribute(env.module, :arc_model_types),
       queries: queries,
       availability:

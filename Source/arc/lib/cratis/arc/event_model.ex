@@ -51,9 +51,11 @@ defmodule Cratis.Arc.EventModel do
 
   @doc """
   Builds the event model of `application` and writes it under `priv/cratis/event_model` of the
-  current Mix project (or `:output`). Returns `{:ok, %{written: [path], project: id}}`.
+  current Mix project (or `:output`). Returns `{:ok, %{written: [path], project: id, problems:
+  [problem]}}`; a problem says where the model is incomplete (`Cratis.Arc.EventModel.Validation`).
   """
-  @spec generate(module(), keyword()) :: {:ok, %{written: [Path.t()], project: String.t()}}
+  @spec generate(module(), keyword()) ::
+          {:ok, %{written: [Path.t()], project: String.t(), problems: [String.t()]}}
   def generate(application, opts \\ []) do
     config = application.config()
     otp_app = Keyword.fetch!(config, :otp_app)
@@ -94,7 +96,7 @@ defmodule Cratis.Arc.EventModel do
     written = for {path, content} <- files, write_if_changed(path, content), do: path
 
     Enum.each(stale -- Enum.map(files, &elem(&1, 0)), &File.rm/1)
-    {:ok, %{written: written, project: project_id}}
+    {:ok, %{written: written, project: project_id, problems: built.problems}}
   end
 
   defp write_if_changed(path, content) do
