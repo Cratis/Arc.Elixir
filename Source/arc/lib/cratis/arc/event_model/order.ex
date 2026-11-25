@@ -17,7 +17,7 @@ defmodule Cratis.Arc.EventModel.Order do
 
     slices
     |> Enum.group_by(& &1.module)
-    |> Enum.sort_by(fn {module, group} -> {latest(group, ranks), module} end)
+    |> arrange(ranks)
     |> Enum.flat_map(fn {_module, group} -> node(group, 0, ranks) end)
   end
 
@@ -32,10 +32,45 @@ defmodule Cratis.Arc.EventModel.Order do
     children =
       deeper
       |> Enum.group_by(&Enum.at(path(&1), depth))
-      |> Enum.sort_by(fn {name, group} -> {latest(group, ranks), name} end)
+      |> arrange(ranks)
       |> Enum.flat_map(fn {_name, group} -> node(group, depth + 1, ranks) end)
 
     Enum.sort_by(own, &{Map.fetch!(ranks, &1.key), &1.type, &1.name}) ++ children
+  end
+
+  # Siblings (modules, or the features of a feature) go in dependency order: one that holds a slice
+  # consuming an event another sibling produces comes after it. Among those ready, the one whose
+  # latest slice is earliest goes first, then by name. A cycle takes the earliest one.
+  defp arrange(groups, ranks) do
+    groups =
+      Enum.map(groups, fn {name, slices} -> {name, slices, MapSet.new(slices, & &1.key)} end)
+
+    place(groups, groups, ranks, [])
+  end
+
+  defp place([], _all, _ranks, placed), do: Enum.reverse(placed)
+
+  defp place(remaining, all, ranks, placed) do
+    ready =
+      Enum.filter(remaining, fn {_n, slices, keys} ->
+        Enum.all?(needs(slices, keys, all), fn other ->
+          other in Enum.map(placed, &elem(&1, 0))
+        end)
+      end)
+
+    pool = if ready == [], do: remaining, else: ready
+
+    {name, slices, _} =
+      chosen = Enum.min_by(pool, fn {name, slices, _} -> {latest(slices, ranks), name} end)
+
+    place(List.delete(remaining, chosen), all, ranks, [{name, slices} | placed])
+  end
+
+  # The names of the other siblings holding slices these slices depend on.
+  defp needs(slices, own, all) do
+    owners = slices |> Enum.flat_map(&dependencies/1) |> Enum.uniq() |> Enum.reject(&(&1 in own))
+
+    for {name, _slices, keys} <- all, Enum.any?(owners, &(&1 in keys)), do: name
   end
 
   # A feature is as late as its latest slice: it cannot be drawn before everything inside it can.

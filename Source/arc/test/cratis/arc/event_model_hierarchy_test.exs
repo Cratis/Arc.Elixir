@@ -92,6 +92,27 @@ defmodule Cratis.Arc.EventModelHierarchyTest do
       assert Validation.check(Order.sort([set, apply_grants, add])) == []
     end
 
+    test "a feature follows the feature it consumes from even when their latest slices tie" do
+      add = change("Credentials", "Add", ["Added"])
+      drop = change("Credentials", "Drop", ["Dropped"])
+
+      tidy = %{
+        slice("Credentials", "Tidy", 2, %{})
+        | external: [event("Dropped", drop.key)],
+          events: [event("Tidied", ["M", "Credentials", "Tidy"])]
+      }
+
+      apply_grants = %{
+        slice("Access", "Apply", 2, %{})
+        | external: [event("Added", add.key)],
+          events: [event("Applied", ["M", "Access", "Apply"])]
+      }
+
+      sorted = Order.sort([apply_grants, tidy, drop, add])
+      assert names(sorted) |> Enum.take(-1) == ["Apply"]
+      assert Validation.check(sorted) == []
+    end
+
     test "a cycle does not stop the order" do
       a = slice("F", "A", 2, %{external: [event("B", ["M", "F", "B"])]})
       b = slice("F", "B", 2, %{external: [event("A", ["M", "F", "A"])]})
