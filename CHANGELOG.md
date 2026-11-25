@@ -15,7 +15,7 @@
 
 ### Changed
 
-- **The Screenplay source compiles.** A read model several views share is declared once, a property such as `system?` is written as `system`, and `produces` names the stream (`produces E for id`), so the generated `.screenplay` passes the Screenplay compiler without errors.
+- **The Screenplay source compiles.** A read model several views share is declared once, a property such as `system?` is written as `system`, and `produces` names the stream (a nested `for id`), so the generated `.screenplay` passes the Screenplay compiler without errors.
 - **Sibling features follow their dependencies.** A feature, or a module, with a slice that consumes an event of a sibling is drawn after that sibling, however the two compare otherwise.
 - **A feature is ordered by its latest slice.** A feature that holds both a command and a reaction to another feature's events is drawn after that feature.
 - **Sub-features are a hierarchy.** A feature path such as `ApiCredentials.Secrets` is a feature `Secrets` inside `ApiCredentials`: the board nests it as `subFeatures`, the Screenplay source nests `feature` inside `feature`, and every depth has its own document.
