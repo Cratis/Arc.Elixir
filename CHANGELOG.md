@@ -15,6 +15,7 @@
 
 ### Changed
 
+- **Sibling features follow their dependencies.** A feature, or a module, with a slice that consumes an event of a sibling is drawn after that sibling, however the two compare otherwise.
 - **A feature is ordered by its latest slice.** A feature that holds both a command and a reaction to another feature's events is drawn after that feature.
 - **Sub-features are a hierarchy.** A feature path such as `ApiCredentials.Secrets` is a feature `Secrets` inside `ApiCredentials`: the board nests it as `subFeatures`, the Screenplay source nests `feature` inside `feature`, and every depth has its own document.
 - **The event model is read in order.** A view or an automation comes after the slices that produce the events it consumes, features and modules follow the same order, and a feature's own slices come before its sub-features.
