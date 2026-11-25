@@ -120,7 +120,10 @@ defmodule Cratis.Arc.EventModel.Documents do
   end
 
   defp slice_json(doc, slice, index) do
-    seed = [doc | slice.key]
+    # Slice-level ids do not depend on the document, so an event is the same event in the
+    # application, module and feature documents and other slices can point at it.
+    _ = doc
+    seed = slice.key
 
     base = %{
       "id" => guid(seed ++ ["slice"]),
@@ -130,8 +133,8 @@ defmodule Cratis.Arc.EventModel.Documents do
       "status" => slice.status,
       "collapsed" => false,
       "sortOrder" => index,
-      "externalEvents" => Enum.map(slice.external, &external_json(seed, &1)),
-      "events" => Enum.map(slice.events, &event_json(seed, &1)),
+      "externalEvents" => externals_json(seed, slice),
+      "events" => events_json(seed, slice),
       "queries" => Enum.map(slice.queries, &query_json(seed, &1)),
       "actors" => [],
       "specifications" => [],
@@ -141,6 +144,48 @@ defmodule Cratis.Arc.EventModel.Documents do
     base
     |> put_command(seed, slice.commands)
     |> put_read_model(seed, slice)
+    |> put_trigger(slice)
+  end
+
+  # What a view or an automation consumes is drawn as the events of the slice, each pointing at the
+  # event it came from, which is how the board connects slices.
+  defp events_json(seed, %{type: 0} = slice), do: Enum.map(slice.events, &event_json(seed, &1))
+
+  defp events_json(seed, %{type: 1} = slice) do
+    Enum.map(slice.events, &event_json(seed, &1)) ++
+      for event <- slice.external, do: consumed_json(seed, event)
+  end
+
+  defp events_json(seed, slice) do
+    Enum.map(slice.events, &event_json(seed, &1))
+  end
+
+  defp externals_json(seed, %{type: 2} = slice),
+    do: Enum.map(slice.external, &external_json(seed, &1))
+
+  defp externals_json(_seed, _slice), do: []
+
+  # An automation starts from the first event it handles.
+  defp put_trigger(json, %{type: 2, external: [event | _]}) do
+    Map.put(json, "automationTrigger", %{
+      "type" => 1,
+      "description" => "",
+      "eventId" => event_guid(event)
+    })
+  end
+
+  defp put_trigger(json, _slice), do: json
+
+  defp event_guid(%{owner: owner, name: name}), do: guid(owner ++ ["event", name])
+
+  defp consumed_json(seed, event) do
+    %{
+      "id" => guid(seed ++ ["consumed", event.name]),
+      "name" => event.name,
+      "schema" => event.schema,
+      "sourceEventId" => event_guid(event),
+      "tags" => event.tags
+    }
   end
 
   defp put_command(json, _seed, []), do: json
@@ -158,7 +203,12 @@ defmodule Cratis.Arc.EventModel.Documents do
 
   defp put_read_model(json, seed, %{model: model, read_models: read_models})
        when not is_nil(model) do
-    name = model |> Module.split() |> List.last()
+    name =
+      case read_models do
+        [%Descriptor{id: id, name: name} | _] when is_binary(id) -> name
+        _ -> model |> Module.split() |> List.last()
+      end
+
     fields = Cratis.Arc.Schema.model_fields(model)
 
     Map.put(json, "readModel", %{
@@ -182,20 +232,24 @@ defmodule Cratis.Arc.EventModel.Documents do
     end
   end
 
+  # An event the slice owns has the id others point at; one it only shows (a command appending an
+  # event of another slice) points at its owner.
   defp event_json(seed, event) do
-    %{
+    base = %{
       "id" => guid(seed ++ ["event", event.name]),
       "name" => event.name,
       "schema" => event.schema,
       "tags" => event.tags
     }
+
+    if event.owner == seed, do: base, else: Map.put(base, "sourceEventId", event_guid(event))
   end
 
   defp external_json(seed, event) do
     %{
       "id" => guid(seed ++ ["external", event.name]),
       "name" => event.name,
-      "sourceEventId" => event.event_type
+      "sourceEventId" => event_guid(event)
     }
   end
 

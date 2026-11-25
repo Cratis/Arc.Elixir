@@ -54,11 +54,12 @@ defmodule Cratis.Arc.Structure do
   Builds the structure of the commands and read models of an application, with `segments_to_skip`
   leading namespace segments left out of every location.
   """
-  @spec build([Descriptor.t()], [Descriptor.t()], integer()) :: map()
-  def build(commands, read_models, segments_to_skip) do
+  @spec build([Descriptor.t()], [Descriptor.t()], integer(), Cratis.Arc.Naming.display_style()) ::
+          map()
+  def build(commands, read_models, segments_to_skip, style \\ :pascal_case) do
     parts =
-      Enum.map(commands, &entry(&1, "Command", segments_to_skip)) ++
-        Enum.map(read_models, &entry(&1, "ReadModel", segments_to_skip))
+      Enum.map(commands, &entry(&1, "Command", segments_to_skip, style)) ++
+        Enum.map(read_models, &entry(&1, "ReadModel", segments_to_skip, style))
 
     modules =
       parts
@@ -72,16 +73,16 @@ defmodule Cratis.Arc.Structure do
   end
 
   # The module, the features and slice below it, and the part.
-  defp entry(descriptor, kind, segments_to_skip) do
+  defp entry(descriptor, kind, segments_to_skip, style) do
     {module, feature, slice} = Descriptor.slice_location(descriptor, segments_to_skip)
-    {module, location_segments("", feature, slice), part(descriptor, kind)}
+    {module, location_segments("", feature, slice), part(descriptor, kind, style)}
   end
 
-  defp part(descriptor, kind) do
+  defp part(descriptor, kind, style) do
     full_name = inspect(descriptor.module)
 
     %{
-      "name" => full_name |> String.split(".") |> List.last(),
+      "name" => Descriptor.display_name(descriptor, style),
       "fullName" => full_name,
       "kind" => kind
     }

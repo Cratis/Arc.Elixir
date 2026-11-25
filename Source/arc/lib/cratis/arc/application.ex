@@ -30,6 +30,9 @@ defmodule Cratis.Arc.Application do
     * `:route_prefix` - default `"api"`
     * `:segments_to_skip` - leading module-name segments dropped from routes, slice locations
       and proxy folders; default `1` (the application name)
+    * `:display_names` - how the declared `id:` of a command, read model, event type or reactor is
+      shown by `/.cratis/structure` and the event model: `:pascal_case` (default,
+      `"register-author"` is `"RegisterAuthor"`), `:kebab_case`, `:as_declared` or a function of the id
     * `:chronicle` - options given to every Chronicle call, for example `[client: MyApp.Chronicle]`
     * `:authentication` - a list of `Cratis.Arc.Authentication` handler modules, run in order
     * `:policies` - `[name: PolicyModule]` for `Cratis.Arc.Policy`
@@ -94,6 +97,7 @@ defmodule Cratis.Arc.Application do
     [
       route_prefix: "api",
       segments_to_skip: 1,
+      display_names: :pascal_case,
       chronicle: [],
       authentication: [Cratis.Arc.Authentication.FromAssigns],
       policies: [],

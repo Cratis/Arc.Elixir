@@ -120,7 +120,9 @@ defmodule Cratis.Arc.Command do
   @doc false
   defmacro __before_compile__(env) do
     fields = Cratis.Arc.Schema.fields_of(env.module)
-    {namespace, name} = Cratis.Arc.Naming.module_parts(env.module)
+    {namespace, module_name} = Cratis.Arc.Naming.module_parts(env.module)
+    id = Module.get_attribute(env.module, :arc_command_name)
+    name = if id, do: Cratis.Arc.Naming.pascal(id), else: module_name
 
     authorization =
       Module.get_attribute(env.module, :arc_authorization) |> Cratis.Arc.Authorization.normalize()
@@ -133,7 +135,8 @@ defmodule Cratis.Arc.Command do
       kind: :command,
       module: env.module,
       name: name,
-      route_name: Module.get_attribute(env.module, :arc_command_name),
+      id: id,
+      route_name: id,
       namespace: namespace,
       doc: doc,
       fields: fields,

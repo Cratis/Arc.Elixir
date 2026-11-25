@@ -87,6 +87,27 @@ defmodule Cratis.Arc.EventModelTest do
       assert [%{"name" => "AuthorRegistered"}] = registration["events"]
     end
 
+    test "connect a view to the events it consumes and an event to the slice that owns it", %{
+      documents: [root | _]
+    } do
+      slices =
+        root.model["eventModel"]["collections"]
+        |> Enum.flat_map(& &1["modules"])
+        |> Enum.flat_map(& &1["features"])
+        |> Enum.flat_map(& &1["slices"])
+
+      ids = for s <- slices, e <- s["events"], not Map.has_key?(e, "sourceEventId"), do: e["id"]
+
+      linked =
+        for s <- slices,
+            e <- s["events"] ++ s["externalEvents"],
+            source = e["sourceEventId"],
+            do: source
+
+      assert linked != []
+      assert Enum.all?(linked, &(&1 in ids))
+    end
+
     test "carry the Screenplay source", %{documents: [root | _]} do
       assert root.source =~ "slice StateChange Registration"
       assert root.source =~ "command RegisterAuthor"

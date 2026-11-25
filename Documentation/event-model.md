@@ -43,6 +43,12 @@ The **Source** tab shows the same model as [Cratis Screenplay](https://github.co
 
 A command returns the events it appends, so Arc reads them from the compiled module: the event types it builds. A reactor's emitted events are found the same way, and the events it handles come from `@handles`. A command that builds its events somewhere else, in another module, shows only what it builds itself.
 
+## Names
+
+The model names a command, an event type, a reactor and a read model by the `id:` it declares, not by its module, so renaming a module never renames the model. The kebab-case id is shown in PascalCase (`"register-author"` is `RegisterAuthor`). Choose another style with `display_names:` on the Arc application: `:kebab_case`, `:as_declared` or a function of the id. `/.cratis/structure` follows the same setting. A command or read model without an `id:` keeps the last segment of its module name.
+
+A state view lists the events it consumes and an automation starts from the first event it handles, each pointing at the event of the slice that owns it, so the board connects the slices.
+
 ## Embedded at build time
 
 The model is not worked out when a request arrives. The compiler writes it to `priv/cratis/event_model/` of your application: a `catalog.json`, and for each document a `*.model.json` (the document [`@cratis/event-models`](https://www.npmjs.com/package/@cratis/event-models) draws) and a `*.screenplay`. It is part of every release, the way the C# build embeds it in the assembly, and nothing is analysed in production. The explorer itself ships inside the `cratis_arc` package.

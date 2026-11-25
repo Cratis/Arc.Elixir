@@ -29,6 +29,7 @@ defmodule Cratis.Arc.Descriptor do
     :kind,
     :module,
     :name,
+    :id,
     :route_name,
     :namespace,
     :doc,
@@ -43,6 +44,24 @@ defmodule Cratis.Arc.Descriptor do
   ]
 
   @type t :: %__MODULE__{}
+
+  @doc """
+  The name to show for an artifact: its declared `id:` in the configured style, or, when it declared
+  none, the last segment of its module name.
+  """
+  @spec display_name(t(), Cratis.Arc.Naming.display_style()) :: String.t()
+  def display_name(descriptor, style \\ :pascal_case)
+
+  def display_name(%__MODULE__{id: id}, style) when is_binary(id),
+    do: Cratis.Arc.Naming.display(id, style)
+
+  def display_name(%__MODULE__{name: name}, style) do
+    case style do
+      :pascal_case -> name
+      :as_declared -> name
+      other -> Cratis.Arc.Naming.display(Cratis.Arc.Naming.kebab(name), other)
+    end
+  end
 
   @doc "The fully qualified name of a query: the container module plus the PascalCase function name."
   @spec query_name(t(), Query.t()) :: String.t()
