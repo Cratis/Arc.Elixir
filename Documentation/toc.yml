@@ -14,6 +14,8 @@
   href: validation.md
 - name: Authorization and identity
   href: authorization-and-identity.md
+- name: Availability
+  href: availability.md
 - name: Vertical slices
   href: vertical-slices.md
 - name: Event model

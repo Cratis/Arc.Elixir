@@ -17,6 +17,8 @@ defmodule Arc.Descriptor do
       :watch,
       :topics,
       :http_method,
+      :route,
+      :availability,
       many?: true,
       observable?: false,
       authorization: %{roles: [], policy: nil, allow_anonymous: false, authenticated?: false}
@@ -36,6 +38,7 @@ defmodule Arc.Descriptor do
     :model,
     :model_types,
     :queries,
+    :availability,
     authorization: %{roles: [], policy: nil, allow_anonymous: false, authenticated?: false}
   ]
 
@@ -56,7 +59,10 @@ defmodule Arc.Descriptor do
 
   @doc "The conventional route of a query."
   @spec query_route(t(), Query.t(), keyword()) :: String.t()
-  def query_route(%__MODULE__{} = descriptor, %Query{name: name}, opts \\ []),
+  def query_route(descriptor, query, opts \\ [])
+  def query_route(%__MODULE__{}, %Query{route: route}, _opts) when is_binary(route), do: route
+
+  def query_route(%__MODULE__{} = descriptor, %Query{name: name}, opts),
     do: route(descriptor, Atom.to_string(name), opts)
 
   defp route(%__MODULE__{namespace: namespace}, name, opts) do

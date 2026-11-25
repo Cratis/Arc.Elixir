@@ -12,6 +12,7 @@ defmodule Arc.CommandResult do
             exception_messages: [],
             exception_stack_trace: "",
             authorization_failure_reason: "",
+            retryable?: false,
             response: nil,
             events: []
 
@@ -23,10 +24,11 @@ defmodule Arc.CommandResult do
     do: r.authorized? and r.validation_results == [] and r.exception_messages == []
 
   @doc "The HTTP status the Arc contract maps this result to."
-  @spec status(t()) :: 200 | 400 | 403 | 500
+  @spec status(t()) :: 200 | 400 | 403 | 500 | 503
   def status(%__MODULE__{} = r) do
     cond do
       success?(r) -> 200
+      r.retryable? -> 503
       not r.authorized? -> 403
       r.validation_results != [] -> 400
       true -> 500
@@ -48,6 +50,8 @@ defmodule Arc.CommandResult do
       "authorizationFailureReason" => r.authorization_failure_reason
     }
 
+    base = if r.retryable?, do: Map.put(base, "isRetryable", true), else: base
+
     if success?(r) and r.response != nil,
       do: Map.put(base, "response", Arc.Wire.encode(r.response)),
       else: base
@@ -66,6 +70,8 @@ defmodule Arc.QueryResult do
             validation_results: [],
             exception_messages: [],
             exception_stack_trace: "",
+            authorization_failure_reason: "",
+            retryable?: false,
             paging: %{page: 0, size: 0, total_items: 0}
 
   @type t :: %__MODULE__{}
@@ -76,10 +82,11 @@ defmodule Arc.QueryResult do
     do: r.ready? and r.authorized? and r.validation_results == [] and r.exception_messages == []
 
   @doc "The HTTP status the Arc contract maps this result to."
-  @spec status(t()) :: 200 | 202 | 400 | 403 | 500
+  @spec status(t()) :: 200 | 202 | 400 | 403 | 500 | 503
   def status(%__MODULE__{} = r) do
     cond do
       success?(r) -> 200
+      r.retryable? -> 503
       not r.authorized? -> 403
       r.validation_results != [] -> 400
       not r.ready? and r.exception_messages == [] -> 202
@@ -109,6 +116,13 @@ defmodule Arc.QueryResult do
         "totalPages" => if(size == 0, do: 0, else: ceil(total / size))
       }
     }
+
+    base =
+      if r.authorization_failure_reason == "",
+        do: base,
+        else: Map.put(base, "authorizationFailureReason", r.authorization_failure_reason)
+
+    base = if r.retryable?, do: Map.put(base, "isRetryable", true), else: base
 
     if success?(r) and r.data != nil,
       do: Map.put(base, "data", Arc.Wire.encode(r.data)),

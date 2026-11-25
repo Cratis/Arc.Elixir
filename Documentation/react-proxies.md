@@ -112,7 +112,7 @@ In development, proxy the API and the Arc paths to Phoenix so the browser sees o
 
 ## Limits
 
-Enums, nested lists and derived types are not generated. Header timestamps are omitted on purpose, which keeps output deterministic. See [Limits and gaps](limits-and-gaps.md).
+Enums (`{:enum, [...]}`), nested lists and derived types (`{:one_of, [...]}`) are generated from a read model's declared types. Every command and query proxy carries `static readonly part`, the identity of the part for [availability](availability.md); it needs `@cratis/arc` with `PartIdentity`. Header timestamps are omitted on purpose, which keeps output deterministic. See [Limits and gaps](limits-and-gaps.md).
 
 ## Next steps
 

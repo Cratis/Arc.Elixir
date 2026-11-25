@@ -160,6 +160,9 @@ defmodule Arc.Application do
     query_names =
       for d <- read_models, q <- d.queries, into: %{}, do: {Descriptor.query_name(d, q), {d, q}}
 
+    availability = Arc.Availability.build(config, commands, read_models)
+    {query_routes, query_names} = built_in_queries(config, opts, query_routes, query_names)
+
     ensure_unique!(commands, opts, &Descriptor.command_route(&1, opts), "command")
 
     ensure_unique!(
@@ -178,6 +181,7 @@ defmodule Arc.Application do
       command_routes: command_routes,
       query_routes: query_routes,
       query_names: query_names,
+      availability: availability,
       identity_provider: identity_provider(config, modules),
       users_providers: implementing(modules, Arc.Identity.UsersProvider),
       tenants_providers: implementing(modules, Arc.Identity.TenantsProvider)
@@ -185,6 +189,21 @@ defmodule Arc.Application do
 
     :persistent_term.put({@key, app}, state)
     state
+  end
+
+  # The `/.cratis/availability` observable, present when the application configured availability.
+  defp built_in_queries(config, opts, routes, names) do
+    if config[:availability] do
+      descriptor = Arc.Availability.Parts.descriptor()
+      [query] = descriptor.queries
+
+      {Map.put(routes, Descriptor.query_route(descriptor, query, opts), {descriptor, query}),
+       names
+       |> Map.put(Descriptor.query_name(descriptor, query), {descriptor, query})
+       |> Map.put("ObserveAvailableParts", {descriptor, query})}
+    else
+      {routes, names}
+    end
   end
 
   @doc false
@@ -265,6 +284,14 @@ defmodule Arc.Application do
     def start_link(app, _init_arg),
       do: Elixir.Supervisor.start_link(__MODULE__, app, name: Module.concat(app, Supervisor))
 
+    defp availability_children(app) do
+      config = Arc.Availability.config(app)
+
+      if config && config[:pubsub] && Code.ensure_loaded?(Phoenix.PubSub),
+        do: [{Arc.Availability.Listener, app}],
+        else: []
+    end
+
     @impl true
     def init(app) do
       Arc.Application.refresh(app)
@@ -275,6 +302,8 @@ defmodule Arc.Application do
         {Arc.Identity.ReplayCache, app},
         {DynamicSupervisor, name: Arc.Notifier.subscriptions(app), strategy: :one_for_one}
       ]
+
+      children = children ++ availability_children(app)
 
       Elixir.Supervisor.init(children, strategy: :one_for_one)
     end

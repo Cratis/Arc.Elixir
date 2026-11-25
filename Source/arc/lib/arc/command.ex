@@ -76,7 +76,10 @@ defmodule Arc.Command do
     quote do
       use Arc.Schema
       @behaviour Arc.Command
-      import Arc.Command, only: [command: 1, authorize: 1, allow_anonymous: 0, response: 1]
+      import Arc.Command,
+        only: [command: 1, authorize: 1, allow_anonymous: 0, response: 1, available: 1]
+
+      Module.register_attribute(__MODULE__, :arc_available, accumulate: true)
       @arc_command_name nil
       @arc_authorization nil
       @arc_response nil
@@ -97,6 +100,14 @@ defmodule Arc.Command do
   @doc "Declares who may run the command. See `Arc.Authorization`."
   defmacro authorize(requirement) do
     quote do: @arc_authorization(unquote(requirement))
+  end
+
+  @doc """
+  Declares when the command is available: `available for: "Plus", with: "Reported", when: ...`.
+  See `Arc.Availability`. Several declarations all hold.
+  """
+  defmacro available(lines) do
+    quote do: @arc_available(unquote(lines))
   end
 
   @doc "Allows anonymous callers."
@@ -131,6 +142,11 @@ defmodule Arc.Command do
       fields: fields,
       response: response,
       key: key && key.name,
+      availability:
+        env.module
+        |> Module.get_attribute(:arc_available)
+        |> Enum.reverse()
+        |> Arc.Availability.Declaration.gate(),
       authorization: authorization
     }
 
