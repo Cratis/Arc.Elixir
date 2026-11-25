@@ -15,6 +15,7 @@
 
 ### Changed
 
+- **A feature is ordered by its latest slice.** A feature that holds both a command and a reaction to another feature's events is drawn after that feature.
 - **Sub-features are a hierarchy.** A feature path such as `ApiCredentials.Secrets` is a feature `Secrets` inside `ApiCredentials`: the board nests it as `subFeatures`, the Screenplay source nests `feature` inside `feature`, and every depth has its own document.
 - **The event model is read in order.** A view or an automation comes after the slices that produce the events it consumes, features and modules follow the same order, and a feature's own slices come before its sub-features.
 - **The event model is validated.** A state change needs a command and the events it appends, a view a read model and the events it consumes (a view over a model another slice builds consumes that reducer's events; `consumes:` on `use Cratis.Arc.ReadModel` names the events of a model read some other way), an automation the event it reacts to and one it records, every consumed event must be produced by a slice, and a fact must come before what uses it. The `arc_event_model` compiler reports each problem as a warning, or as an error with `event_model_strict: true` in the project's `arc:` options.

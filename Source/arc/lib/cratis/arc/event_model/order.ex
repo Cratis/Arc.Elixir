@@ -6,7 +6,7 @@ defmodule Cratis.Arc.EventModel.Order do
 
   # Puts the slices of an event model in the order they are read: a fact is drawn before whatever
   # uses it. A view or an automation depends on the slices that own the events it consumes, so it
-  # comes after them; features and modules follow the same order, and a feature's own slices come
+  # comes after them; features and modules follow the same order (a feature is as late as its latest slice), and a feature's own slices come
   # before its sub-features. Where nothing decides, state changes come before views and automations,
   # then names. A cycle is broken where it is found, so the order is always total and stable.
 
@@ -17,7 +17,7 @@ defmodule Cratis.Arc.EventModel.Order do
 
     slices
     |> Enum.group_by(& &1.module)
-    |> Enum.sort_by(fn {module, group} -> {lowest(group, ranks), module} end)
+    |> Enum.sort_by(fn {module, group} -> {latest(group, ranks), module} end)
     |> Enum.flat_map(fn {_module, group} -> node(group, 0, ranks) end)
   end
 
@@ -32,13 +32,14 @@ defmodule Cratis.Arc.EventModel.Order do
     children =
       deeper
       |> Enum.group_by(&Enum.at(path(&1), depth))
-      |> Enum.sort_by(fn {name, group} -> {lowest(group, ranks), name} end)
+      |> Enum.sort_by(fn {name, group} -> {latest(group, ranks), name} end)
       |> Enum.flat_map(fn {_name, group} -> node(group, depth + 1, ranks) end)
 
     Enum.sort_by(own, &{Map.fetch!(ranks, &1.key), &1.type, &1.name}) ++ children
   end
 
-  defp lowest(group, ranks), do: group |> Enum.map(&Map.fetch!(ranks, &1.key)) |> Enum.min()
+  # A feature is as late as its latest slice: it cannot be drawn before everything inside it can.
+  defp latest(group, ranks), do: group |> Enum.map(&Map.fetch!(ranks, &1.key)) |> Enum.max()
 
   # The longest chain of slices a slice depends on.
   defp ranks(slices) do
