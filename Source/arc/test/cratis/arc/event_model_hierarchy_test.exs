@@ -44,7 +44,8 @@ defmodule Cratis.Arc.EventModelHierarchyTest do
 
   defp change(feature, name, events) do
     key = ["M", feature, name]
-    command = %Cratis.Arc.Descriptor{kind: :command, name: name, fields: [], doc: nil}
+    field = %Cratis.Arc.Schema.Field{name: :id, type: :string, key?: true, required?: true}
+    command = %Cratis.Arc.Descriptor{kind: :command, name: name, fields: [field], doc: nil}
     slice(feature, name, 0, %{commands: [command], events: Enum.map(events, &event(&1, key))})
   end
 
@@ -189,6 +190,7 @@ defmodule Cratis.Arc.EventModelHierarchyTest do
       [root | _] = Documents.build(%{name: "App", slices: [add, a, b], problems: []}, "app")
 
       assert length(String.split(root.source, "readmodel Author\n")) == 2
+      assert root.source =~ "produces Added\n          for id\n"
       _ = documents
     end
 

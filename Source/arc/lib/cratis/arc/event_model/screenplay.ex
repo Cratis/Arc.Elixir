@@ -130,16 +130,16 @@ defmodule Cratis.Arc.EventModel.Screenplay do
       end,
       Enum.map(
         events,
-        &[pad, "produces ", ident(&1.name), identifier_clause(command.fields), "\n"]
+        &[pad, "produces ", ident(&1.name), "\n", identifier_clause(command.fields, pad)]
       )
     ]
   end
 
-  # `produces E for id`: the command's identifier says which stream the event is appended to.
-  defp identifier_clause(fields) do
+  # A nested `for id` line: the command's identifier says which stream the event is appended to.
+  defp identifier_clause(fields, pad) do
     case Enum.find(fields, & &1.key?) do
       nil -> ""
-      field -> " for " <> property_name(field.name)
+      field -> [pad, "  for ", property_name(field.name), "\n"]
     end
   end
 
