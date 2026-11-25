@@ -11,16 +11,35 @@ defmodule Arc.ProxyGenerator.TypeScript do
 
   @fundamentals "@cratis/fundamentals"
 
-  defstruct [:type, :ctor, :import, enumerable?: false]
+  defstruct [:type, :ctor, :import, imports: [], enumerable?: false, union?: false, dimensions: 0]
 
   @type t :: %__MODULE__{}
 
   @doc "The TypeScript mapping of a field type."
   @spec map(Arc.Types.t(), integer()) :: t()
-  def map({:list, {:list, _}}, _skip),
-    do: raise(ArgumentError, "Nested lists are not supported by proxy generation.")
+  def map({:list, inner}, skip) do
+    inner = map(inner, skip)
+    %{inner | enumerable?: true, dimensions: inner.dimensions + 1}
+  end
 
-  def map({:list, inner}, skip), do: %{map(inner, skip) | enumerable?: true}
+  def map({:enum, values}, _skip),
+    do: %__MODULE__{
+      type: Enum.map_join(values, " | ", &"'#{&1}'"),
+      ctor: "String",
+      union?: true
+    }
+
+  def map({:one_of, modules}, skip) do
+    mappings = Enum.map(modules, &map(&1, skip))
+
+    %__MODULE__{
+      type: Enum.map_join(mappings, " | ", & &1.type),
+      ctor: "Object",
+      imports: Enum.map(mappings, & &1.import),
+      union?: true
+    }
+  end
+
   def map(:string, _), do: %__MODULE__{type: "string", ctor: "String"}
   def map(:integer, _), do: %__MODULE__{type: "number", ctor: "Number"}
   def map(:float, _), do: %__MODULE__{type: "number", ctor: "Number"}
@@ -89,7 +108,7 @@ defmodule Arc.ProxyGenerator.TypeScript do
   @spec imports([t()], String.t(), layout()) :: [{String.t(), String.t()}]
   def imports(mappings, from_folder, skip) do
     mappings
-    |> Enum.map(& &1.import)
+    |> Enum.flat_map(&[&1.import | &1.imports])
     |> Enum.reject(&is_nil/1)
     |> Enum.map(fn
       {name, {:module, module}} -> {name, import_path(from_folder, module, skip)}
@@ -112,6 +131,12 @@ defmodule Arc.ProxyGenerator.TypeScript do
   defp collect([type | rest], overrides, seen) do
     seen =
       case base(type) do
+        {:enum, _} ->
+          seen
+
+        {:one_of, modules} ->
+          collect(modules, overrides, seen)
+
         module when is_atom(module) ->
           if Arc.Types.primitive?(module) or Arc.Types.concept?(module) or
                MapSet.member?(seen, module) do
@@ -128,6 +153,18 @@ defmodule Arc.ProxyGenerator.TypeScript do
 
   defp base({:list, inner}), do: base(inner)
   defp base(type), do: type
+
+  @doc """
+  The TypeScript type of a mapping, with one `[]` per list dimension. A union is parenthesised
+  when it is a list.
+  """
+  @spec ts_type(t()) :: String.t()
+  def ts_type(%__MODULE__{type: type, dimensions: 0}), do: type
+
+  def ts_type(%__MODULE__{union?: true, type: type, dimensions: n}),
+    do: "(#{type})" <> String.duplicate("[]", n)
+
+  def ts_type(%__MODULE__{type: type, dimensions: n}), do: type <> String.duplicate("[]", n)
 
   @doc "Applies a model's `types:` overrides to its fields."
   @spec model_fields(module(), keyword() | nil) :: [Schema.Field.t()]

@@ -7,13 +7,19 @@ defmodule Arc.Types do
 
   A type is one of `:string`, `:integer`, `:float`, `:boolean`, `:uuid`, `:date`, `:datetime`,
   `:map`, `{:list, type}`, a `Chronicle.Concept` module (a strongly typed wrapper over one
-  primitive), or a module that `use Arc.Schema` (a nested type).
+  primitive), or a module that `use Arc.Schema` (a nested type). Lists nest: `{:list, {:list, :integer}}`.
+
+  Two more forms describe what a read model stores:
+
+    * `{:enum, [:draft, :published]}` - one of a closed set of atoms, on the wire the name as a string
+    * `{:one_of, [MyApp.Circle, MyApp.Square]}` - one of several derived types of a common base; the
+      generated proxy types it as the union of the proxies
   """
 
   @primitives [:string, :integer, :float, :boolean, :uuid, :date, :datetime, :map]
   @uuid ~r/\A[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z/
 
-  @type t :: atom() | {:list, t()}
+  @type t :: atom() | {:list, t()} | {:enum, [atom()]} | {:one_of, [module()]}
 
   @doc "Whether `type` is one of the built-in primitive types."
   @spec primitive?(term()) :: boolean()
@@ -95,6 +101,21 @@ defmodule Arc.Types do
 
   def cast(:map, v) when is_map(v), do: {:ok, v}
 
+  def cast({:enum, values}, v) when is_atom(v) and not is_nil(v),
+    do: if(v in values, do: {:ok, v}, else: :error)
+
+  def cast({:enum, values}, v) when is_binary(v),
+    do: Enum.find_value(values, :error, &if(Atom.to_string(&1) == v, do: {:ok, &1}))
+
+  def cast({:one_of, modules}, v) when is_map(v) do
+    Enum.find_value(modules, :error, fn module ->
+      case cast(module, v) do
+        {:ok, _} = ok -> ok
+        :error -> nil
+      end
+    end)
+  end
+
   def cast({:list, inner}, v) when is_list(v) do
     Enum.reduce_while(v, {:ok, []}, fn item, {:ok, acc} ->
       case cast(inner, item) do
@@ -130,6 +151,8 @@ defmodule Arc.Types do
   @doc "A human-readable name for a type, used in validation messages."
   @spec describe(t()) :: String.t()
   def describe({:list, inner}), do: "list of #{describe(inner)}"
+  def describe({:enum, values}), do: "one of " <> Enum.map_join(values, ", ", &Atom.to_string/1)
+  def describe({:one_of, modules}), do: "one of " <> Enum.map_join(modules, ", ", &inspect/1)
   def describe(type) when type in @primitives, do: Atom.to_string(type)
   def describe(module) when is_atom(module), do: inspect(module)
 end
