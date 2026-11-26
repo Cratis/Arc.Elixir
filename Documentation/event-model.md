@@ -1,6 +1,6 @@
 ---
 title: Event model
-description: See your application's commands, events, read models and reactions drawn as an event model, from the explorer at /.cratis/event-model that Arc generates while you compile.
+description: Enable the Arc event model explorer in Elixir to see how your application's commands, events, read models and reactions connect across slices.
 ---
 
 Arc draws what your application does as an **event model**: the slices of each feature with the commands that start them, the events they record, the read models and queries that show the result, and the reactions that follow. It is the same explorer the C# Arc serves, at the same address, `/.cratis/event-model`, and it works from the code you already wrote.
