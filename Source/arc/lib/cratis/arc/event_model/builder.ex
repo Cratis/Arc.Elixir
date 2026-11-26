@@ -56,7 +56,7 @@ defmodule Cratis.Arc.EventModel.Builder do
     slices =
       groups
       |> Enum.flat_map(fn {key, group} ->
-        List.wrap(slice(key, group, skip, state, event_types))
+        List.wrap(slice(key, group, state, event_types))
       end)
       |> Enum.map(&name_artifacts(&1, skip))
       |> add_model_events(chronicle, skip)
@@ -183,7 +183,7 @@ defmodule Cratis.Arc.EventModel.Builder do
 
   # -- slices -------------------------------------------------------------------------------------
 
-  defp slice({module, feature, name}, group, skip, state, all_events) do
+  defp slice({module, feature, name}, group, state, all_events) do
     commands = Map.get(group, :commands, [])
     read_models = Map.get(group, :read_models, [])
     reactors = Map.get(group, :reactors, [])
@@ -209,7 +209,6 @@ defmodule Cratis.Arc.EventModel.Builder do
             events: events_of(Enum.uniq(appended ++ owned) -- handles),
             external: events_of(handles)
           },
-          skip,
           state
         )
 
@@ -222,7 +221,6 @@ defmodule Cratis.Arc.EventModel.Builder do
           name,
           @state_change,
           %{commands: commands, events: events_of(appended ++ owned)},
-          skip,
           state
         )
 
@@ -242,7 +240,6 @@ defmodule Cratis.Arc.EventModel.Builder do
             external: events_of(external),
             queries: queries(read_models, state)
           },
-          skip,
           state
         )
 
@@ -262,7 +259,6 @@ defmodule Cratis.Arc.EventModel.Builder do
             events: events_of(Enum.uniq(emitted ++ owned) -- handles),
             external: events_of(handles)
           },
-          skip,
           state
         )
 
@@ -295,15 +291,15 @@ defmodule Cratis.Arc.EventModel.Builder do
   end
 
   defp reactor_name(module, style) do
-    case module.__chronicle_reactor__(:id) do
-      id when is_binary(id) -> Cratis.Arc.Naming.display(id, style)
+    with true <- function_exported?(module, :__chronicle_reactor__, 1),
+         id when is_binary(id) <- module.__chronicle_reactor__(:id) do
+      Cratis.Arc.Naming.display(id, style)
+    else
       _ -> module |> Module.split() |> List.last()
     end
-  rescue
-    _ -> module |> Module.split() |> List.last()
   end
 
-  defp make(module, feature, name, type, extra, _skip, state) do
+  defp make(module, feature, name, type, extra, state) do
     Map.merge(
       %{
         key: [module, feature, name],
@@ -408,9 +404,9 @@ defmodule Cratis.Arc.EventModel.Builder do
   end
 
   defp defaults_of(module) do
-    module |> struct() |> Map.from_struct()
-  rescue
-    _ -> %{}
+    if function_exported?(module, :__struct__, 0),
+      do: module |> struct() |> Map.from_struct(),
+      else: %{}
   end
 
   defp short(module), do: module |> Module.split() |> List.last()

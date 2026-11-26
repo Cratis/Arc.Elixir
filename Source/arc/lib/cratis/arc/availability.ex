@@ -71,7 +71,7 @@ defmodule Cratis.Arc.Availability do
     Cratis.Arc.Notifier.notify(app, @topic)
 
     with config when is_list(config) <- config(app),
-         pubsub when pubsub != nil <- config[:pubsub],
+         pubsub when not is_nil(pubsub) <- config[:pubsub],
          true <- Code.ensure_loaded?(Phoenix.PubSub) do
       Phoenix.PubSub.broadcast_from(
         pubsub,
@@ -204,8 +204,8 @@ defmodule Cratis.Arc.Availability do
     app = ctx.application
     state = Cratis.Arc.Application.state(app)
 
-    with availability when availability != nil <- state[:availability],
-         part when part != nil <- availability.parts[key] do
+    with %{parts: parts} <- state[:availability],
+         %{} = part <- parts[key] do
       case Development.switch(Development.current(app), part) do
         :off ->
           {:denied, "NotAvailable"}

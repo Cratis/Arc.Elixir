@@ -15,6 +15,8 @@
 
 ### Changed
 
+- The event model builder no longer rescues errors to find a reactor id or the defaults of an event: it checks that the module defines the function or struct first, so a real failure is no longer swallowed.
+- Availability checks match the shape they need (`%{parts: parts}`) instead of testing for `nil`.
 - **A reaction that runs a command is an automation with that command.** A slice holding a reactor and the command it runs shows what it reacts to, the command and the events the command appends, and the Screenplay source says `invokes` under the reaction. The slice description comes from the reactor.
 - **A scoped document links only what it contains.** The document of a module or feature leaves an event's link out when the slice producing it is not in that document, so no link points at nothing.
 - **The Screenplay source compiles.** A read model several views share is declared once, a property such as `system?` is written as `system`, and `produces` names the stream (a nested `for id`), so the generated `.screenplay` passes the Screenplay compiler without errors.
