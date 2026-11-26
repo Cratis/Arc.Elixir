@@ -93,8 +93,17 @@ defmodule Cratis.Arc.EventModel.Screenplay do
     ]
   end
 
-  defp body(%{type: 2, reactors: reactors, external: external} = slice, depth),
-    do: Enum.map(reactors, &reaction(&1, external, depth, Map.get(slice.reactor_names, &1)))
+  defp body(%{type: 2, reactors: reactors, external: external, commands: commands} = slice, depth) do
+    events = slice.events
+
+    [
+      Enum.map(commands, &command(&1, events, depth)),
+      Enum.map(
+        reactors,
+        &reaction(&1, external, depth, Map.get(slice.reactor_names, &1), List.first(commands))
+      )
+    ]
+  end
 
   # -- constructs ---------------------------------------------------------------------------------
 
@@ -188,7 +197,7 @@ defmodule Cratis.Arc.EventModel.Screenplay do
     ]
   end
 
-  defp reaction(module, external, depth, name) do
+  defp reaction(module, external, depth, name, invoked \\ nil) do
     pad = indent(depth + 1)
 
     [
@@ -196,8 +205,39 @@ defmodule Cratis.Arc.EventModel.Screenplay do
       "reaction ",
       ident(name || short(module)),
       "\n",
-      Enum.map(external, &[pad, "when ", ident(&1.name), "\n"])
+      external
+      |> Enum.with_index()
+      |> Enum.map(fn {event, index} ->
+        [
+          pad,
+          "when ",
+          ident(event.name),
+          "\n",
+          if(index == 0, do: invokes(invoked, depth + 2), else: [])
+        ]
+      end)
     ]
+  end
+
+  # The command a reaction runs, for the event source of the event that triggered it.
+  defp invokes(nil, _depth), do: []
+
+  defp invokes(command, depth) do
+    case Enum.find(command.fields, & &1.key?) do
+      nil ->
+        [indent(depth), "invokes ", ident(command.name), "\n"]
+
+      key ->
+        [
+          indent(depth),
+          "invokes ",
+          ident(command.name),
+          "\n",
+          indent(depth + 1),
+          property_name(key.name),
+          " = $eventSourceId\n"
+        ]
+    end
   end
 
   defp description(nil, _depth), do: []
