@@ -1,6 +1,6 @@
 ---
 title: Availability
-description: Declare which parts of an application exist for which audiences, suspend parts at run time, and let the frontend hide what the caller cannot use, with the same model and manifest as Arc for .NET.
+description: Use Arc for Elixir to gate commands and queries by audience, suspend parts at runtime and let clients hide features the caller cannot use.
 ---
 
 Availability decides whether a part of the application exists for the caller in front of you. A part is a command or a query; parts are grouped in modules, features and slices. It is the same model as Arc for .NET and Screenplay: audiences, blocks, gates and suspension, written in the same words.
