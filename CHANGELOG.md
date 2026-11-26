@@ -15,6 +15,7 @@
 
 ### Changed
 
+- A reaction invokes every command of its slice in the Screenplay source, not only the first.
 - The event model builder no longer rescues errors to find a reactor id or the defaults of an event: it checks that the module defines the function or struct first, so a real failure is no longer swallowed.
 - Availability checks match the shape they need (`%{parts: parts}`) instead of testing for `nil`.
 - **A reaction that runs a command is an automation with that command.** A slice holding a reactor and the command it runs shows what it reacts to, the command and the events the command appends, and the Screenplay source says `invokes` under the reaction. The slice description comes from the reactor.
