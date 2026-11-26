@@ -204,6 +204,33 @@ defmodule Cratis.Arc.EventModelHierarchyTest do
       refute Map.has_key?(event, "sourceEventId")
     end
 
+    test "an automation with a command shows the reaction, the command and its event" do
+      add = change("F", "Add", ["Added"])
+      command = hd(add.commands)
+
+      auto = %{
+        slice("F", "Record", 2, %{})
+        | commands: [command],
+          reactors: [ArcFixtures.Authors.Listing.Authors],
+          reactor_names: %{ArcFixtures.Authors.Listing.Authors => "Recorder"},
+          external: [event("Added", add.key)],
+          events: [event("Recorded", ["M", "F", "Record"])]
+      }
+
+      [root | _] = Documents.build(%{name: "App", slices: [add, auto], problems: []}, "app")
+      [module] = hd(root.model["eventModel"]["collections"])["modules"]
+      [feature] = module["features"]
+      slice = Enum.find(feature["slices"], &(&1["name"] == "Record"))
+
+      assert slice["sliceType"] == 2
+      assert slice["command"]["name"] == "Add"
+      assert [%{"name" => "Recorded"}] = slice["events"]
+      assert slice["automationTrigger"]["type"] == 1
+
+      assert root.source =~
+               "reaction Recorder\n        when Added\n          invokes Add\n            id = $eventSourceId\n"
+    end
+
     test "write nested features in the Screenplay source", %{documents: [root | _]} do
       assert root.source =~ "  feature Orders\n"
       assert root.source =~ "    feature Placing\n      slice StateChange Add\n"

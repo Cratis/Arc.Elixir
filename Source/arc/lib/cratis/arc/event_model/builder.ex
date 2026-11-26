@@ -192,6 +192,27 @@ defmodule Cratis.Arc.EventModel.Builder do
     owned = Map.get(group, :events, [])
 
     cond do
+      commands != [] and reactors != [] ->
+        # A reaction that invokes commands: the automation shows what it reacts to, the command it
+        # runs and the events that command appends.
+        handles = reactors |> Enum.flat_map(&handled/1) |> Enum.uniq()
+        appended = commands |> Enum.flat_map(&Appends.in_module(&1.module)) |> Enum.uniq()
+
+        make(
+          module,
+          feature,
+          name,
+          @automation,
+          %{
+            commands: commands,
+            reactors: reactors,
+            events: events_of(Enum.uniq(appended ++ owned) -- handles),
+            external: events_of(handles)
+          },
+          skip,
+          state
+        )
+
       commands != [] ->
         appended = commands |> Enum.flat_map(&Appends.in_module(&1.module)) |> Enum.uniq()
 
@@ -305,9 +326,9 @@ defmodule Cratis.Arc.EventModel.Builder do
     )
   end
 
+  defp description(%{reactors: [module | _]}), do: moduledoc(module)
   defp description(%{commands: [%Descriptor{doc: doc} | _]}) when is_binary(doc), do: doc
   defp description(%{read_models: [%Descriptor{doc: doc} | _]}) when is_binary(doc), do: doc
-  defp description(%{reactors: [module | _]}), do: moduledoc(module)
   defp description(_), do: ""
 
   defp moduledoc(module) do
