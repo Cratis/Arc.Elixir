@@ -197,7 +197,7 @@ defmodule Cratis.Arc.EventModel.Screenplay do
     ]
   end
 
-  defp reaction(module, external, depth, name, invoked \\ nil) do
+  defp reaction(module, external, depth, name, invoked) do
     pad = indent(depth + 1)
 
     [
