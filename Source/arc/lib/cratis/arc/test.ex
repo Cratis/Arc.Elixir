@@ -18,6 +18,10 @@ defmodule Cratis.Arc.Test do
         end
       end
 
+  For specs that state one behavior in the shape of a Specification (given, because, should), use
+  `Cratis.Arc.Test.CommandScenario` and `Cratis.Arc.Test.QueryScenario`, with the `should_*`
+  assertions of `Cratis.Arc.Test.Should`.
+
   Validation, authorization, binding and the Chronicle append all run for real; nothing is
   mocked. Reactors and reducers run synchronously after each append, as in `Cratis.Chronicle.Testing`.
   Each test gets its own kernel, so `async: true` is safe.

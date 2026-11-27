@@ -19,6 +19,12 @@ defmodule Cratis.Arc.MixProject do
       # Test fixtures define protocol implementations inside test modules, so protocols must
       # not be consolidated before ExUnit loads `test/**/*_test.exs`.
       consolidate_protocols: Mix.env() != :test,
+      # Specs are `*_test.exs` (the older ones) or any script in a `for_*` folder (the BDD layout, with no
+      # `_test` suffix); `given/` holds shared contexts the specs load themselves.
+      test_load_filters: [
+        &String.ends_with?(&1, "_test.exs"),
+        &(String.contains?(&1, "/for_") and not String.contains?(&1, "/given/"))
+      ],
       deps: deps(),
       description:
         "Opinionated CQRS application framework for Phoenix and Plug on Cratis Chronicle, with model-bound commands and queries, validation, authorization, observable queries and opt-in TypeScript proxy generation",
