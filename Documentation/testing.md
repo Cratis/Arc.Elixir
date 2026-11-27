@@ -124,7 +124,7 @@ defmodule MyApp.Authors.ForRenameAuthor.Given.ARegisteredAuthor do
 end
 ```
 
-The `given:` option applies contexts before the spec's own `setup_all`, in order; `given/2` applies one in a pipeline (a module, `{module, argument}` or a 1-arity function), and a context composes others by calling `given/2` itself.
+The `given:` option applies contexts before the spec's own `setup_all`, in order; `given/2` applies one in a pipeline (a module, `{module, argument}` or a 1-arity function), and a context composes others by calling `given_context/2` itself.
 
 ```elixir
 use Cratis.Arc.Test.CommandScenario,

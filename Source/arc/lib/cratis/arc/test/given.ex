@@ -17,7 +17,7 @@ defmodule Cratis.Arc.Test.Given do
       end
 
   Use it from a spec with the `given:` option, which applies it before the spec's own `setup_all`, or in a
-  pipeline with `given/2`; contexts compose by calling `given/2` on another one:
+  pipeline with `given/2`; contexts compose by calling `given_context/2` on another one:
 
       use Cratis.Arc.Test.CommandScenario,
         application: MyApp.Arc,
@@ -48,9 +48,13 @@ defmodule Cratis.Arc.Test.Given do
   def given_events(%module{} = scenario, event_source_id, events),
     do: module.given_events(scenario, event_source_id, events)
 
-  @doc "Applies another given context to the scenario."
-  @spec given(struct(), module() | {module(), term()} | (struct() -> struct())) :: struct()
-  def given(%module{} = scenario, context), do: module.given(scenario, context)
+  @doc """
+  Applies another given context to the scenario, for contexts that compose. It is not named `given/2`, so a
+  context can define `given/2` (with an argument) itself.
+  """
+  @spec given_context(struct(), module() | {module(), term()} | (struct() -> struct())) ::
+          struct()
+  def given_context(%module{} = scenario, context), do: module.given(scenario, context)
 
   @doc "An authenticated principal with `roles`."
   defdelegate principal(name \\ "tester", roles \\ []), to: Cratis.Arc.Test
