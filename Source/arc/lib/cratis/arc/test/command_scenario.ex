@@ -35,7 +35,7 @@ defmodule Cratis.Arc.Test.CommandScenario do
   `use` starts the in-memory kernel once for the module (`lifecycle: :shared`, the default: the
   Specification's shared lifecycle) or before every test (`lifecycle: :per_test`, with `setup`
   instead of `setup_all`), puts the scenario in the context as `:scenario`, and imports this module
-  and `Cratis.Arc.Test.Should`. Options: `:application` (required), `:lifecycle`, `:async` (default
+  and `Cratis.Arc.Test.Should`. Options: `:application` (required), `:lifecycle`, `:given` (contexts, see `Cratis.Arc.Test.Given`), `:setup` (`{module, function}`), `:async` (default
   `true`) and every option of `Cratis.Chronicle.Testing.start_supervised_client/1` (`:event_types`,
   `:reactors`, `:reducers`, `:constraints`, ...).
 
@@ -79,6 +79,13 @@ defmodule Cratis.Arc.Test.CommandScenario do
   def new(application, client), do: %__MODULE__{application: application, client: client}
 
   # -- given and because -----------------------------------------------------------------------
+
+  @doc """
+  Applies a reusable given context: a module with `given/1` (or `{module, argument}` for `given/2`), a
+  1-arity function. Contexts compose: a context may `given/2` another one.
+  """
+  @spec given(t(), module() | {module(), term()} | (t() -> t())) :: t()
+  def given(%__MODULE__{} = scenario, context), do: Scenarios.apply_given(scenario, [context])
 
   @doc "Appends `events` (one event or a list) to an event source before the command runs."
   @spec given_events(t(), String.t(), struct() | [struct()]) :: t()

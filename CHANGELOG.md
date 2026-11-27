@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Given contexts for scenarios.** `Cratis.Arc.Test.Given` modules hold the facts several specs start from; `use Cratis.Arc.Test.CommandScenario ... given: [Context]` applies them before the spec's `setup_all`, `given/2` applies one in a pipeline, and `setup: {module, function}` prepares fakes before the contexts run. See [Reusable given contexts](Documentation/testing.md#reusable-given-contexts).
 - **Scenarios and `Should` for specs.** `Cratis.Arc.Test.CommandScenario` and `Cratis.Arc.Test.QueryScenario` state a behavior in the shape of a Specification (given, because, `should_*`), run the real pipeline against Chronicle's in-memory kernel and start the kernel once per spec module or once per test. `Cratis.Arc.Test.Should` is the counterpart of the `Should` extensions of Cratis.Specifications (`should_equal`, `should_contain_only`, `should_match`, ...). Specs can live in `for_*`/`when_*` folders with no `_test` suffix. See [Testing](Documentation/testing.md).
 
 - **Availability.** The same model as Arc for .NET: audiences, blocks (`for`, `when`, `with`, `not`), gates on module, feature, slice, command and query, and suspension. One gate runs first in the pipeline with the reasons `NotAvailable` and `Suspended` (`403`) and a retryable `503`; `/.cratis/availability`, the shared manifest, proxies that carry part identity and a LiveView component. See Documentation/availability.md.

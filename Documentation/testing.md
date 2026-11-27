@@ -110,6 +110,33 @@ Then drive the endpoint with `Plug.Test` and `Phoenix.LiveViewTest` as usual. Fo
 
 `Phoenix.LiveViewTest` needs `{:lazy_html, ">= 0.1.0", only: :test}` in your dependencies.
 
+## Reusable given contexts
+
+Facts that several specs start from are a **given context**, named for the situation, in a `given/` folder beside the specs, like the `given` classes of the C# specs. A context is a module with `given/1` that returns the next scenario; `given/2` takes an argument.
+
+```elixir
+# for_rename_author/given/a_registered_author.exs
+defmodule MyApp.Authors.ForRenameAuthor.Given.ARegisteredAuthor do
+  use Cratis.Arc.Test.Given
+
+  @impl true
+  def given(scenario), do: given_events(scenario, "ada", %AuthorRegistered{name: "Ada"})
+end
+```
+
+The `given:` option applies contexts before the spec's own `setup_all`, in order; `given/2` applies one in a pipeline (a module, `{module, argument}` or a 1-arity function), and a context composes others by calling `given/2` itself.
+
+```elixir
+use Cratis.Arc.Test.CommandScenario,
+  application: MyApp.Arc,
+  event_types: MyApp.Events.all(),
+  given: [MyApp.Authors.ForRenameAuthor.Given.ARegisteredAuthor]
+```
+
+Contexts are scripts, so a release never contains them; load them once in `test/test_helper.exs` with `for file <- Path.wildcard("lib/**/given/*.exs") |> Enum.sort(), do: Code.require_file(file)` and keep them out of the specs to run with `test_ignore_filters: [&String.contains?(&1, "/given/")]`.
+
+`setup: {module, function}` runs `module.function(client)` before the contexts, in the process of the setup, for what the specs need around the kernel: start a fake with `start_supervised!/1`, set application environment, return a map that joins the test context.
+
 ## Where specs live
 
 Name a spec for what it specifies, not with a `_test` suffix: `for_<unit>/when_<behavior>/<and|with|without>_<condition>.exs`, beside the code. The folders already say it is a spec, as in the C# and TypeScript specs. They are scripts, so a release never contains them. Point `mix test` at the folders:

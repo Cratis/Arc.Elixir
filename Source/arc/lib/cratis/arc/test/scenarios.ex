@@ -16,6 +16,8 @@ defmodule Cratis.Arc.Test.Scenarios do
   def using(scenario_module, opts) do
     {application, opts} = Keyword.pop!(opts, :application)
     {lifecycle, opts} = Keyword.pop(opts, :lifecycle, :shared)
+    {given, opts} = Keyword.pop(opts, :given, [])
+    {prepare, opts} = Keyword.pop(opts, :setup)
     {async, chronicle_opts} = Keyword.pop(opts, :async, true)
 
     setup = if lifecycle == :per_test, do: :setup, else: :setup_all
@@ -33,10 +35,45 @@ defmodule Cratis.Arc.Test.Scenarios do
           Cratis.Chronicle.Testing.stop_supervised_client(client)
         end)
 
-        %{scenario: unquote(scenario_module).new(unquote(application), client)}
+        context = Cratis.Arc.Test.Scenarios.prepare(unquote(prepare), client)
+
+        scenario =
+          unquote(application)
+          |> unquote(scenario_module).new(client)
+          |> Cratis.Arc.Test.Scenarios.apply_given(unquote(given))
+
+        Map.put(context, :scenario, scenario)
       end
     end
   end
+
+  @doc """
+  Runs the `setup:` function of a spec module, `{module, function}`, with the client and returns what it
+  adds to the context (a map, a keyword list, or `:ok`). It runs in the process of the setup, so
+  `start_supervised!/1` and `on_exit/1` work there, and before the given contexts, so what they append can
+  already reach the fakes it starts.
+  """
+  def prepare(nil, _client), do: %{}
+
+  def prepare({module, function}, client) do
+    case apply(module, function, [client]) do
+      :ok -> %{}
+      context -> Map.new(context)
+    end
+  end
+
+  @doc """
+  Applies given contexts to a scenario, in order. A context is a module with `given/1`, `{module, argument}`
+  for one with `given/2`, or a 1-arity function.
+  """
+  def apply_given(scenario, contexts),
+    do: contexts |> List.wrap() |> Enum.reduce(scenario, &apply_context/2)
+
+  defp apply_context({module, argument}, scenario) when is_atom(module),
+    do: module.given(scenario, argument)
+
+  defp apply_context(module, scenario) when is_atom(module), do: module.given(scenario)
+  defp apply_context(function, scenario) when is_function(function, 1), do: function.(scenario)
 
   @doc "Appends `events` to an event source, as the given facts of a scenario."
   def given_events(client, event_source_id, events) do
