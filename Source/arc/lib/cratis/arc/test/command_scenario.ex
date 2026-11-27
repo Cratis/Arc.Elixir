@@ -35,7 +35,7 @@ defmodule Cratis.Arc.Test.CommandScenario do
   `use` starts the in-memory kernel once for the module (`lifecycle: :shared`, the default: the
   Specification's shared lifecycle) or before every test (`lifecycle: :per_test`, with `setup`
   instead of `setup_all`), puts the scenario in the context as `:scenario`, and imports this module
-  and `Cratis.Arc.Test.Should`. Options: `:application` (required), `:lifecycle`, `:async` (default
+  and `Cratis.Arc.Test.Should`. Options: `:application` (required), `:lifecycle`, `:given` (contexts, see `Cratis.Arc.Test.Given`), `:setup` (`{module, function}`), `:async` (default
   `true`) and every option of `Cratis.Chronicle.Testing.start_supervised_client/1` (`:event_types`,
   `:reactors`, `:reducers`, `:constraints`, ...).
 
