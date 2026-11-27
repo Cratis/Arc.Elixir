@@ -25,7 +25,8 @@ defmodule Cratis.Arc.Test.ForGiven.Given.TwoAuthors do
   alias Cratis.Arc.Test.ForGiven.Given.AnAuthor
 
   @impl true
-  def given(scenario), do: scenario |> given(AnAuthor) |> given({AnAuthor, "Grace"})
+  def given(scenario),
+    do: scenario |> given_context(AnAuthor) |> given_context({AnAuthor, "Grace"})
 end
 
 defmodule Cratis.Arc.Test.ForGiven.Given.Prepared do
