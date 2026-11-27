@@ -80,6 +80,13 @@ defmodule Cratis.Arc.Test.CommandScenario do
 
   # -- given and because -----------------------------------------------------------------------
 
+  @doc """
+  Applies a reusable given context: a module with `given/1` (or `{module, argument}` for `given/2`), a
+  1-arity function. Contexts compose: a context may `given/2` another one.
+  """
+  @spec given(t(), module() | {module(), term()} | (t() -> t())) :: t()
+  def given(%__MODULE__{} = scenario, context), do: Scenarios.apply_given(scenario, [context])
+
   @doc "Appends `events` (one event or a list) to an event source before the command runs."
   @spec given_events(t(), String.t(), struct() | [struct()]) :: t()
   def given_events(%__MODULE__{} = scenario, event_source_id, events) do
